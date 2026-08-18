@@ -1,0 +1,124 @@
+{
+  "variables": [
+    {
+      "name": "DB_H2_URL",
+      "value": "jdbc:h2:tcp://localhost:9092/mem:csep;DB_CLOSE_DELAY=-1;MODE=Oracle;DATABASE_TO_UPPER=TRUE;DEFAULT_NULL_ORDERING=HIGH;AUTO_RECONNECT=TRUE",
+      "description": "JDBC URL H2 - BD in-memory mem:csep (igual en todos los entornos)"
+    },
+    {
+      "name": "DB_H2_HOST",
+      "value": "localhost",
+      "description": "Host H2 (in-memory)"
+    },
+    {
+      "name": "DB_H2_PORT",
+      "value": "9092",
+      "description": "Puerto H2 (in-memory)"
+    },
+    {
+      "name": "DB_H2_DATABASE",
+      "value": "mem:csep",
+      "description": "Base H2 (in-memory)"
+    },
+    {
+      "name": "DB_H2_USERNAME",
+      "value": "sa",
+      "description": "Usuario H2"
+    },
+    {
+      "name": "DB_H2_PASSWORD",
+      "value": "csep",
+      "description": "Password H2"
+    },
+    {
+      "name": "DB_ORA_SISUD_URL",
+      "value": "jdbc:oracle:thin:@//<HOST>:<PUERTO>/<SERVICE>",
+      "description": "JDBC URL Oracle oefabd (SISUD, fuente) LOCAL - completar"
+    },
+    {
+      "name": "DB_ORA_SISUD_HOST",
+      "value": "<HOST>",
+      "description": "Host Oracle oefabd (SISUD, fuente) LOCAL - completar"
+    },
+    {
+      "name": "DB_ORA_SISUD_PORT",
+      "value": "<PUERTO>",
+      "description": "Puerto Oracle oefabd (SISUD, fuente) LOCAL - completar"
+    },
+    {
+      "name": "DB_ORA_SISUD_DATABASE",
+      "value": "<SERVICE>",
+      "description": "Service Oracle oefabd (SISUD, fuente) LOCAL - completar"
+    },
+    {
+      "name": "DB_ORA_SISUD_USERNAME",
+      "value": "<USUARIO>",
+      "description": "Usuario Oracle oefabd (SISUD, fuente) LOCAL - completar"
+    },
+    {
+      "name": "DB_ORA_SISUD_PASSWORD",
+      "value": "<PASSWORD>",
+      "description": "Password Oracle oefabd (SISUD, fuente) LOCAL - completar"
+    },
+    {
+      "name": "DB_ORA_REPO_URL",
+      "value": "jdbc:oracle:thin:@//<HOST>:<PUERTO>/<SERVICE>",
+      "description": "JDBC URL Oracle REPOCSEP (destino) LOCAL - completar"
+    },
+    {
+      "name": "DB_ORA_REPO_HOST",
+      "value": "<HOST>",
+      "description": "Host Oracle REPOCSEP (destino) LOCAL - completar"
+    },
+    {
+      "name": "DB_ORA_REPO_PORT",
+      "value": "<PUERTO>",
+      "description": "Puerto Oracle REPOCSEP (destino) LOCAL - completar"
+    },
+    {
+      "name": "DB_ORA_REPO_DATABASE",
+      "value": "<SERVICE>",
+      "description": "Service Oracle REPOCSEP (destino) LOCAL - completar"
+    },
+    {
+      "name": "DB_ORA_REPO_USERNAME",
+      "value": "<USUARIO>",
+      "description": "Usuario Oracle REPOCSEP (destino) LOCAL - completar"
+    },
+    {
+      "name": "DB_ORA_REPO_PASSWORD",
+      "value": "<PASSWORD>",
+      "description": "Password Oracle REPOCSEP (destino) LOCAL - completar"
+    },
+    {
+      "name": "DB_MYSQL_URL",
+      "value": "jdbc:mysql://<HOST>:<PUERTO>/<DB>",
+      "description": "JDBC URL MySQL LOCAL (completar)"
+    },
+    {
+      "name": "DB_MYSQL_HOST",
+      "value": "<HOST>",
+      "description": "Host MySQL LOCAL (completar)"
+    },
+    {
+      "name": "DB_MYSQL_PORT",
+      "value": "<PUERTO>",
+      "description": "Puerto MySQL LOCAL (completar)"
+    },
+    {
+      "name": "DB_MYSQL_DATABASE",
+      "value": "<DB>",
+      "description": "Database MySQL LOCAL (completar)"
+    },
+    {
+      "name": "DB_MYSQL_USERNAME",
+      "value": "<USUARIO>",
+      "description": "Usuario MySQL LOCAL (completar)"
+    },
+    {
+      "name": "DB_MYSQL_PASSWORD",
+      "value": "<PASSWORD>",
+      "description": "Password MySQL LOCAL (completar)"
+    }
+  ]
+}

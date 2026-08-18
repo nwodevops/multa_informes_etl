@@ -1,0 +1,23 @@
+# Contrato del manifiesto de fuentes del arquetipo OEFA Hop ETL.
+# Copiar a <proyecto>/inputs.yaml y completar. No commitear keys/passwords.
+#
+# type: oracle | mysql | sheets
+# Python (python/create_stg.py) solo genera/aplica CREATE TABLE STG_* ; Hop extrae las filas.
+# Sheets: types varchar (gotcha #N/A). Ver .agents/skills/oefa-hop-etl/reference.md
+
+sources:
+  - stg_table: STG_ORA_EJEMPLO
+    type: oracle
+    connection: oracle_sisud
+    object: SISUD.VW_EJEMPLO
+
+  - stg_table: STG_MYSQL_EJEMPLO
+    type: mysql
+    connection: mysql
+    object: gappsdb.T_EJEMPLO
+
+  - stg_table: STG_GS1_EJEMPLO
+    type: sheets
+    spreadsheet_key: ${SPREADSHEET_KEY_GS1}
+    worksheet: "Hoja 1"
+    types: varchar
