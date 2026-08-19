@@ -1,24 +1,43 @@
 # Manifiesto de fuentes STG. Python (python/create_stg.py) lo lee y crea
 # CREATE TABLE en H2. Hop extrae las filas. No commitear keys/passwords.
 #
-# type: oracle | mysql | sheets
+# type: oracle | mysql | sheets | excel
 # Contrato: .agents/skills/oefa-hop-etl/inputs.example.yaml
-# sources: [] = no-op (smoke test del arquetipo sin BDs externas).
+# Excel local: path relativo a la raíz, header_row = fila de códigos (1-based).
 
-sources: []
+sources:
+  - stg_table: STG_GS1_MULTAS_COERCITIVAS
+    type: excel
+    path: input_excel/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx
+    worksheet: "1) Multas coercitivas"
+    header_row: 3
+    types: varchar
 
-# - stg_table: STG_ORA_EJEMPLO
-#   type: oracle
-#   connection: oracle_sisud
-#   object: SISUD.VW_EJEMPLO
-#
-# - stg_table: STG_MYSQL_EJEMPLO
-#   type: mysql
-#   connection: mysql
-#   object: gappsdb.T_EJEMPLO
-#
-# - stg_table: STG_GS1_EJEMPLO
-#   type: sheets
-#   spreadsheet_key: ${SPREADSHEET_KEY_GS1}
-#   worksheet: "Hoja 1"
-#   types: varchar
+  - stg_table: STG_GS1_ETAPAS
+    type: excel
+    path: input_excel/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx
+    worksheet: "2) Etapas"
+    header_row: 2
+    types: varchar
+
+  - stg_table: STG_GS2_MULTAS_COERCITIVAS
+    type: excel
+    path: input_excel/MEDIDAS ADMINISTRATIVAS OD LAMBAYEQUE.xlsx
+    worksheet: "5) Multas Coercitivas"
+    header_row: 3
+    types: varchar
+
+  - stg_table: STG_ORA_VW_MULTA_COERCITIVA
+    type: oracle
+    connection: oracle_sisud
+    object: SISUD.VW_MULTA_COERCITIVA
+
+  - stg_table: STG_ORA_CSEP_INFORMES
+    type: oracle
+    connection: oracle_sisud
+    object: SISUD.CSEP_INFORMES_VIEW
+
+  - stg_table: STG_MYSQL_T_MVC_MULTACOERCITIVA
+    type: mysql
+    connection: mysql
+    object: gappsdb.T_MVC_MULTACOERCITIVA_MC

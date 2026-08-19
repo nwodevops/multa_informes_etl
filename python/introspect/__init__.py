@@ -1,1 +1,6 @@
-"""Adapters de introspección: oracle / mysql / sheets -> list[Column]."""
+"""Capa STG / DDL. Solo schema. No extrae filas. No lógica de negocio.
+
+Entry Hop: python/create_stg.py
+Adapters: excel, oracle, mysql, sheets -> list[Column]
+DDL H2: introspect.h2_ddl
+"""

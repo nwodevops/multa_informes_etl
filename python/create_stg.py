@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Crea tablas STG_* en H2 a partir de inputs.yaml. No extrae filas.
 
+CAPA STG/DDL — no importar python/io ni logica/.
 Uso (desde la raíz del proyecto, H2 ya levantado tras Reset):
   .venv/bin/python python/create_stg.py
 
@@ -18,13 +19,14 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from config import load_sources, load_vars, project_root  # noqa: E402
-from h2_ddl import apply_h2, create_table_sql, write_script  # noqa: E402
-from introspect import mysql, oracle, sheets  # noqa: E402
+from introspect import excel, mysql, oracle, sheets  # noqa: E402
+from introspect.h2_ddl import apply_h2, create_table_sql, write_script  # noqa: E402
 
 HANDLERS = {
     "oracle": oracle.introspect,
     "mysql": mysql.introspect,
     "sheets": sheets.introspect,
+    "excel": excel.introspect,
 }
 
 

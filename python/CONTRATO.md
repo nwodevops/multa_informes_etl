@@ -1,20 +1,23 @@
-# CONTRATO — capa de lógica (Python) del arquetipo Apache Hop + H2
+# CONTRATO — dos capas Python (no mezclar)
 
-El proyecto es un **arquetipo**: el I/O es genérico y reutilizable; solo se cambia la
-**lógica de negocio** pegando un `.py` en `python/logica/`.
+Ver también [`LEEME.md`](LEEME.md). Fase 1: [`../docs/fase-1.md`](../docs/fase-1.md).
 
 ```
-python/main.py              orquesta: SETUP → io/leer_h2.py → [único .py de logica/] → escritores
-python/io/leer_h2.py        ENTRADA genérica : H2 mem:csep → DataFrames (nombres = claves de LECTURAS)
-python/logica/              LOGICA de negocio : zona de pegado (un solo .py)
-python/io/escribir_excel.py SALIDA default   : DataFrame → output/resultado.xlsx
-python/io/escribir_mysql.py SALIDA default   : DataFrame → MySQL (skip si placeholders)
-python/io/escribir_oracle.py SALIDA legado  : DataFrame → Oracle REPOCSEP (skip si placeholders)
+CAPA STG / DDL (antes del extract Hop)
+  python/create_stg.py      entry: inputs.yaml → introspect/ → CREATE TABLE STG_*
+  python/introspect/        schema vivo. No extrae filas. No lógica.
+
+CAPA POST-STAGING (después de que Hop cargó STG_*)
+  python/main.py            orquesta: io/leer_h2 → [único .py de logica/] → escritores
+  python/io/leer_h2.py      ENTRADA: H2 mem:csep → DataFrames (nombres = claves de LECTURAS)
+  logica/                   LOGICA: un .py en la raiz (ejecutar.py) + paquete fase1/
+  python/io/escribir_excel.py  SALIDA: output/fase1.xlsx (una hoja por DataFrame)
+  python/io/escribir_dw.py     SALIDA: Oracle BD_CURSOR (INT_ refresh, QA_ append)
 ```
 
-`python/create_stg.py` e `introspect/` **no son esta capa**: solo emiten el DDL de `STG_*`.
+`config.py` y `h2_conn.py` son compartidos (variables + JDBC). No son negocio.
 
-## Entrada (la deja `python/io/leer_h2.py`)
+## Entrada de la lógica (la deja `python/io/leer_h2.py`)
 
 Cada clave de `LECTURAS` se convierte en un DataFrame con **ese mismo nombre** inyectado
 en el namespace del script de lógica.
@@ -22,34 +25,39 @@ en el namespace del script de lógica.
 | Nombre | Fuente (query en `leer_h2.py`) |
 |---|---|
 | `DEMO` | `SELECT ID, TXNOMBRE, FEALTA FROM PUBLIC.DEMO_TABLA_EJEMPLO` |
+| `GS1` | `SELECT * FROM PUBLIC.STG_GS1_MULTAS_COERCITIVAS` |
+| `ETAPAS` | `SELECT * FROM PUBLIC.STG_GS1_ETAPAS` |
+| `GS2` | `SELECT * FROM PUBLIC.STG_GS2_MULTAS_COERCITIVAS` |
+| `ORA` | `SELECT * FROM PUBLIC.STG_ORA_VW_MULTA_COERCITIVA` |
+| `INFORMES` | `SELECT * FROM PUBLIC.STG_ORA_CSEP_INFORMES` |
+| `MYSQL` | `SELECT * FROM PUBLIC.STG_MYSQL_T_MVC_MULTACOERCITIVA` |
 
-Para un ETL nuevo, agregar/editar entradas en `LECTURAS`; los nombres pasan a ser el
-contrato de entrada de tu lógica. `pandas` está disponible como `pd`.
+`pandas` está disponible como `pd`.
 
-## Salida
+## Salida (fase 1)
 
-La lógica debe dejar un DataFrame con el nombre de `SALIDA_DF` (default **`RESULTADO`**,
-configurable en `python/main.py`).
+La lógica deja:
 
-El orquestador escribe:
+| Nombre | Qué es | Carga en BD_CURSOR |
+|---|---|---|
+| `RESULTADO` | Portada: copia de `QA_CORRIDA` | No (solo Excel) |
+| `INT_MC_EXCEL` | UNION GS1+GS2, sin filtrar | TRUNCATE + INSERT |
+| `INT_MC_ETAPAS` | Etapas Excel | TRUNCATE + INSERT |
+| `INT_MC_SISUD` | Vista SISUD de multas | TRUNCATE + INSERT |
+| `INT_MC_GAPP` | MySQL gapps | TRUNCATE + INSERT |
+| `INT_INFORMES` | Informes de supervisión | TRUNCATE + INSERT |
+| `QA_CORRIDA` | Una fila por corrida/capa/fuente | **Append** |
+| `QA_EXCEPCION` | Un hallazgo por fila | **Append** |
 
-1. Excel a `output/resultado.xlsx` (siempre, smoke test).
-2. MySQL: TRUNCATE + INSERT + `COUNT(*)` leído de vuelta; skip si placeholders.
-3. Oracle REPOCSEP: igual, legado; skip si placeholders.
+`main.py` recoge del namespace todo `INT_*`, `QA_*` y `RESULTADO`. No escribe a MySQL
+`gappsdb` (fuente) ni a Oracle REPOCSEP (legado).
 
-## Cómo crear otro ETL en este arquetipo
-
-1. Copiar `python/plantilla_logica.py` → `python/logica/<tu_logica>.py` (**un solo .py**).
-2. Escribir la transformación usando los DataFrames de entrada (nombres de `LECTURAS`)
-   y dejar el DataFrame `RESULTADO`.
-3. Completar tabla/esquema en los escritores si el destino no es el default.
-4. Reutilizar `python/io/` y `python/main.py` sin tocarlos.
+Excel siempre: `output/fase1.xlsx`. Oracle DW: skip si `DB_ORA_DW_*` son placeholders;
+si las credenciales están llenas y el PDB no responde, falla.
 
 ## Reglas
 
-- **Aislamiento de la lógica**: en `python/logica/` no se abren conexiones, no se cargan
-  jars ni drivers, no se usan rutas de archivo. Solo pandas/stdlib sobre los DataFrames.
-- `python/io/` no se llama `import io` desde el path de Python: choca con la stdlib.
-  `main.py` carga esos módulos por ruta.
-- Credenciales salen de `project-config.json`. Los passwords quedan en texto plano
-  (igual que en Hop).
+- En `logica/` no se abren conexiones, jars ni drivers. Solo pandas/stdlib.
+- `python/io/` no se importa como `import io`. `main.py` carga por ruta.
+- El landing `INT_` **no se filtra**. Defectos → `QA_EXCEPCION`, no se borran filas.
+- No hay `FG_VALIDO` ni `FCT_` en esta fase (entregable 2).

@@ -26,12 +26,12 @@ Reglas fijas del arquetipo:
    - `DB_ORA_REPO_*` → **Oracle REPOCSEP** (destino).
    - `DB_MYSQL_*` → MySQL gapps.
 4. **Escribir el DDL propio** en `h2/sql/01_schema.sql` (la tabla demo `DEMO_TABLA_EJEMPLO` es solo un smoke test).
-5. **Poner la lógica**: en `pipelines/` y `workflows/` (partiendo de `wf_main.hwf` / `pl_demo.hpl`), o pegando un `.py` en `python/logica/` (zona de pegado aislada; ver `python/plantilla_logica.py` y `python/CONTRATO.md`).
+5. **Poner la lógica**: en `pipelines/` y `workflows/` (partiendo de `wf_main.hwf` / `pl_demo.hpl`), o pegando un `.py` en `logica/` (zona de pegado aislada, fuera de `python/`; ver `python/plantilla_logica.py` y `python/CONTRATO.md`).
 
 ## Capa de lógica (Python, aislada)
 
-- El patrón es por capas: `python/main.py` orquesta, `python/io/` es I/O genérico y `python/logica/` es una **zona de pegado**. `python/create_stg.py` solo crea el DDL de `STG_*`.
-- Para un ETL nuevo: copiar `python/plantilla_logica.py` → `python/logica/<tu_logica>.py` (**un solo `.py`**), escribir la transformación con los DataFrames de entrada (nombres = claves de `LECTURAS` en `python/io/leer_h2.py`) y dejar el DataFrame `RESULTADO`. `main.py` lo auto-descubre y lo ejecuta.
+- Dos capas: `python/create_stg.py` + `introspect/` (DDL STG, sin filas) y `python/main.py` + `io/` + `logica/` en la raíz (post-staging). Mapa: `python/LEEME.md`.
+- Para un ETL nuevo: copiar `python/plantilla_logica.py` → `logica/<tu_logica>.py` (**un solo `.py`**), escribir la transformación con los DataFrames de entrada (nombres = claves de `LECTURAS` en `python/io/leer_h2.py`) y dejar el DataFrame `RESULTADO`. `main.py` lo auto-descubre y lo ejecuta.
 - **Prerequisitos**: Java en PATH (H2), venv con `pip install -r python/requirements.txt` (incluye pandas y openpyxl). No se usa R ni `ojdbc11.jar`.
 - **Smoke**: escribe `output/resultado.xlsx`. MySQL y Oracle se omiten si las credenciales son placeholders `<...>`.
 

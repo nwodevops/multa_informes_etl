@@ -3,9 +3,12 @@
 Cómo está armado este ETL hoy, con foco en qué hace exactamente la capa de lógica
 (Python). Rama `capa-python`: la capa R de `master` se reemplazó; el contrato es el mismo.
 
-Estado actual: el arquetipo está cableado, pero **vacío de negocio**. `inputs.yaml` tiene
-`sources: []` y `python/logica/` tiene un ejemplo de una línea. El requerimiento real
-está en [`TDR REQ 3629-2026.pdf`](TDR%20REQ%203629-2026.pdf).
+Estado: fase 1 cableada. `logica/fase1/` consolida `STG_*` → `INT_*` y diagnostica
+en `QA_*`. Destino persistente: Oracle **BD_CURSOR** (`APP@localhost:1524`) y
+`output/fase1.xlsx`. Dónde vive el dato: [`antes-durante-fase1.md`](antes-durante-fase1.md).
+Sustento del entregable 1: [`fase-1.md`](fase-1.md) (detalle) y
+[`fase-1-vista.md`](fase-1-vista.md) (diagramas). TDR:
+[`TDR REQ 3629-2026.pdf`](TDR%20REQ%203629-2026.pdf).
 
 ## Vista general
 
@@ -38,11 +41,11 @@ flowchart TB
   end
 
   subgraph logica [Logica de negocio]
-    PYL["python/main.py<br/>unico .py en python/logica/"]
+    PYL["python/main.py<br/>unico .py en logica/"]
   end
 
   subgraph destino [Destino]
-    OUT["MySQL o Excel en output/<br/>Oracle REPOCSEP es legado"]
+    OUT["Excel fase1.xlsx<br/>Oracle APP@BD_CURSOR"]
   end
 
   GS --> YAML
@@ -66,11 +69,11 @@ flowchart TB
 | `inputs.yaml` | Declara fuentes y el nombre `STG_*` | Extraer filas |
 | Python DDL | Introspecta el schema vivo y emite el DDL de H2 | Cargar datos ni reglas |
 | Hop | Extrae 1:1 y carga `STG_*` | Lógica de negocio multi-fuente |
-| Python lógica | Unión, reglas, esquema ancho | Abrir conexiones dentro de `python/logica/` |
+| Python lógica | Unión, reglas, esquema ancho | Abrir conexiones dentro de `logica/` |
 | H2 | Landing tolerante, todo nullable | Persistir entre corridas |
 
 La separación que sostiene el diseño: **`create_stg.py` decide la forma de las tablas, Hop
-mueve las filas y `python/logica/` decide el significado**. H2 es solo el punto de
+mueve las filas y `logica/` decide el significado**. H2 es solo el punto de
 encuentro, in-memory a propósito: cada corrida arranca de cero.
 
 ## Qué hace la capa de lógica
@@ -117,7 +120,7 @@ flowchart TB
 
 1. **Setup**: root + variables de `project-config.json`.
 2. **Entrada**: carga `python/io/leer_h2.py` por ruta, llama a `leer_h2(root, variables)`.
-3. **Lógica**: lista los `.py` de `python/logica/` y hace `exec` del único que encuentra,
+3. **Lógica**: lista los `.py` de `logica/` (raíz del proyecto) y hace `exec` del único que encuentra,
    con los DataFrames y `pd` inyectados en el namespace.
 4. **Salida**: verifica que exista `RESULTADO` y lo pasa a los escritores.
 
@@ -147,7 +150,7 @@ RESULTADO["FEALTA"] = pd.to_datetime(RESULTADO["FEALTA"]).dt.date
 Agregar una fuente al ETL es agregar una clave a `LECTURAS` y usar ese nombre en la
 lógica. Contrato: [`../python/CONTRATO.md`](../python/CONTRATO.md).
 
-### Aislamiento: qué está prohibido dentro de python/logica/
+### Aislamiento: qué está prohibido dentro de logica/
 
 Sin conexiones, sin jars, sin drivers, sin rutas de archivo. Todo eso vive en
 `python/io/`. La lógica es **pegable**: se copia un `.py` escrito contra DataFrames y

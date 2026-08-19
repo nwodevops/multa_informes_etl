@@ -91,6 +91,36 @@
       "description": "Password Oracle REPOCSEP (destino) REMOTO - completar"
     },
     {
+      "name": "DB_ORA_DW_URL",
+      "value": "jdbc:oracle:thin:@//<HOST>:<PUERTO>/<SERVICE>",
+      "description": "JDBC URL Oracle DW BD_CURSOR REMOTO - completar"
+    },
+    {
+      "name": "DB_ORA_DW_HOST",
+      "value": "<HOST>",
+      "description": "Host Oracle DW REMOTO - completar"
+    },
+    {
+      "name": "DB_ORA_DW_PORT",
+      "value": "<PUERTO>",
+      "description": "Puerto Oracle DW REMOTO - completar"
+    },
+    {
+      "name": "DB_ORA_DW_DATABASE",
+      "value": "<SERVICE>",
+      "description": "Service Oracle DW REMOTO - completar"
+    },
+    {
+      "name": "DB_ORA_DW_USERNAME",
+      "value": "<USUARIO>",
+      "description": "Usuario Oracle DW REMOTO - completar"
+    },
+    {
+      "name": "DB_ORA_DW_PASSWORD",
+      "value": "<PASSWORD>",
+      "description": "Password Oracle DW REMOTO - completar"
+    },
+    {
       "name": "DB_MYSQL_URL",
       "value": "jdbc:mysql://<HOST>:<PUERTO>/<DB>",
       "description": "JDBC URL MySQL REMOTO (completar)"

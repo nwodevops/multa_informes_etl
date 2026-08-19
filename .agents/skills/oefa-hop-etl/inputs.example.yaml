@@ -1,9 +1,9 @@
 # Contrato del manifiesto de fuentes del arquetipo OEFA Hop ETL.
 # Copiar a <proyecto>/inputs.yaml y completar. No commitear keys/passwords.
 #
-# type: oracle | mysql | sheets
+# type: oracle | mysql | sheets | excel
 # Python (python/create_stg.py) solo genera/aplica CREATE TABLE STG_* ; Hop extrae las filas.
-# Sheets: types varchar (gotcha #N/A). Ver .agents/skills/oefa-hop-etl/reference.md
+# Sheets/Excel: types varchar (gotcha #N/A). Ver .agents/skills/oefa-hop-etl/reference.md
 
 sources:
   - stg_table: STG_ORA_EJEMPLO
@@ -20,4 +20,11 @@ sources:
     type: sheets
     spreadsheet_key: ${SPREADSHEET_KEY_GS1}
     worksheet: "Hoja 1"
+    types: varchar
+
+  - stg_table: STG_GS1_MULTAS_COERCITIVAS
+    type: excel
+    path: input_excel/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx
+    worksheet: "1) Multas coercitivas"
+    header_row: 3
     types: varchar

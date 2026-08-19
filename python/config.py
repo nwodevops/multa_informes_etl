@@ -1,4 +1,7 @@
-"""Lee project-config.json (variables Hop) + inputs.yaml."""
+"""Lee project-config.json (variables Hop) + inputs.yaml.
+
+Compartido por las dos capas. No hay lógica de negocio.
+"""
 
 from __future__ import annotations
 
@@ -13,6 +16,7 @@ VAR_RE = re.compile(r"\$\{([A-Za-z0-9_]+)\}")
 CONNECTION_PREFIX = {
     "oracle_sisud": "DB_ORA_SISUD",
     "oracle_repocsep": "DB_ORA_REPO",
+    "oracle_dw": "DB_ORA_DW",
     "mysql": "DB_MYSQL",
     "h2": "DB_H2",
 }

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from config import require_live_conn
-from h2_ddl import Column, map_h2_type, sanitize_ident
+from .h2_ddl import Column, map_h2_type, sanitize_ident
 
 
 def _split_object(object_name: str) -> tuple[str, str]:

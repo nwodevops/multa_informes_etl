@@ -10,7 +10,7 @@ Vista general con diagramas y qué hace la capa de lógica: [`docs/arquitectura.
 - [`.agents/skills/oefa-hop-etl/SKILL.md`](.agents/skills/oefa-hop-etl/SKILL.md) — arquetipo Hop + H2 + Python (cómo cablear, extender y debuggear).
 - [`.agents/skills/medallion-auditable/SKILL.md`](.agents/skills/medallion-auditable/SKILL.md) — capas `STG_`/`INT_`/`FCT_`/`VW_`/`IND_`/`QA_`, cuarentena blanda, efectividad por embudo y **una rama por fase**.
 
-Patrón canónico de ETLs nuevos: inputs Sheets / Oracle SISUD / MySQL → `inputs.yaml` + Python DDL → Hop extract → H2 `STG_*` → Python (`python/logica/`) → **MySQL o Excel**. Oracle REPOCSEP es legado (no default).
+Patrón canónico de ETLs nuevos: inputs Sheets / Excel local / Oracle SISUD / MySQL → `inputs.yaml` + Python DDL → Hop extract → H2 `STG_*` → Python (`logica/` en la raíz) → **MySQL o Excel**. Oracle REPOCSEP es legado (no default).
 
 ## Fases del servicio
 
@@ -30,18 +30,18 @@ Este proyecto está portado a Linux. Los `.bat` y `switch-env.ps1` quedan solo c
 ## Ejecución y flujo
 
 - **Diseño:** `workflows/wf_create_stg.hwf`. Cadena: `Reset H2 clean` → `Python create STG` → `Success`. Deja H2 vivo (9092) para mapear `STG_*` en el GUI.
-- **Corrida / smoke:** `workflows/wf_main.hwf`. Cadena: `Reset H2 clean` → `Python create STG` → `Pipeline demo` → `Run Python` → `Success`. Cablear extract **después** de Python create STG.
+- **Corrida / smoke:** `workflows/wf_main.hwf`. Cadena: `Reset H2 clean` → `Python create STG` → `Stage Excel` → `Stage Oracle VW` → `Stage Informes` → `Stage MySQL` → `Pipeline demo` → `Run Python`.
 - Cada corrida de cualquiera de los dos **resetea la BD H2** (stop + start + DDL) vía `h2/scripts/reset_and_create.sh`.
-- Staging STG: `inputs.yaml` + `.venv/bin/python python/create_stg.py` (opción B: DDL JDBC **después** del reset). `sources: []` = no-op.
+- Staging STG: `inputs.yaml` + `.venv/bin/python python/create_stg.py` (opción B: DDL JDBC **después** del reset). Excel local en `input_excel/` (`type: excel`, todo VARCHAR).
 - Smoke test sin Hop: `./h2/scripts/reset_and_create.sh && .venv/bin/python python/create_stg.py && .venv/bin/python python/main.py`.
 - Archivos `.hpl`/`.hwf` son XML con variables `${PROJECT_HOME}`.
 
 ## Capa de lógica (Python, aislada)
 
-- La lógica de negocio vive en `python/logica/`: **zona de pegado** con un solo `.py` (auto-descubierto por `python/main.py`; error si hay 0 o más de 1). Copy-paste ahí y corre.
+- La lógica de negocio vive en `logica/` (raíz del proyecto, **fuera** de `python/`): **zona de pegado** con un solo `.py` (auto-descubierto por `python/main.py`; error si hay 0 o más de 1). Copy-paste ahí y corre.
 - Entrada: DataFrames ya cargados con los nombres de `LECTURAS` en `python/io/leer_h2.py`. Salida: DataFrame `RESULTADO` (`SALIDA_DF` configurable en `main.py`). Ver `python/CONTRATO.md`.
-- Aislamiento: en `python/logica/` no hay conexiones ni jars ni drivers; el I/O vive en `python/io/`. `pandas` se inyecta como `pd`.
-- `python/create_stg.py` **no es esta capa**: solo emite el DDL de `STG_*`.
+- Aislamiento: en `logica/` no hay conexiones ni jars ni drivers; el I/O vive en `python/io/`. `pandas` se inyecta como `pd`.
+- `python/create_stg.py` + `python/introspect/`: **capa STG/DDL** (schema, no filas). `python/main.py` + `python/io/` + `logica/`: **capa post-staging**. Ver `python/LEEME.md`.
 - Smoke: escribe `output/resultado.xlsx`. MySQL y Oracle se omiten si las credenciales son placeholders `<...>`.
 
 ## H2 (server local, in-memory)
@@ -76,6 +76,6 @@ Este proyecto está portado a Linux. Los `.bat` y `switch-env.ps1` quedan solo c
 
 - **Skill** (global, fuera del repo): `~/.agents/skills/codegraph/SKILL.md`.
 - MCP instalado globalmente (`@colbymchenry/codegraph`), registrado en `~/.cursor/mcp.json` (Cursor) y `~/.config/opencode/opencode.json` (OpenCode). Los 8 tools se habilitan con `CODEGRAPH_MCP_TOOLS`: `explore`, `search`, `node`, `callers`, `callees`, `impact`, `files`, `status`.
-- Indexado: `.codegraph/` en la raíz (14 archivos, 85 nodes, 137 edges). Re-indexar con `codegraph index` (full) o `codegraph sync` (delta).
+- Indexado: `.codegraph/` en la raíz (16 archivos, 95 nodes, 178 edges; gitignore). Re-indexar con `codegraph index` (full) o `codegraph sync` (delta).
 - **Solo indexa Python y YAML.** Los `.hpl`/`.hwf` de Hop, los `.sql` y los `.sh` **no** están en el grafo: para esos hay que usar grep/lectura directa.
 - Re-indexar después de cambios grandes en `python/`.

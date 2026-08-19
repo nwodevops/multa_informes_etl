@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from h2_ddl import Column, map_h2_type, sanitize_ident
+from .h2_ddl import Column, map_h2_type, sanitize_ident
 
 
 def introspect(source: dict, variables: dict[str, str], root: Path | None = None) -> list[Column]:

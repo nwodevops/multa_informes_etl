@@ -6,7 +6,7 @@ Leer desde [SKILL.md](SKILL.md). No duplicar reglas de arquitectura aquí.
 
 Opción **B** (fija): Reset H2 primero; después `.venv/bin/python python/create_stg.py` lee `inputs.yaml`, introspecta, escribe `h2/sql/02_stg.sql` y aplica `CREATE TABLE IF NOT EXISTS` por JDBC (`jaydebeapi` + `h2/lib/h2-*.jar`). No reescribe `01_schema.sql`. Reset **no** ejecuta `02_stg.sql`.
 
-Entry point: `python/create_stg.py`. Adapters: `python/introspect/{oracle,mysql,sheets}.py`. Mapeo H2: `python/h2_ddl.py`.
+Entry point: `python/create_stg.py`. Adapters: `python/introspect/{oracle,mysql,sheets,excel}.py`. Mapeo H2: `python/introspect/h2_ddl.py`. JDBC H2: `python/h2_conn.py`.
 
 ### Oracle (`type: oracle`)
 
@@ -37,6 +37,14 @@ Conexión: `DB_MYSQL_*`. `object` es `schema.tabla`.
 - Schema = **fila de headers**. Tipos: **todos VARCHAR**. No inferir NUMBER (gotcha `#N/A`).
 - Sanitizar nombres de columna a identificadores H2 (sin espacios ni `)` `(` `/`).
 
+### Excel local (`type: excel`)
+
+- `path` relativo a la raíz del proyecto (Hop usa `${PROJECT_HOME}/...` en el `.hpl`).
+- `worksheet`: nombre exacto de la pestaña.
+- `header_row`: fila **1-based** de códigos (no la fila de agrupadores). En Hop `ExcelInput`, `startrow` es **0-based** (`header_row - 1`).
+- Schema = esa fila. Tipos: **todos VARCHAR**. No inferir NUMBER (gotcha `#N/A`, igual que Sheets).
+- Sanitizar nombres con `sanitize_ident`. Prefijo STG: `STG_GS1_` / `STG_GS2_` si el Excel es extracto de esos libros.
+
 ## Mapeo de tipos → H2 (MODE=Oracle)
 
 Landing tolerante: **todo nullable**. VARCHAR **sin longitud** (máximo H2; evita `Value too long`).
@@ -49,7 +57,7 @@ Landing tolerante: **todo nullable**. VARCHAR **sin longitud** (máximo H2; evit
 | DATE | TIMESTAMP o DATE |
 | TIMESTAMP / DATETIME | TIMESTAMP |
 | BOOLEAN / BIT | VARCHAR o BOOLEAN |
-| Sheets (cualquier columna) | VARCHAR |
+| Sheets / Excel (cualquier columna) | VARCHAR |
 
 Si hay duda (Sheets, columnas sucias, montos): **VARCHAR**.
 
@@ -95,7 +103,8 @@ Tras Success: mapear `pl_stage_*.hpl` en el GUI (TableOutput ve `STG_*`). Si se 
 Start
   -> Reset H2 clean          (stop + start + DROP ALL + 01_schema.sql)
   -> Python create STG       (SHELL: .venv/bin/python python/create_stg.py)
-  -> load_sheets / pl_stage_*  (después de Python; demo: pl_demo.hpl)
+  -> pl_stage_excel.hpl      (después de Python; Excel local → STG_GS*)
+  -> Pipeline demo           (pl_demo.hpl)
   -> Run Python              (SHELL: .venv/bin/python python/main.py)
   -> Success
 ```
@@ -108,6 +117,7 @@ Patrón: Input → (Select values si hace falta) → TableOutput H2.
 
 - Oracle/MySQL: `TableInput` con `SELECT` explícito de columnas (mismo orden que STG).
 - Sheets: `GoogleSheetsInput` + campos String; credencial `${PROJECT_HOME}/client_secret.json`.
+- Excel: `ExcelInput` (POI) + campos String; `startrow` 0-based = `header_row - 1`.
 - TableOutput: conexión `h2`, tabla `STG_*`, **truncate** en cada corrida.
 - No transformar negocio en el pipeline de staging.
 

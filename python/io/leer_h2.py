@@ -1,4 +1,6 @@
-"""ENTRADA genérica: H2 mem:csep -> pandas DataFrames.
+"""ENTRADA post-staging: H2 STG_* ya cargadas -> pandas DataFrames.
+
+No introspecta fuentes. No crea tablas. Eso es python/create_stg.py + introspect/.
 
 La dict `LECTURAS` define el contrato de entrada de la lógica:
   nombre -> query SQL sobre H2.
@@ -13,11 +15,17 @@ from pathlib import Path
 
 import pandas as pd
 
-from h2_ddl import connect_h2
+from h2_conn import connect_h2
 
 
 LECTURAS: dict[str, str] = {
     "DEMO": "SELECT ID, TXNOMBRE, FEALTA FROM PUBLIC.DEMO_TABLA_EJEMPLO",
+    "GS1": "SELECT * FROM PUBLIC.STG_GS1_MULTAS_COERCITIVAS",
+    "ETAPAS": "SELECT * FROM PUBLIC.STG_GS1_ETAPAS",
+    "GS2": "SELECT * FROM PUBLIC.STG_GS2_MULTAS_COERCITIVAS",
+    "ORA": "SELECT * FROM PUBLIC.STG_ORA_VW_MULTA_COERCITIVA",
+    "INFORMES": "SELECT * FROM PUBLIC.STG_ORA_CSEP_INFORMES",
+    "MYSQL": "SELECT * FROM PUBLIC.STG_MYSQL_T_MVC_MULTACOERCITIVA",
 }
 
 

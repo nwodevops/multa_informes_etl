@@ -2,8 +2,8 @@
 name: oefa-hop-etl
 description: >-
   Apache Hop + H2 in-memory STG_* + Python ETL archetype for OEFA. Inputs Google
-  Sheets / Oracle SISUD / MySQL; staging H2 via inputs.yaml + Python DDL; logic
-  in Python (python/logica/); output MySQL or Excel. Use when cloning the
+  Sheets / Excel local / Oracle SISUD / MySQL; staging H2 via inputs.yaml + Python DDL; logic
+  in Python (logica/ at project root); output MySQL or Excel. Use when cloning the
   archetype, adding a STG source, wiring wf_main / wf_create_stg, debugging
   Hop/H2/Python logs, writing inputs.yaml, or choosing Hop-only vs Python logic.
   Portable for Cursor, OpenCode, and agents reading AGENTS.md.
@@ -22,12 +22,12 @@ Contrato: `python/CONTRATO.md`. Capas y controles de calidad del entregable: [`.
 ## Architecture (do not mix layers)
 
 ```
-Sheets / Oracle SISUD / MySQL
+Sheets / Excel local / Oracle SISUD / MySQL
     -> inputs.yaml  (declara fuentes)
     -> Python DDL   (CREATE TABLE STG_* en H2; no extrae filas)
-    -> Apache Hop   (extract: TableInput / GoogleSheetsInput -> TableOutput)
+    -> Apache Hop   (extract: TableInput / GoogleSheetsInput / ExcelInput -> TableOutput)
     -> H2 mem:csep  (landing STG_*, reset each run)
-    -> Python      (python/logica/: un solo .py)
+    -> Python      (logica/: un solo .py, raiz del proyecto)
     -> MySQL or Excel
 ```
 
@@ -36,7 +36,7 @@ Sheets / Oracle SISUD / MySQL
 | `inputs.yaml` | Declara fuentes y nombre `STG_*` | Extraer filas |
 | Python DDL | Introspecta schema vivo y crea DDL H2 (`create_stg.py`) | Cargar datos ni reglas de negocio |
 | Hop | Extrae y trunca/carga `STG_*` | Lógica de negocio multi-fuente |
-| Python lógica | Unión, reglas, esquema ancho (`python/logica/`) | Abrir conexiones dentro de `python/logica/` |
+| Python lógica | Unión, reglas, esquema ancho (`logica/`) | Abrir conexiones dentro de `logica/` |
 
 **Salida default de ETLs nuevos:** MySQL o Excel (`output/`). Oracle REPOCSEP es **legado** (nefa/diego/multa); no copiarlo a proyectos nuevos. Oracle SISUD es **fuente**.
 
@@ -45,7 +45,7 @@ Sheets / Oracle SISUD / MySQL
 - **Hop solo**: 1 fuente → 1 destino, mapeo 1:1.
 - **Python lógica**: UNION multi-fuente, reglas de negocio, esquema ancho, `#N/A` → NA.
 
-Un solo `.py` en `python/logica/` (auto-descubierto por `python/main.py`). Entrada = claves de `LECTURAS` en `python/io/leer_h2.py`. Salida = DataFrame `RESULTADO` (`SALIDA_DF` en `main.py`). En `python/logica/` no hay drivers, jars ni conexiones. `pandas` se inyecta como `pd`.
+Un solo `.py` en `logica/` (auto-descubierto por `python/main.py`). Entrada = claves de `LECTURAS` en `python/io/leer_h2.py`. Salida = DataFrame `RESULTADO` (`SALIDA_DF` en `main.py`). En `logica/` no hay drivers, jars ni conexiones. `pandas` se inyecta como `pd`.
 
 ## Workflow to run
 
@@ -77,7 +77,7 @@ No reescribir `h2/sql/01_schema.sql`. Orden:
 4. Cablear `pl_stage_*.hpl` en `wf_main.hwf` **después** de Python.
 5. Añadir clave en `python/io/leer_h2.py` → `LECTURAS`.
 
-Deps: `.venv/bin/python -m pip install -r python/requirements.txt`. `create_stg.py` **solo crea DDL**. Hop extrae. Sheets: todos VARCHAR (`#N/A`). `sources: []` = exit 0.
+Deps: `.venv/bin/python -m pip install -r python/requirements.txt`. `create_stg.py` **solo crea DDL**. Hop extrae. Sheets/Excel: todos VARCHAR (`#N/A`). `sources: []` = exit 0.
 
 Convención de nombre: `STG_<ORIGEN>_<ENTIDAD>` (`STG_ORA_*`, `STG_MYSQL_*`, `STG_GS1_*`). Landing: todo nullable, VARCHAR sin longitud.
 
@@ -87,7 +87,7 @@ Convención de nombre: `STG_<ORIGEN>_<ENTIDAD>` (`STG_ORA_*`, `STG_MYSQL_*`, `ST
 2. Añadir entrada en `inputs.yaml`.
 3. Play `wf_create_stg` (H2 vivo) y crear `pipelines/pl_stage_*.hpl` (TableInput o GoogleSheetsInput → H2 TableOutput truncate).
 4. Wire action + hops en `wf_main.hwf` **después** de Python create STG.
-5. Extender `LECTURAS` + el único `.py` de `python/logica/`.
+5. Extender `LECTURAS` + el único `.py` de `logica/`.
 6. Salida: `python/io/escribir_mysql.py` o `escribir_excel.py` hacia `output/`. Oracle write = legado (`escribir_oracle.py`).
 7. Actualizar `AGENTS.md`.
 

@@ -1,8 +1,8 @@
 # =============================================================================
-# plantilla_logica.py  --  PLANTILLA DE LOGICA (copia fuera de python/logica/)
+# plantilla_logica.py  --  PLANTILLA DE LOGICA (copia a logica/ en la raiz, no a python/)
 #
 # PARA UN ETL NUEVO:
-#   1. Copiar este archivo a  python/logica/<tu_logica>.py  (un solo .py)
+#   1. Copiar este archivo a  logica/<tu_logica>.py  (un solo .py)
 #   2. Escribir tu transformacion usando los DataFrames de entrada
 #      (nombres = claves de LECTURAS en python/io/leer_h2.py).
 #   3. Dejar al final un DataFrame con el nombre SALIDA_DF (default "RESULTADO").

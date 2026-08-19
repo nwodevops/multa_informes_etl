@@ -124,12 +124,12 @@ ella la trazabilidad completa.
 |---|---|
 | `STG_` | H2 `mem:csep`, creada por `python/create_stg.py` desde `inputs.yaml`, cargada por pipelines Hop |
 | `INT_` / `FCT_` / `IND_` / `QA_` | Destino final (MySQL o Excel), escritas desde `r/io/` |
-| Lógica de capas | El único `.py` de `python/logica/` de la rama de la fase |
+| Lógica de capas | El único `.py` de `logica/` de la rama de la fase |
 
 ## Fases: una rama por fase, no una carpeta
 
 Cada fase del servicio vive en **su propia rama git**. No hay `docs/fase2/`,
-`python/logica/fase2/` ni `sql/fase2/`: el árbol de archivos es el mismo en todas las fases y
+`logica/fase2/` ni `sql/fase2/`: el árbol de archivos es el mismo en todas las fases y
 lo que cambia es la rama.
 
 | Rama | Entregable | Actividades del TDR | Qué agrega al medallion |
@@ -167,8 +167,8 @@ gitGraph
 ### Por qué ramas y no carpetas
 
 **El arquetipo admite un solo `.py` de lógica.** `python/main.py` auto-descubre el único
-archivo de `python/logica/` y falla con 0 o con más de 1, y el listado no es recursivo. Con
-carpetas por fase hay que meter un `import`/`exec` de `python/logica/faseN/*.py` dentro de ese
+archivo de `logica/` y falla con 0 o con más de 1, y el listado no es recursivo. Con
+carpetas por fase hay que meter un `import`/`exec` de `logica/faseN/*.py` dentro de ese
 único archivo, y la fase vieja queda enganchada al camino de ejecución de la nueva. Con
 una rama por fase, cada fase tiene su único `.py` y no hace falta el andamiaje.
 
@@ -191,7 +191,7 @@ que poder volver a él.
    siguiente y se reporta como hallazgo, no se reescribe la historia.
 4. Sí se propaga hacia atrás la **infraestructura** (scripts de H2, conexiones, fixes de
    workflow), nunca las reglas de datos.
-5. Un solo `.py` en `python/logica/` por rama.
+5. Un solo `.py` en `logica/` por rama.
 6. Atar la corrida al código: registrar el commit corto y la rama en
    `QA_CORRIDA.DETALLE`. Sin eso, un `ID_CORRIDA` no dice con qué reglas se calculó.
 
@@ -452,4 +452,4 @@ en el mismo equipo: `~/Documents/desarrollo/workspace_oefa/multa_etl`, rama `fas
 Ahí las fases están **a la vez** en ramas y en carpetas `fase2/`, y el único `.R` de
 `r/logica/` termina haciendo `source` de los pasos. Esa duplicación es lo que este
 arquetipo abandona: se copian las reglas y los controles, no la estructura de carpetas
-ni el runtime R. Acá la zona de pegado es `python/logica/`.
+ni el runtime R. Acá la zona de pegado es `logica/` (raíz del proyecto).
