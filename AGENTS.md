@@ -1,81 +1,48 @@
-# AGENTS.md
+# AGENTS.md — mapa para agentes
 
-Proyecto ETL en **Apache Hop** (OEFA), copia del arquetipo (original fuera del repo: `~/Documents/desarrollo/workspace_oefa/archetype`). No hay build/test/lint: la verificación es ejecutar el workflow en el GUI de Hop y revisar el log.
+ETL **Apache Hop + H2 in-memory + Python** (OEFA). Requerimiento: [`docs/TDR REQ 3629-2026.pdf`](docs/TDR%20REQ%203629-2026.pdf). Arquitectura: [`docs/arquitectura.md`](docs/arquitectura.md).
 
-Requerimiento del proyecto: [`docs/TDR REQ 3629-2026.pdf`](docs/TDR%20REQ%203629-2026.pdf) — consolidar y validar informes de supervisión y multas coercitivas, con controles de calidad, trazabilidad entre capas e indicadores de efectividad.
+> **Arquetipo base:** plantilla mínima en [`archetype/README.md`](archetype/README.md) (regenerar con `./scripts/sync_archetype.sh`). Este repo es la implementación de referencia consultoría.
 
-Vista general con diagramas y qué hace la capa de lógica: [`docs/arquitectura.md`](docs/arquitectura.md).
+**Verificación:** [`./init.sh`](init.sh) debe terminar en **`HARNESS OK`**. Criterios: [`CHECKPOINTS.md`](CHECKPOINTS.md). Detalle: [`docs/verification.md`](docs/verification.md).
 
-**Skills del proyecto:**
-- [`.agents/skills/oefa-hop-etl/SKILL.md`](.agents/skills/oefa-hop-etl/SKILL.md) — arquetipo Hop + H2 + Python (cómo cablear, extender y debuggear).
-- [`.agents/skills/medallion-auditable/SKILL.md`](.agents/skills/medallion-auditable/SKILL.md) — capas `STG_`/`INT_`/`FCT_`/`VW_`/`IND_`/`QA_`, cuarentena blanda, efectividad por embudo y **una rama por fase**.
+## Harness (orquestación)
 
-Patrón canónico de ETLs nuevos: inputs Sheets / Excel local / Oracle SISUD / MySQL → `inputs.yaml` + Python DDL → Hop extract → H2 `STG_*` → Python (`logica/` en la raíz) → **MySQL o Excel**. Oracle REPOCSEP es legado (no default).
+| Archivo | Propósito |
+|---|---|
+| [`feature_list.json`](feature_list.json) | Alcance por fase; **una** `in_progress` a la vez |
+| [`progress/current.md`](progress/current.md) | Plan de sesión activa |
+| [`progress/history.md`](progress/history.md) | Bitácora append-only |
+| [`docs/harness/workflow.md`](docs/harness/workflow.md) | Roles líder / implementador / revisor |
+| [`docs/harness/platform.md`](docs/harness/platform.md) | Hop, H2, variables, conexiones (detalle) |
 
-## Fases del servicio
+Patrón: [ejemplo-harness-subagentes](https://github.com/nwoswo/ejemplo-harness-subagentes) — estado en disco, no en chat.
 
-Cada entregable del TDR se trabaja en su propia rama git, no en carpetas por fase: `fase-1` (actividades a, b, c), `fase-2` (d, e, f) y `fase-3` (g, h). `fase-2` sale de `fase-1`, no de `master`. Reglas y qué capas toca cada fase: la skill `medallion-auditable`.
+## Skills (dominio ETL)
 
-Hoy el repo **todavía no tiene git**; el arquetipo se inicializa al arrancar el ETL. Antes del primer commit, revisar que `project-config.json` y `environments/*.json` no lleven passwords reales.
+- [`.agents/skills/hop-python-etl/SKILL.md`](.agents/skills/hop-python-etl/SKILL.md) — arquetipo Hop + H2 + Python
+- [`.agents/skills/phased-dwh-lineamiento/SKILL.md`](.agents/skills/phased-dwh-lineamiento/SKILL.md) — fases 2–7, `logica/dwh/`
+- [`.agents/skills/auditable-soft-quarantine/SKILL.md`](.agents/skills/auditable-soft-quarantine/SKILL.md) — cuarentena blanda, DQ, amarre H9
+- [`.agents/skills/oracle-cargar-dw/SKILL.md`](.agents/skills/oracle-cargar-dw/SKILL.md) — TRUNCATE+INSERT, DDL, gotchas Oracle
 
-## Plataforma: Linux
+Lineamiento canónico: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md). Status: [`docs/fase1-3/status.md`](docs/fase1-3/status.md).
 
-Este proyecto está portado a Linux. Los `.bat` y `switch-env.ps1` quedan solo como referencia para Windows; los workflows llaman a los `.sh`.
+## Inicio rápido
 
-- Apache Hop 2.19.0 en `~/apps/hop` (GUI: `~/apps/hop/hop-gui.sh`). Proyecto `etl_cursor` ya registrado en `~/apps/hop/config/hop-config.json`.
-- Java 21 en PATH. R **no** se usa en esta rama (`capa-python`); la lógica corre con el venv.
-- Python: venv del proyecto en `.venv/` (el sistema es *externally managed*, PEP 668). Crear con `python3 -m venv --without-pip .venv` + `get-pip.py`, luego `.venv/bin/python -m pip install -r python/requirements.txt`. Los workflows usan `.venv/bin/python` si existe, si no `python3`.
-- Fuentes locales de prueba (Oracle XE + MySQL 8): `../data_for_etl/docker-compose.yml`.
+```bash
+./init.sh                                    # smoke harness
+./switch-env.sh local                        # entorno
+~/apps/hop/hop-gui.sh                        # Hop GUI → wf_main.hwf
+```
 
-## Ejecución y flujo
+Flujo datos: `inputs.yaml` → Hop `STG_*` → `python/main.py` → `logica/` → Oracle DW (`cargar_dw.py`) si `DB_ORA_DW_*` configurado.
 
-- **Diseño:** `workflows/wf_create_stg.hwf`. Cadena: `Reset H2 clean` → `Python create STG` → `Success`. Deja H2 vivo (9092) para mapear `STG_*` en el GUI.
-- **Corrida / smoke:** `workflows/wf_main.hwf`. Cadena: `Reset H2 clean` → `Python create STG` → `Stage Excel` → `Stage Oracle VW` → `Stage Informes` → `Stage MySQL` → `Pipeline demo` → `Run Python`.
-- Cada corrida de cualquiera de los dos **resetea la BD H2** (stop + start + DDL) vía `h2/scripts/reset_and_create.sh`.
-- Staging STG: `inputs.yaml` + `.venv/bin/python python/create_stg.py` (opción B: DDL JDBC **después** del reset). Excel local en `input_excel/` (`type: excel`, todo VARCHAR).
-- Smoke test sin Hop: `./h2/scripts/reset_and_create.sh && .venv/bin/python python/create_stg.py && .venv/bin/python python/main.py`.
-- Archivos `.hpl`/`.hwf` son XML con variables `${PROJECT_HOME}`.
+## Reglas críticas
 
-## Capa de lógica (Python, aislada)
+1. **Un solo `.py`** en `logica/` (auto-descubierto por `main.py`).
+2. **Sin secretos** en git (`project-config.json`, `environments/`).
+3. **Sin `${VAR}` literal** en logs = variable Hop mal definida.
+4. **Rama por fase de servicio** (`fase-1`, `fase-2`, …); ver skill `auditable-soft-quarantine`.
+5. CodeGraph (Python/YAML): skill global `~/.agents/skills/codegraph/SKILL.md`.
 
-- La lógica de negocio vive en `logica/` (raíz del proyecto, **fuera** de `python/`): **zona de pegado** con un solo `.py` (auto-descubierto por `python/main.py`; error si hay 0 o más de 1). Copy-paste ahí y corre.
-- Entrada: DataFrames ya cargados con los nombres de `LECTURAS` en `python/io/leer_h2.py`. Salida: DataFrame `RESULTADO` (`SALIDA_DF` configurable en `main.py`). Ver `python/CONTRATO.md`.
-- Aislamiento: en `logica/` no hay conexiones ni jars ni drivers; el I/O vive en `python/io/`. `pandas` se inyecta como `pd`.
-- `python/create_stg.py` + `python/introspect/`: **capa STG/DDL** (schema, no filas). `python/main.py` + `python/io/` + `logica/`: **capa post-staging**. Ver `python/LEEME.md`.
-- Smoke: escribe `output/resultado.xlsx`. MySQL y Oracle se omiten si las credenciales son placeholders `<...>`.
-
-## H2 (server local, in-memory)
-
-- BD **in-memory** `mem:csep` (`jdbc:h2:tcp://localhost:9092/mem:csep;...MODE=Oracle...`). Se limpia sola al parar el server.
-- El DDL se aplica por TCP **después** del start: `h2/scripts/reset_and_create.sh` → `h2/sql/00_reset.sql` (DROP ALL) + `h2/sql/01_schema.sql` (DDL del proyecto).
-- Requiere `java` en PATH; jar `h2/lib/h2-2.4.240.jar`. Log del server: `h2/h2_server.log` (gitignore).
-- Si el workflow se queda pegado en `Reset H2 clean`, revisar procesos java/H2 huérfanos (`h2/scripts/stop_h2.sh`).
-- **Gotcha**: el `java ... org.h2.tools.Server` de `h2/scripts/start_h2.sh` debe ir con `nohup`, en background y con stdout/stderr redirigidos al log; si hereda los descriptores, la acción SHELL de Hop espera para siempre.
-
-## Variables (crítico)
-
-- **Fuente única**: `project-config.json` → `config.variables`. Un `${VAR}` literal en el log = variable no definida o proyecto activo equivocado.
-- Cambio de entorno: `./switch-env.sh local|remote` copia `environments/<env>.json` → `project-config.json`.
-- El proyecto activo se elige en `~/apps/hop/config/hop-config.json` (fuera del repo): debe ser `etl_cursor`. No editar ese config a mano; usar `~/apps/hop/hop-conf.sh --project-create ... --project-keep-config-file` (sin ese flag, Hop sobrescribe `project-config.json` y te borra las variables).
-
-## Conexiones
-
-- `metadata/rdbms/*.json` referencian variables:
-  - `h2` (`DB_H2_*`), lista por defecto.
-  - `oracle_sisud` (`DB_ORA_SISUD_*`): Oracle **oefabd** (SISUD, fuente).
-  - `oracle_repocsep` (`DB_ORA_REPO_*`): Oracle **REPOCSEP** (destino).
-  - `mysql` (`DB_MYSQL_*`).
-  - Completar los placeholders `<...>` en `project-config.json` o `environments/`.
-
-## Credenciales y secretos
-
-- Passwords en texto plano dentro del repo (`project-config.json`, `environments/*.json`): no commitear ni propagar.
-- Si se usa Google Sheets, `client_secret.json` (service account) va en la raíz y está en `.gitignore`.
-
-## CodeGraph (knowledge graph del código)
-
-- **Skill** (global, fuera del repo): `~/.agents/skills/codegraph/SKILL.md`.
-- MCP instalado globalmente (`@colbymchenry/codegraph`), registrado en `~/.cursor/mcp.json` (Cursor) y `~/.config/opencode/opencode.json` (OpenCode). Los 8 tools se habilitan con `CODEGRAPH_MCP_TOOLS`: `explore`, `search`, `node`, `callers`, `callees`, `impact`, `files`, `status`.
-- Indexado: `.codegraph/` en la raíz (16 archivos, 95 nodes, 178 edges; gitignore). Re-indexar con `codegraph index` (full) o `codegraph sync` (delta).
-- **Solo indexa Python y YAML.** Los `.hpl`/`.hwf` de Hop, los `.sql` y los `.sh` **no** están en el grafo: para esos hay que usar grep/lectura directa.
-- Re-indexar después de cambios grandes en `python/`.
+Más detalle de plataforma, H2 gotchas y conexiones → [`docs/harness/platform.md`](docs/harness/platform.md).

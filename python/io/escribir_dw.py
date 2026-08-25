@@ -1,7 +1,7 @@
-"""SALIDA fase 1: DataFrames INT_* / QA_* -> Oracle BD_CURSOR (esquema APP).
+"""SALIDA fase 1+: DataFrames INT_* / QA_* / DQ_* -> Oracle BD_CURSOR (esquema APP).
 
 INT_*: CREATE si no existe, TRUNCATE + INSERT + COUNT leido de vuelta.
-QA_*: CREATE si no existe, APPEND (historico por ID_CORRIDA).
+QA_* / DQ_*: CREATE si no existe, APPEND (historico por ID_CARGA).
 
 Skip si las credenciales DB_ORA_DW_* son placeholders.
 Excel se escribe igual; si el PDB no responde, este modulo lanza error.
@@ -155,9 +155,9 @@ def _drop(cur, tabla: str) -> None:
 
 
 def escribir_dw(tablas: dict[str, pd.DataFrame], root: Path) -> dict[str, int]:
-    """Escribe INT_* (full refresh) y QA_* (append). Devuelve COUNT por tabla."""
+    """Escribe INT_* (full refresh) y QA_*/DQ_* (append). Devuelve COUNT por tabla."""
     if not tablas:
-        print("AVISO: no hay tablas INT_/QA_ para BD_CURSOR.")
+        print("AVISO: no hay tablas INT_/QA_/DQ_ para BD_CURSOR.")
         return {}
 
     conn = _connect(root)
@@ -171,7 +171,7 @@ def escribir_dw(tablas: dict[str, pd.DataFrame], root: Path) -> dict[str, int]:
             for nombre, df in tablas.items():
                 tabla = _ora_ident(nombre)
                 ora_cols = _ensure_table(cur, tabla, df)
-                modo = "append" if tabla.startswith("QA_") else "truncate"
+                modo = "append" if tabla.startswith(("QA_", "DQ_")) else "truncate"
                 if modo == "truncate":
                     cur.execute(f"TRUNCATE TABLE {ESQUEMA}.{tabla}")
                 try:

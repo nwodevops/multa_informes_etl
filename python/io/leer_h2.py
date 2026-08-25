@@ -1,12 +1,6 @@
 """ENTRADA post-staging: H2 STG_* ya cargadas -> pandas DataFrames.
 
-No introspecta fuentes. No crea tablas. Eso es python/create_stg.py + introspect/.
-
-La dict `LECTURAS` define el contrato de entrada de la lógica:
-  nombre -> query SQL sobre H2.
-Cada clave se convierte en un DataFrame con ESE MISMO nombre (lo inyecta main.py).
-
-PARA UN ETL NUEVO: agregar/editar entradas en `LECTURAS` (no tocar el resto).
+Contrato lineamientos F1–F5 + diccionario F2 (DIC_*).
 """
 
 from __future__ import annotations
@@ -19,13 +13,14 @@ from h2_conn import connect_h2
 
 
 LECTURAS: dict[str, str] = {
-    "DEMO": "SELECT ID, TXNOMBRE, FEALTA FROM PUBLIC.DEMO_TABLA_EJEMPLO",
     "GS1": "SELECT * FROM PUBLIC.STG_GS1_MULTAS_COERCITIVAS",
     "ETAPAS": "SELECT * FROM PUBLIC.STG_GS1_ETAPAS",
     "GS2": "SELECT * FROM PUBLIC.STG_GS2_MULTAS_COERCITIVAS",
     "ORA": "SELECT * FROM PUBLIC.STG_ORA_VW_MULTA_COERCITIVA",
     "INFORMES": "SELECT * FROM PUBLIC.STG_ORA_CSEP_INFORMES",
     "MYSQL": "SELECT * FROM PUBLIC.STG_MYSQL_T_MVC_MULTACOERCITIVA",
+    "DIC_TABLAS": "SELECT * FROM PUBLIC.STG_GS1_DIC_TABLAS",
+    "DIC_VARIABLES": "SELECT * FROM PUBLIC.STG_GS1_DIC_VARIABLES",
 }
 
 
@@ -47,7 +42,13 @@ def leer_h2(root: Path, variables: dict[str, str]) -> dict[str, pd.DataFrame]:
         cur = conn.cursor()
         try:
             for nombre, query in LECTURAS.items():
-                cur.execute(query)
+                try:
+                    cur.execute(query)
+                except Exception as exc:
+                    msg = str(exc).split("\n")[0][:120]
+                    print(f"AVISO: {nombre} no disponible en H2 ({msg}); DataFrame vacío")
+                    datos[nombre] = pd.DataFrame()
+                    continue
                 cols = [d[0] for d in cur.description]
                 rows = cur.fetchall()
                 df = pd.DataFrame.from_records(rows, columns=cols)

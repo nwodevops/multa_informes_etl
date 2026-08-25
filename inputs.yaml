@@ -2,7 +2,7 @@
 # CREATE TABLE en H2. Hop extrae las filas. No commitear keys/passwords.
 #
 # type: oracle | mysql | sheets | excel
-# Contrato: .agents/skills/oefa-hop-etl/inputs.example.yaml
+# Contrato: .agents/skills/hop-python-etl/inputs.example.yaml
 # Excel local: path relativo a la raíz, header_row = fila de códigos (1-based).
 
 sources:
@@ -25,6 +25,20 @@ sources:
     path: input_excel/MEDIDAS ADMINISTRATIVAS OD LAMBAYEQUE.xlsx
     worksheet: "5) Multas Coercitivas"
     header_row: 3
+    types: varchar
+
+  - stg_table: STG_GS1_DIC_TABLAS
+    type: excel
+    path: input_excel/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx
+    worksheet: "DIC_TABLAS"
+    header_row: 1
+    types: varchar
+
+  - stg_table: STG_GS1_DIC_VARIABLES
+    type: excel
+    path: input_excel/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx
+    worksheet: "DIC_VARIABLES"
+    header_row: 1
     types: varchar
 
   - stg_table: STG_ORA_VW_MULTA_COERCITIVA

@@ -38,93 +38,123 @@
       },
       {
         "name": "DB_ORA_SISUD_URL",
-        "value": "jdbc:oracle:thin:@//<HOST>:<PUERTO>/<SERVICE>",
-        "description": "JDBC URL Oracle oefabd (SISUD, fuente) - completar"
+        "value": "jdbc:oracle:thin:@//localhost:1523/XEPDB1",
+        "description": "JDBC URL Oracle SISUD (fuente) LOCAL"
       },
       {
         "name": "DB_ORA_SISUD_HOST",
-        "value": "<HOST>",
-        "description": "Host Oracle oefabd (SISUD, fuente) - completar"
+        "value": "localhost",
+        "description": "Host Oracle SISUD (fuente) LOCAL"
       },
       {
         "name": "DB_ORA_SISUD_PORT",
-        "value": "<PUERTO>",
-        "description": "Puerto Oracle oefabd (SISUD, fuente) - completar"
+        "value": "1523",
+        "description": "Puerto Oracle SISUD (fuente) LOCAL"
       },
       {
         "name": "DB_ORA_SISUD_DATABASE",
-        "value": "<SERVICE>",
-        "description": "Service Oracle oefabd (SISUD, fuente) - completar"
+        "value": "XEPDB1",
+        "description": "Service Oracle SISUD (fuente) LOCAL"
       },
       {
         "name": "DB_ORA_SISUD_USERNAME",
-        "value": "<USUARIO>",
-        "description": "Usuario Oracle oefabd (SISUD, fuente) - completar"
+        "value": "SISUD",
+        "description": "Usuario Oracle SISUD (fuente) LOCAL"
       },
       {
         "name": "DB_ORA_SISUD_PASSWORD",
-        "value": "<PASSWORD>",
-        "description": "Password Oracle oefabd (SISUD, fuente) - completar"
+        "value": "sisud2026",
+        "description": "Password Oracle SISUD (fuente) LOCAL"
       },
       {
         "name": "DB_ORA_REPO_URL",
-        "value": "jdbc:oracle:thin:@//<HOST>:<PUERTO>/<SERVICE>",
-        "description": "JDBC URL Oracle REPOCSEP (destino) - completar"
+        "value": "jdbc:oracle:thin:@//localhost:1524/BD_CURSOR",
+        "description": "JDBC URL Oracle BD_CURSOR (destino legado) LOCAL"
       },
       {
         "name": "DB_ORA_REPO_HOST",
-        "value": "<HOST>",
-        "description": "Host Oracle REPOCSEP (destino) - completar"
+        "value": "localhost",
+        "description": "Host Oracle BD_CURSOR (destino legado) LOCAL"
       },
       {
         "name": "DB_ORA_REPO_PORT",
-        "value": "<PUERTO>",
-        "description": "Puerto Oracle REPOCSEP (destino) - completar"
+        "value": "1524",
+        "description": "Puerto Oracle BD_CURSOR (destino legado) LOCAL"
       },
       {
         "name": "DB_ORA_REPO_DATABASE",
-        "value": "<SERVICE>",
-        "description": "Service Oracle REPOCSEP (destino) - completar"
+        "value": "BD_CURSOR",
+        "description": "Service Oracle BD_CURSOR (destino legado) LOCAL"
       },
       {
         "name": "DB_ORA_REPO_USERNAME",
-        "value": "<USUARIO>",
-        "description": "Usuario Oracle REPOCSEP (destino) - completar"
+        "value": "app",
+        "description": "Usuario Oracle BD_CURSOR (destino legado) LOCAL"
       },
       {
         "name": "DB_ORA_REPO_PASSWORD",
-        "value": "<PASSWORD>",
-        "description": "Password Oracle REPOCSEP (destino) - completar"
+        "value": "app2026",
+        "description": "Password Oracle BD_CURSOR (destino legado) LOCAL"
+      },
+      {
+        "name": "DB_ORA_DW_URL",
+        "value": "jdbc:oracle:thin:@//localhost:1524/BD_CURSOR",
+        "description": "JDBC URL Oracle DW BD_CURSOR LOCAL"
+      },
+      {
+        "name": "DB_ORA_DW_HOST",
+        "value": "localhost",
+        "description": "Host Oracle DW LOCAL"
+      },
+      {
+        "name": "DB_ORA_DW_PORT",
+        "value": "1524",
+        "description": "Puerto Oracle DW LOCAL"
+      },
+      {
+        "name": "DB_ORA_DW_DATABASE",
+        "value": "BD_CURSOR",
+        "description": "Service Oracle DW LOCAL"
+      },
+      {
+        "name": "DB_ORA_DW_USERNAME",
+        "value": "app",
+        "description": "Usuario Oracle DW LOCAL"
+      },
+      {
+        "name": "DB_ORA_DW_PASSWORD",
+        "value": "app2026",
+        "description": "Password Oracle DW LOCAL"
       },
       {
         "name": "DB_MYSQL_URL",
-        "value": "jdbc:mysql://<HOST>:<PUERTO>/<DB>",
-        "description": "JDBC URL MySQL (completar)"
+        "value": "jdbc:mysql://localhost:3307/gappsdb",
+        "description": "JDBC URL MySQL LOCAL"
       },
       {
         "name": "DB_MYSQL_HOST",
-        "value": "<HOST>",
-        "description": "Host MySQL (completar)"
+        "value": "localhost",
+        "description": "Host MySQL LOCAL"
       },
       {
         "name": "DB_MYSQL_PORT",
-        "value": "<PUERTO>",
-        "description": "Puerto MySQL (completar)"
+        "value": "3307",
+        "description": "Puerto MySQL LOCAL"
       },
       {
         "name": "DB_MYSQL_DATABASE",
-        "value": "<DB>",
-        "description": "Database MySQL (completar)"
+        "value": "gappsdb",
+        "description": "Database MySQL LOCAL"
       },
       {
         "name": "DB_MYSQL_USERNAME",
-        "value": "<USUARIO>",
-        "description": "Usuario MySQL (completar)"
+        "value": "gapps",
+        "description": "Usuario MySQL LOCAL"
       },
       {
         "name": "DB_MYSQL_PASSWORD",
-        "value": "<PASSWORD>",
-        "description": "Password MySQL (completar)"
+        "value": "gapps2026",
+        "description": "Password MySQL LOCAL"
       }
     ]
   }

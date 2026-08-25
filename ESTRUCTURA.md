@@ -11,18 +11,26 @@ etl_cursor/
 ├── .venv/                               # GENERADO (gitignore): deps de python/requirements.txt
 ├── inputs.yaml                          # Manifiesto de fuentes STG (excel local CAGR + Lambayeque)
 ├── README.md                            # Cómo usar el arquetipo
-├── AGENTS.md                            # Guía para agentes en este proyecto
+├── AGENTS.md                            # Mapa corto para agentes (divulgación progresiva)
+├── CHECKPOINTS.md                       # Criterios de "estado final correcto" por fase
+├── feature_list.json                    # Alcance harness: una feature in_progress
+├── init.sh                              # Verificación ejecutable (smoke ETL)
+├── progress/
+│   ├── current.md                       # Sesión activa (plan vivo)
+│   └── history.md                       # Bitácora append-only
 ├── ESTRUCTURA.md                        # Este documento
 ├── .agents/skills/
-│   ├── oefa-hop-etl/                    # Skill del arquetipo (Hop + H2 STG + Python)
-│   │   ├── SKILL.md
-│   │   ├── reference.md
-│   │   └── inputs.example.yaml
-│   └── medallion-auditable/             # Skill de capas, QA y trazabilidad (TDR d/e/f)
-│       └── SKILL.md
+│   ├── hop-python-etl/                  # Arquetipo Hop + H2 STG + Python
+│   ├── phased-dwh-lineamiento/        # Fases 2–7: perfil → indicadores
+│   ├── auditable-soft-quarantine/     # Cuarentena blanda, DQ, amarre H9
+│   └── oracle-cargar-dw/              # Carga TRUNCATE+INSERT Oracle
 ├── docs/
 │   ├── TDR REQ 3629-2026.pdf            # Requerimiento del servicio
-│   └── arquitectura.md                  # Diagramas: vista general y capa de lógica
+│   ├── arquitectura.md                  # Diagramas: vista general y capa de lógica
+│   ├── verification.md                  # Cómo demostrar que funciona (init.sh + manual)
+│   └── harness/
+│       ├── workflow.md                  # Roles líder / implementador / revisor
+│       └── platform.md                  # Hop, H2, variables (detalle desde AGENTS.md)
 │
 ├── environments/                        # Plantillas de variables por entorno
 │   ├── local.json                       #   Entorno local/oficina (completar Oracle/MySQL)
@@ -45,7 +53,7 @@ etl_cursor/
 │   ├── rdbms/
 │   │   ├── h2.json                      #   Conexión H2 (variables DB_H2_*)
 │   │   ├── oracle_sisud.json            #   Oracle oefabd SISUD, fuente (variables DB_ORA_SISUD_*)
-│   │   ├── oracle_repocsep.json         #   Oracle REPOCSEP, destino (variables DB_ORA_REPO_*)
+│   │   ├── oracle_BD_CURSOR.json         #   Oracle BD_CURSOR, destino (variables DB_ORA_REPO_*)
 │   │   └── mysql.json                   #   Conexión MySQL (variables DB_MYSQL_*)
 │   ├── pipeline-run-configuration/
 │   │   └── local.json                   #   Run config "local" para pipelines
@@ -71,7 +79,7 @@ etl_cursor/
 │       ├── leer_h2.py                   #     ENTRADA: H2 STG_* → DataFrames (dict LECTURAS)
 │       ├── escribir_excel.py            #     SALIDA default: output/resultado.xlsx
 │       ├── escribir_mysql.py            #     SALIDA default: MySQL (skip si placeholders)
-│       └── escribir_oracle.py           #     SALIDA legado: Oracle REPOCSEP (skip si placeholders)
+│       └── escribir_oracle.py           #     SALIDA legado: Oracle BD_CURSOR (skip si placeholders)
 │
 ├── logica/                              # Zona de pegado (fuera de python/): un solo .py
 │   ├── LEEME.md

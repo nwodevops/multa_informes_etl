@@ -1,4 +1,4 @@
-"""SALIDA legado: DataFrame -> tabla Oracle REPOCSEP (TRUNCATE + INSERT + COUNT).
+"""SALIDA legado: DataFrame -> tabla Oracle BD_CURSOR (TRUNCATE + INSERT + COUNT).
 
 Skip si las credenciales DB_ORA_REPO_* son placeholders. Smoke test H2-only
 sin Oracle. ETLs nuevos: MySQL o Excel, no este escritor.
@@ -21,7 +21,7 @@ def escribir_oracle(
     esquema: str = "MI_ESQUEMA",
 ) -> int | None:
     variables = load_vars(root)
-    cv = conn_vars("oracle_repocsep", variables)
+    cv = conn_vars("oracle_BD_CURSOR", variables)
     if (
         is_placeholder(cv["host"])
         or is_placeholder(cv["username"])

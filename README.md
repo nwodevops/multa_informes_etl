@@ -6,7 +6,19 @@ Reglas fijas del arquetipo:
 - Siempre es un ETL **Apache Hop**.
 - Siempre se usa **H2 in-memory** (`mem:csep`, puerto `9092`) como staging, con **reset clean en cada corrida** (stop + start + DDL). La infra de H2 se reutiliza de `etl_diego/h2`.
 
-## Uso
+## Nuevo proyecto desde el arquetipo local
+
+Plantilla mínima en [`archetype/README.md`](archetype/README.md) (generada con [`scripts/sync_archetype.sh`](scripts/sync_archetype.sh)):
+
+```bash
+cp -r archetype/ ~/workspace/mi_etl/
+cd ~/workspace/mi_etl/
+# ver archetype/README.md → venv, hop-conf, ./init.sh
+```
+
+Este repo (`etl_phyton_cursor`) **extiende** ese arquetipo con lógica OEFA (Fases 2–7, DW Oracle).
+
+## Uso (desde arquetipo histórico)
 
 1. **Copiar** la carpeta a un proyecto nuevo:
    `cp -r archetype/ <workspace>/<nombre_proyecto>`
@@ -23,7 +35,7 @@ Reglas fijas del arquetipo:
    - `DB_H2_*` ya vienen listas (in-memory `mem:csep`).
    - Oracle (2 conexiones) y MySQL tienen placeholders `<...>`: rellenar con las credenciales reales (usar `./switch-env.sh local|remote` con `environments/*.json` si se manejan entornos).
    - `DB_ORA_SISUD_*` → **Oracle oefabd** (SISUD, fuente).
-   - `DB_ORA_REPO_*` → **Oracle REPOCSEP** (destino).
+   - `DB_ORA_REPO_*` → **Oracle BD_CURSOR** (destino).
    - `DB_MYSQL_*` → MySQL gapps.
 4. **Escribir el DDL propio** en `h2/sql/01_schema.sql` (la tabla demo `DEMO_TABLA_EJEMPLO` es solo un smoke test).
 5. **Poner la lógica**: en `pipelines/` y `workflows/` (partiendo de `wf_main.hwf` / `pl_demo.hpl`), o pegando un `.py` en `logica/` (zona de pegado aislada, fuera de `python/`; ver `python/plantilla_logica.py` y `python/CONTRATO.md`).
@@ -51,13 +63,22 @@ Los workflows usan `.venv/bin/python` si existe, y si no `python3`.
 
 ## Verificación
 
-No hay build/test/lint: se ejecuta `workflows/wf_main.hwf` en el GUI de Apache Hop (`~/apps/hop/hop-gui.sh`) y se revisa el log. El workflow demo corre sin BDs externas: lee `DEMO_TABLA_EJEMPLO` desde H2, escribe `output/resultado.xlsx` y omite MySQL/Oracle si las credenciales son placeholders.
+**Harness (recomendado):**
 
-Smoke test equivalente sin abrir Hop:
+```bash
+chmod +x init.sh   # una vez
+./init.sh          # debe terminar en HARNESS OK
+```
+
+Criterios por fase: [`CHECKPOINTS.md`](CHECKPOINTS.md). Detalle: [`docs/verification.md`](docs/verification.md). Alcance de trabajo: [`feature_list.json`](feature_list.json).
+
+Alternativa manual sin Hop GUI:
 
 ```bash
 ./h2/scripts/reset_and_create.sh && .venv/bin/python python/create_stg.py && .venv/bin/python python/main.py
 ```
+
+Corrida completa con staging externo: `workflows/wf_main.hwf` en Apache Hop (`~/apps/hop/hop-gui.sh`).
 
 ## Notas
 

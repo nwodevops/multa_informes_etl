@@ -63,32 +63,32 @@
     {
       "name": "DB_ORA_REPO_URL",
       "value": "jdbc:oracle:thin:@//<HOST>:<PUERTO>/<SERVICE>",
-      "description": "JDBC URL Oracle REPOCSEP (destino) REMOTO - completar"
+      "description": "JDBC URL Oracle BD_CURSOR (destino) REMOTO - completar"
     },
     {
       "name": "DB_ORA_REPO_HOST",
       "value": "<HOST>",
-      "description": "Host Oracle REPOCSEP (destino) REMOTO - completar"
+      "description": "Host Oracle BD_CURSOR (destino) REMOTO - completar"
     },
     {
       "name": "DB_ORA_REPO_PORT",
       "value": "<PUERTO>",
-      "description": "Puerto Oracle REPOCSEP (destino) REMOTO - completar"
+      "description": "Puerto Oracle BD_CURSOR (destino) REMOTO - completar"
     },
     {
       "name": "DB_ORA_REPO_DATABASE",
       "value": "<SERVICE>",
-      "description": "Service Oracle REPOCSEP (destino) REMOTO - completar"
+      "description": "Service Oracle BD_CURSOR (destino) REMOTO - completar"
     },
     {
       "name": "DB_ORA_REPO_USERNAME",
       "value": "<USUARIO>",
-      "description": "Usuario Oracle REPOCSEP (destino) REMOTO - completar"
+      "description": "Usuario Oracle BD_CURSOR (destino) REMOTO - completar"
     },
     {
       "name": "DB_ORA_REPO_PASSWORD",
       "value": "<PASSWORD>",
-      "description": "Password Oracle REPOCSEP (destino) REMOTO - completar"
+      "description": "Password Oracle BD_CURSOR (destino) REMOTO - completar"
     },
     {
       "name": "DB_ORA_DW_URL",

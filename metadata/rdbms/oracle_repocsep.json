@@ -22,7 +22,7 @@
         "PRESERVE_RESERVED_WORD_CASE": "Y",
         "SQL_CONNECT": "",
         "FORCE_IDENTIFIERS_TO_UPPERCASE": "N",
-        "PREFERRED_SCHEMA_NAME": "REPOCSEP"
+        "PREFERRED_SCHEMA_NAME": "BD_CURSOR"
       },
       "manualUrl": "${DB_ORA_REPO_URL}",
       "sshTunnelPassphrase": "Encrypted ",
@@ -31,5 +31,5 @@
       "username": "${DB_ORA_REPO_USERNAME}"
     }
   },
-  "name": "oracle_repocsep"
+  "name": "oracle_BD_CURSOR"
 }

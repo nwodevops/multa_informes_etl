@@ -1,0 +1,84 @@
+---
+name: oracle-cargar-dw
+description: >-
+  Carga TRUNCATE+INSERT del modelo dimensional a Oracle desde Python (oracledb):
+  DDL formal numerado, TABLESPACE con cuota, coerción de tipos, orden FK,
+  esquema incompleto, identity skip. Usar al implementar cargar_dw.py, depurar
+  ORA-01950/ORA-12899/ORA-00907 o extender tablas DIM_/FACT_/INDICADOR_*.
+---
+
+# Carga Oracle DW (Python)
+
+Módulo tipo: `python/io/cargar_dw.py`. Patrón **full refresh**: TRUNCATE hijos → padres → INSERT tipado → log `COUNT(*)`.
+
+## Flujo `_prepare_schema`
+
+1. DROP vistas legacy (`VW_FCT_*`) si existen.
+2. Si falta modelo core (`DIM_TIEMPO`…`DQ_HALLAZGO`): aplicar DDL `01`→`02`→`03`→`04`.
+3. Si core existe pero falta `INDICADOR_RESULTADO`: solo DDL `04` (**no** droppear todo el modelo).
+4. Si `DQ_HALLAZGO` es esquema VARCHAR legacy: DROP + recrear `03`.
+
+## DDL desde Python
+
+- Leer `docs/lineamientos/ddl/NN_*.sql`; split por `;`.
+- **Omitir** `INSERT` del DDL (Python carga todo, incluido miembro `-1`).
+- **Inyectar** `TABLESPACE <nombre>` en `CREATE TABLE`/`CREATE INDEX` si el usuario no tiene cuota en SYSTEM.
+
+```python
+# Usuario APP suele tener cuota en USERS, default_tablespace SYSTEM
+cur.execute("SELECT tablespace_name FROM user_ts_quotas WHERE ...")
+# Append antes del ';': ) TABLESPACE USERS;
+```
+
+## Orden TRUNCATE / INSERT
+
+```
+INDICADOR_RESULTADO → DET_* → FACT_* → DIM_* → DQ_HALLAZGO
+INSERT: DIM_* → FACT_* → DET_* → DQ_* → INDICADOR_RESULTADO
+```
+
+## Coerción de tipos (`_coerce_for_oracle`)
+
+| Tipo Oracle | Regla |
+|---|---|
+| VARCHAR2 | str(); truncar bytes UTF-8 al `data_length` |
+| NUMBER | float/int; NA → NULL |
+| DATE | `pd.Timestamp` → `datetime` |
+| CHAR(1) | homologar SI/NO → S/N **antes** del insert |
+
+No pasar float a columna VARCHAR (DPY-3013).
+
+## Identity columns
+
+- `ID_HALLAZGO`, `ID_RESULTADO`: omitir en INSERT (`skip_identity=True`).
+- Claves de hechos (`ID_MC`, `ID_INFORME`): asignadas en Python antes del insert.
+
+## Verificación
+
+```
+DW: FACT_MULTA_COERCITIVA: 571 filas -> 571 en BD (OK)
+```
+
+Criterio: `n_bd == n_df` por tabla (excepto identity auto-generada no usada).
+
+## Errores frecuentes
+
+| ORA / error | Fix |
+|---|---|
+| ORA-01950 no privileges on SYSTEM | TABLESPACE USERS en CREATE |
+| ORA-00907 missing parenthesis | TABLESPACE mal insertado (ir antes de `;`, no dentro de `(…)`) |
+| ORA-12899 value too large | truncar VARCHAR por bytes; homologar CHAR(1) |
+| DPY-3013 float for VARCHAR | `_coerce_for_oracle` por metadata |
+| Esquema parcial tras fallo | `_model_complete` solo core; drop parcial si incompleto |
+
+## No reutilizar
+
+- `escribir_dw.py` append VARCHAR auto-CREATE para `DIM_`/`FACT_`.
+- Vistas `VW_FCT_*_VALIDADA` del modelo medallion viejo.
+
+## Extender con tabla nueva
+
+1. `docs/lineamientos/ddl/05_*.sql`
+2. `REQUIRED_CORE` o lista aparte; `TRUNCATE_ORDEN` / `INSERT_ORDEN`
+3. `_prepare_schema`: aplicar `05` si falta
+4. `main.py`: incluir en `tablas_dw`

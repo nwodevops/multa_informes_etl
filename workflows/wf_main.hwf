@@ -114,27 +114,26 @@ cd "${PROJECT_HOME}"
       <attributes_hac/>
     </action>
     <action>
-      <filename>${PROJECT_HOME}/pipelines/pl_stage_oracle.hpl</filename>
-      <params_from_previous>N</params_from_previous>
-      <exec_per_row>N</exec_per_row>
-      <clear_rows>N</clear_rows>
-      <clear_files>N</clear_files>
-      <create_parent_folder>N</create_parent_folder>
+      <filename/>
+      <work_directory>${PROJECT_HOME}</work_directory>
+      <arguments/>
+      <arg_from_previous>N</arg_from_previous>
       <set_logfile>N</set_logfile>
-      <set_append_logfile>N</set_append_logfile>
       <logfile/>
       <logext/>
       <add_date>N</add_date>
       <add_time>N</add_time>
       <loglevel>Basic</loglevel>
-      <wait_until_finished>Y</wait_until_finished>
-      <parameters>
-        <pass_all_parameters>Y</pass_all_parameters>
-      </parameters>
-      <run_configuration>local</run_configuration>
+      <exec_per_row>N</exec_per_row>
+      <set_append_logfile>N</set_append_logfile>
+      <insertScript>Y</insertScript>
+      <script>set -e
+cd "${PROJECT_HOME}"
+./h2/scripts/stage_if_configured.sh oracle_sisud pipelines/pl_stage_oracle.hpl
+</script>
       <name>Stage Oracle VW</name>
-      <description>SISUD.VW_MULTA_COERCITIVA → H2 STG_ORA_VW_MULTA_COERCITIVA</description>
-      <type>PIPELINE</type>
+      <description>SISUD.VW_MULTA_COERCITIVA → H2 (skip si DB_ORA_SISUD_* placeholder)</description>
+      <type>SHELL</type>
       <attributes/>
       <xloc>672</xloc>
       <yloc>96</yloc>
@@ -142,27 +141,26 @@ cd "${PROJECT_HOME}"
       <attributes_hac/>
     </action>
     <action>
-      <filename>${PROJECT_HOME}/pipelines/pl_stage_informes.hpl</filename>
-      <params_from_previous>N</params_from_previous>
-      <exec_per_row>N</exec_per_row>
-      <clear_rows>N</clear_rows>
-      <clear_files>N</clear_files>
-      <create_parent_folder>N</create_parent_folder>
+      <filename/>
+      <work_directory>${PROJECT_HOME}</work_directory>
+      <arguments/>
+      <arg_from_previous>N</arg_from_previous>
       <set_logfile>N</set_logfile>
-      <set_append_logfile>N</set_append_logfile>
       <logfile/>
       <logext/>
       <add_date>N</add_date>
       <add_time>N</add_time>
       <loglevel>Basic</loglevel>
-      <wait_until_finished>Y</wait_until_finished>
-      <parameters>
-        <pass_all_parameters>Y</pass_all_parameters>
-      </parameters>
-      <run_configuration>local</run_configuration>
+      <exec_per_row>N</exec_per_row>
+      <set_append_logfile>N</set_append_logfile>
+      <insertScript>Y</insertScript>
+      <script>set -e
+cd "${PROJECT_HOME}"
+./h2/scripts/stage_if_configured.sh oracle_sisud pipelines/pl_stage_informes.hpl
+</script>
       <name>Stage Informes</name>
-      <description>SISUD.CSEP_INFORMES_VIEW → H2 STG_ORA_CSEP_INFORMES</description>
-      <type>PIPELINE</type>
+      <description>SISUD.CSEP_INFORMES_VIEW → H2 (skip si placeholder)</description>
+      <type>SHELL</type>
       <attributes/>
       <xloc>672</xloc>
       <yloc>192</yloc>
@@ -170,27 +168,26 @@ cd "${PROJECT_HOME}"
       <attributes_hac/>
     </action>
     <action>
-      <filename>${PROJECT_HOME}/pipelines/pl_stage_mysql.hpl</filename>
-      <params_from_previous>N</params_from_previous>
-      <exec_per_row>N</exec_per_row>
-      <clear_rows>N</clear_rows>
-      <clear_files>N</clear_files>
-      <create_parent_folder>N</create_parent_folder>
+      <filename/>
+      <work_directory>${PROJECT_HOME}</work_directory>
+      <arguments/>
+      <arg_from_previous>N</arg_from_previous>
       <set_logfile>N</set_logfile>
-      <set_append_logfile>N</set_append_logfile>
       <logfile/>
       <logext/>
       <add_date>N</add_date>
       <add_time>N</add_time>
       <loglevel>Basic</loglevel>
-      <wait_until_finished>Y</wait_until_finished>
-      <parameters>
-        <pass_all_parameters>Y</pass_all_parameters>
-      </parameters>
-      <run_configuration>local</run_configuration>
+      <exec_per_row>N</exec_per_row>
+      <set_append_logfile>N</set_append_logfile>
+      <insertScript>Y</insertScript>
+      <script>set -e
+cd "${PROJECT_HOME}"
+./h2/scripts/stage_if_configured.sh mysql pipelines/pl_stage_mysql.hpl
+</script>
       <name>Stage MySQL</name>
-      <description>gappsdb.T_MVC_MULTACOERCITIVA_MC → H2 STG_MYSQL_T_MVC_MULTACOERCITIVA</description>
-      <type>PIPELINE</type>
+      <description>gappsdb → H2 (skip si DB_MYSQL_* placeholder)</description>
+      <type>SHELL</type>
       <attributes/>
       <xloc>672</xloc>
       <yloc>288</yloc>
@@ -339,7 +336,7 @@ H2 se resetea en cada corrida: stop + start + DDL (h2/scripts/reset_and_create.s
 Python create STG: lee inputs.yaml, CREATE TABLE STG_* (excel + oracle + mysql).
 Stage Excel: pl_stage_excel.hpl. Stage Oracle/Informes/MySQL: TableInput truncate a H2.
 Pipeline demo: lee DEMO_TABLA_EJEMPLO.
-Run Python: python/main.py. Conexiones: h2 / oracle_sisud / oracle_repocsep / mysql.</note>
+Run Python: python/main.py. Conexiones: h2 / oracle_sisud / oracle_BD_CURSOR / mysql.</note>
       <markdown>N</markdown>
       <notetype>GENERAL</notetype>
       <fontname>Segoe UI</fontname>

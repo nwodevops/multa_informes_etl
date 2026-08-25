@@ -1,0 +1,6 @@
+# Manifiesto de fuentes STG. Python (create_stg.py) crea DDL en H2; Hop extrae filas.
+#
+# Ejemplos: .agents/skills/hop-python-etl/inputs.example.yaml
+# Smoke del arquetipo: sources vacío (solo DEMO_TABLA_EJEMPLO en 01_schema.sql).
+
+sources: []

@@ -3,12 +3,11 @@
 Cómo está armado este ETL hoy, con foco en qué hace exactamente la capa de lógica
 (Python). Rama `capa-python`: la capa R de `master` se reemplazó; el contrato es el mismo.
 
-Estado: fase 1 cableada. `logica/fase1/` consolida `STG_*` → `INT_*` y diagnostica
-en `QA_*`. Destino persistente: Oracle **BD_CURSOR** (`APP@localhost:1524`) y
-`output/fase1.xlsx`. Dónde vive el dato: [`antes-durante-fase1.md`](antes-durante-fase1.md).
-Sustento del entregable 1: [`fase-1.md`](fase-1.md) (detalle) y
-[`fase-1-vista.md`](fase-1-vista.md) (diagramas). TDR:
-[`TDR REQ 3629-2026.pdf`](TDR%20REQ%203629-2026.pdf).
+Estado: capa lógica alineada a [`lineamientos/PROPUESTA_ADAPTADA_ETL.md`](lineamientos/PROPUESTA_ADAPTADA_ETL.md)
+**Fases 2–3** (`logica/dwh/`: perfilamiento, diccionario, homologación, integración en memoria).
+Modelo dimensional `FACT_*`/`DIM_*` en Oracle BD_CURSOR = lineamiento Fases 5–6 (pendiente).
+Detalle implementación: [`lineamientos/implementacion-fase-2-3.md`](lineamientos/implementacion-fase-2-3.md).
+TDR: [`TDR REQ 3629-2026.pdf`](TDR%20REQ%203629-2026.pdf).
 
 ## Vista general
 
@@ -236,4 +235,4 @@ flowchart LR
 
 Las capas `INT_`, `FCT_`, `VW_*_VALIDADA`, `IND_` y `QA_` no existen todavía: se
 construyen dentro de la capa de lógica, fase por fase. Reglas, controles de calidad y
-por qué una rama por fase: [`../.agents/skills/medallion-auditable/SKILL.md`](../.agents/skills/medallion-auditable/SKILL.md).
+por qué una rama por fase: [`../.agents/skills/auditable-soft-quarantine/SKILL.md`](../.agents/skills/auditable-soft-quarantine/SKILL.md). Fases técnicas del lineamiento: [`../.agents/skills/phased-dwh-lineamiento/SKILL.md`](../.agents/skills/phased-dwh-lineamiento/SKILL.md).

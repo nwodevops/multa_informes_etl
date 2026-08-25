@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-"""ENTRY POINT de la capa de lógica post-staging (orquestación delgada).
+"""ENTRY POINT capa lógica post-staging (orquestación delgada).
 
-CAPA POST-STAGING — no importar python/introspect ni create_stg.
-
-Flujo:
+Lineamientos PROPUESTA_ADAPTADA_ETL.md — Fases 2–7:
   1. SETUP   : root + variables de project-config.json
-  2. ENTRADA : io/leer_h2.py              -> DataFrames (nombres = claves de LECTURAS)
-  3. LOGICA  : el UNICO .py de logica/    -> RESULTADO + INT_* + QA_*
-  4. SALIDA  : Excel multi-hoja (siempre) + Oracle BD_CURSOR (INT_ refresh, QA_ append)
+  2. ENTRADA : io/leer_h2.py -> DataFrames (nombres = claves de LECTURAS)
+  3. LOGICA  : único .py en logica/ -> PROF_*, DICCIONARIO, DF_*, DIM_*, FACT_*, IND_*
+  4. SALIDA  : logs de conteo; carga TRUNCATE+INSERT a BD_CURSOR (Fases 6–7)
 
-No escribe a MySQL gappsdb (es fuente) ni a Oracle REPOCSEP (legado).
 Contrato: python/CONTRATO.md
 Uso: .venv/bin/python python/main.py
 """
@@ -39,7 +36,12 @@ def _load(name: str, path: Path):
 
 
 def _es_salida(nombre: str) -> bool:
-    return nombre == SALIDA_DF or nombre.startswith("INT_") or nombre.startswith("QA_")
+    if nombre == SALIDA_DF or nombre == "DICCIONARIO":
+        return True
+    return any(
+        nombre.startswith(p)
+        for p in ("PROF_", "DF_", "DQ_", "QA_", "DIM_", "FACT_", "DET_", "IND_")
+    ) or nombre == "INDICADOR_RESULTADO"
 
 
 def main() -> int:
@@ -83,22 +85,22 @@ def main() -> int:
 
     if SALIDA_DF not in salidas:
         raise SystemExit(
-            f"La logica no dejo el DataFrame '{SALIDA_DF}' (configurable en main.py). Ver python/CONTRATO.md"
+            f"La logica no dejo el DataFrame '{SALIDA_DF}'. Ver python/CONTRATO.md"
         )
 
     for nombre, df in salidas.items():
         print(f"Salida {nombre}: {len(df)} filas x {len(df.columns)} columnas")
 
-    excel = _load("escribir_excel", HERE / "io" / "escribir_excel.py")
-    excel.escribir_libro(salidas, root, nombre="fase1.xlsx")
+    tablas_dw = {
+        k: v
+        for k, v in salidas.items()
+        if k.startswith(("DIM_", "FACT_", "DET_")) or k in ("DQ_HALLAZGO", "INDICADOR_RESULTADO")
+    }
+    if tablas_dw:
+        cargar = _load("cargar_dw", HERE / "io" / "cargar_dw.py")
+        cargar.cargar_dw(tablas_dw, root)
 
-    dw = _load("escribir_dw", HERE / "io" / "escribir_dw.py")
-    dw.escribir_dw(
-        {k: v for k, v in salidas.items() if k.startswith("INT_") or k.startswith("QA_")},
-        root,
-    )
-
-    print("Listo (H2 -> logica -> Excel + BD_CURSOR).")
+    print("Listo (H2 -> logica Fases 2-7, modelo e indicadores en BD_CURSOR si credenciales OK).")
     return 0
 
 

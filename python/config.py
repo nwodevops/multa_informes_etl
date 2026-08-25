@@ -15,7 +15,7 @@ VAR_RE = re.compile(r"\$\{([A-Za-z0-9_]+)\}")
 
 CONNECTION_PREFIX = {
     "oracle_sisud": "DB_ORA_SISUD",
-    "oracle_repocsep": "DB_ORA_REPO",
+    "oracle_BD_CURSOR": "DB_ORA_REPO",
     "oracle_dw": "DB_ORA_DW",
     "mysql": "DB_MYSQL",
     "h2": "DB_H2",
@@ -93,7 +93,7 @@ def load_sources(root: Path, variables: dict[str, str]) -> list[dict]:
     path = root / "inputs.yaml"
     if not path.is_file():
         raise FileNotFoundError(
-            f"No se encuentra {path}. Copia .agents/skills/oefa-hop-etl/inputs.example.yaml"
+            f"No se encuentra {path}. Copia .agents/skills/hop-python-etl/inputs.example.yaml"
         )
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     sources = raw.get("sources") or []

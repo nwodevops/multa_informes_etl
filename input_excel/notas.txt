@@ -1,4 +1,4 @@
-INPUT
+#INPUT
 
 MYSQL_PORT=3307
 MYSQL_DATABASE=gappsdb
@@ -20,7 +20,7 @@ VW_MULTA_COERCITIVA
 
 
 
-
+#OUTPUT
 PARA DATAWAREHOUSE a futuro
 # Oracle XE extra (etl_oracle_xe2) con PDBs BD_CURSOR 
 ORACLE_XE_PORT=1524

@@ -1,0 +1,69 @@
+{
+  "project": "etl_phyton_cursor",
+  "lineamiento": "docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md",
+  "branch_trabajo": "fase-1-lineamiento",
+  "reglas": {
+    "una_feature_activa": "Como máximo un item con status in_progress",
+    "verificacion": "./init.sh debe terminar en verde antes de marcar done",
+    "trazabilidad": "Implementador escribe progress/impl_<id>.md; revisor progress/review_<id>.md"
+  },
+  "features": [
+    {
+      "id": "fase-1-entorno",
+      "title": "Entorno Python + Hop + H2",
+      "status": "done",
+      "criterio": "CHECKPOINTS.md#fase-1",
+      "doc": "docs/fase1-3/status.md"
+    },
+    {
+      "id": "fase-2-perfil-diccionario",
+      "title": "Perfilamiento y diccionario (H1–H9)",
+      "status": "done",
+      "criterio": "CHECKPOINTS.md#fase-2",
+      "doc": "docs/lineamientos/implementacion-fase-2-3.md"
+    },
+    {
+      "id": "fase-3-homolog-integracion",
+      "title": "Homologación e integración tipificada",
+      "status": "done",
+      "criterio": "CHECKPOINTS.md#fase-3",
+      "doc": "docs/lineamientos/implementacion-fase-2-3.md"
+    },
+    {
+      "id": "fase-4-calidad",
+      "title": "Reglas R01–R05, DQ_HALLAZGO, amarre H9",
+      "status": "done",
+      "criterio": "CHECKPOINTS.md#fase-4",
+      "doc": "docs/lineamientos/implementacion-fase-4.md"
+    },
+    {
+      "id": "fase-5-dimensional",
+      "title": "DIM_*, FACT_*, DET_ETAPA_MC en memoria",
+      "status": "done",
+      "criterio": "CHECKPOINTS.md#fase-5",
+      "doc": "docs/lineamientos/implementacion-fase-5-6.md"
+    },
+    {
+      "id": "fase-6-carga-oracle",
+      "title": "Carga TRUNCATE+INSERT a BD_CURSOR",
+      "status": "done",
+      "criterio": "CHECKPOINTS.md#fase-6",
+      "doc": "docs/lineamientos/implementacion-fase-5-6.md"
+    },
+    {
+      "id": "fase-7-indicadores",
+      "title": "INDICADOR_RESULTADO K1–K5",
+      "status": "done",
+      "criterio": "CHECKPOINTS.md#fase-7",
+      "doc": "docs/lineamientos/implementacion-fase-7.md",
+      "evidencia": "progress/impl_fase-7-indicadores.md"
+    },
+    {
+      "id": "fase-8-powerbi",
+      "title": "Power BI contra tablas BD_CURSOR",
+      "status": "pending",
+      "criterio": "CHECKPOINTS.md#fase-8",
+      "doc": null
+    }
+  ]
+}
