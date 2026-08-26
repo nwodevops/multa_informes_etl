@@ -1,5 +1,5 @@
 # Credenciales LOCAL — referencia humana (no commitear secretos en git)
-# Aplicar: ./switch-env.sh local  →  regenera project-config.json
+# Aplicar: ./switch-env.sh local  |  .\switch-env.ps1 local  →  regenera project-config.json
 
 # INPUT — MySQL (conexión Hop: mysql → DB_MYSQL_*)
 Host: localhost

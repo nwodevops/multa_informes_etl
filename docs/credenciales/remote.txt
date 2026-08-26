@@ -1,5 +1,5 @@
 # Credenciales REMOTO — referencia humana (no commitear secretos en git)
-# Aplicar: ./switch-env.sh remote  →  regenera project-config.json
+# Aplicar: ./switch-env.sh remote  |  .\switch-env.ps1 remote  →  regenera project-config.json
 
 # INPUT — MySQL (conexión Hop: mysql → DB_MYSQL_*)
 Host: 10.1.1.217

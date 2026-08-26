@@ -2,7 +2,7 @@
 
 Dónde viven los datos en cada momento de una corrida de `wf_main`, y **en qué se diferencian**.
 
-Nombres: [`glosario.md`](glosario.md). Qué hace la fase 1: [`fase-1-vista.md`](fase-1-vista.md).
+Nombres: [`../glosario.md`](../glosario.md). Vista general: [`../vista-general.md`](../vista-general.md). Status: [`status.md`](status.md).
 
 Hay **tres momentos**, no tres copias idénticas de la misma base.
 
