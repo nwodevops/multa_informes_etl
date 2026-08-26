@@ -23,6 +23,11 @@ def introspect(source: dict, variables: dict[str, str], root=None) -> list[Colum
             "Falta oracledb. Instala: pip install -r python/requirements.txt"
         ) from exc
 
+    try:
+        oracledb.init_oracle_client()
+    except Exception:
+        pass
+
     connection = source.get("connection") or "oracle_sisud"
     object_name = source.get("object")
     if not object_name:

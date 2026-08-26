@@ -14,7 +14,15 @@ set PY=python
 if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
 
 REM --- Hop ---
-if not defined HOP_RUN set "HOP_RUN=%USERPROFILE%\apps\hop\hop-run.sh"
+if not defined HOP_RUN (
+  if exist "D:\Eder\hop\hop-run.bat" (
+    set "HOP_RUN=D:\Eder\hop\hop-run.bat"
+  ) else if exist "%USERPROFILE%\apps\hop\hop-run.bat" (
+    set "HOP_RUN=%USERPROFILE%\apps\hop\hop-run.bat"
+  ) else if exist "%USERPROFILE%\apps\hop\hop-run.sh" (
+    set "HOP_RUN=%USERPROFILE%\apps\hop\hop-run.sh"
+  )
+)
 set HOP_PROJECT=multa_informes_etl
 
 REM --- Temp log ---
@@ -61,22 +69,25 @@ if errorlevel 1 (
 )
 
 echo %GREEN%==>%NC% Staging Excel local (Hop pl_stage_excel)
-where hop-run >nul 2>&1
-if errorlevel 1 (
+if not defined HOP_RUN (
     echo %YELLOW%AVISO:%NC% hop-run no encontrado; STG Excel puede quedar vacio
+) else if not exist "%HOP_RUN%" (
+    echo %YELLOW%AVISO:%NC% hop-run no encontrado en %HOP_RUN%; STG Excel puede quedar vacio
 ) else (
-    hop-run -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_excel.hpl" -r local
+    "%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_excel.hpl" -r local
 )
 
 echo %GREEN%==>%NC% Staging Oracle / MySQL ^(Hop directo^)
-where hop-run >nul 2>&1
-if errorlevel 1 (
+if not defined HOP_RUN (
     echo %RED%FAIL:%NC% hop-run no encontrado; requerido para staging Oracle/MySQL
     exit /b 1
+) else if not exist "%HOP_RUN%" (
+    echo %RED%FAIL:%NC% hop-run no encontrado en %HOP_RUN%; requerido para staging Oracle/MySQL
+    exit /b 1
 )
-hop-run -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_oracle.hpl" -r local
-hop-run -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_informes.hpl" -r local
-hop-run -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_mysql.hpl" -r local
+"%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_oracle.hpl" -r local
+"%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_informes.hpl" -r local
+"%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_mysql.hpl" -r local
 
 echo %GREEN%==>%NC% Python main (logica Fases 2-7 + carga DW)
 "%PY%" python\main.py > "%LOG%" 2>&1
@@ -138,13 +149,22 @@ if errorlevel 1 (
     echo %YELLOW%AVISO:%NC% carga DW sin lineas ^(OK^); revisar credenciales oracle_dw
 )
 
+echo %GREEN%==>%NC% Verificando variables Hop sin resolver
+findstr /R "\${" "%LOG%" >nul 2>&1
+if not errorlevel 1 (
+    echo %RED%FAIL:%NC% log contiene variables Hop sin resolver ^(${VAR}^)
+    type "%LOG%"
+    del "%LOG%"
+    exit /b 1
+)
+
 echo %GREEN%==>%NC% Verificacion Oracle K1-K5
 "%PY%" -c "import sys; sys.path.insert(0,'python'); from config import require_live_conn, load_vars; from pathlib import Path; require_live_conn('oracle_dw',load_vars(Path('.')))" >nul 2>&1
 if errorlevel 1 (
     echo %YELLOW%AVISO:%NC% Oracle DW omitido ^(credenciales placeholder^)
 ) else (
     echo %GREEN%==>%NC% Oracle DW configurado, verificando indicadores...
-    "%PY%" -c "import sys; sys.path.insert(0,'python'); import oracledb; from config import require_live_conn, load_vars; from pathlib import Path; cv=require_live_conn('oracle_dw',load_vars(Path('.'))); dsn=oracledb.makedsn(cv['host'],int(cv['port'] or '1521'),service_name=cv['database']); conn=oracledb.connect(user=cv['username'],password=cv['password'],dsn=dsn); cur=conn.cursor(); cur.execute('SELECT COUNT(*) FROM APP.MI_INDICADOR_RESULTADO'); print(f'MI_INDICADOR_RESULTADO: {cur.fetchone()[0]} filas en Oracle'); cur.execute('SELECT DISTINCT COD_INDICADOR FROM APP.MI_INDICADOR_RESULTADO ORDER BY 1'); codes={r[0] for r in cur.fetchall()}; missing=sorted({'K1','K2','K3','K4','K5'}-codes); sys.exit(f'faltan indicadores en Oracle: {missing}') if missing else print('Indicadores K1-K5 presentes')"
+    "%PY%" -c "import sys; sys.path.insert(0,'python'); import oracledb; oracledb.init_oracle_client(); from config import require_live_conn, load_vars; from pathlib import Path; cv=require_live_conn('oracle_dw',load_vars(Path('.'))); dsn=oracledb.makedsn(cv['host'],int(cv['port'] or '1521'),service_name=cv['database']); conn=oracledb.connect(user=cv['username'],password=cv['password'],dsn=dsn); cur=conn.cursor(); cur.execute('SELECT COUNT(*) FROM APP.MI_INDICADOR_RESULTADO'); print(f'MI_INDICADOR_RESULTADO: {cur.fetchone()[0]} filas en Oracle'); cur.execute('SELECT DISTINCT COD_INDICADOR FROM APP.MI_INDICADOR_RESULTADO ORDER BY 1'); codes={r[0] for r in cur.fetchall()}; missing=sorted({'K1','K2','K3','K4','K5'}-codes); sys.exit(f'faltan indicadores en Oracle: {missing}') if missing else print('Indicadores K1-K5 presentes')"
     if errorlevel 1 (
         echo %RED%FAIL:%NC% Verificacion Oracle K1-K5 fallo
         del "%LOG%"

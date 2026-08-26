@@ -72,6 +72,10 @@ def _connect(root: Path):
         import oracledb
     except ImportError as exc:
         raise SystemExit("Falta oracledb. Instala: pip install -r python/requirements.txt") from exc
+    try:
+        oracledb.init_oracle_client()
+    except Exception:
+        pass
     dsn = oracledb.makedsn(cv["host"], int(cv["port"] or "1521"), service_name=cv["database"])
     conn = oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn)
     return conn, cv

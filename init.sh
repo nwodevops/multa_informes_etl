@@ -109,6 +109,11 @@ cv = require_live_conn("oracle_dw", load_vars(ROOT))
 
 import oracledb  # noqa: E402
 
+try:
+    oracledb.init_oracle_client()
+except Exception:
+    pass
+
 dsn = oracledb.makedsn(cv["host"], int(cv["port"] or "1521"), service_name=cv["database"])
 with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as conn:
     with conn.cursor() as cur:

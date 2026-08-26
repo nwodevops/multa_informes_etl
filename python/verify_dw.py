@@ -37,6 +37,11 @@ def main() -> int:
         print("ERROR: falta oracledb", file=sys.stderr)
         return 1
 
+    try:
+        oracledb.init_oracle_client()
+    except Exception:
+        pass
+
     dest = f"{cv['username']}@{cv['host']}:{cv['port']}/{cv['database']}"
     print(f"Destino: {dest}  esquema {ESQUEMA}")
     print(f"JDBC:    {cv.get('url') or '(makedsn)'}")
