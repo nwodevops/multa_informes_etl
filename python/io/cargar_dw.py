@@ -251,6 +251,17 @@ def _prepare_schema(cur, root: Path) -> None:
         _run_ddl_file(cur, ddl_root / "04_indicadores.sql", ts)
 
 
+def _apply_column_comments(cur, root: Path) -> None:
+    """COMMENT ON TABLE/COLUMN (05). Idempotente; aplica en APP o REPOCSEP según USER."""
+    if not _model_complete(cur):
+        return
+    path = root / DDL_DIR / "05_comentarios.sql"
+    if not path.is_file():
+        return
+    print("DW: aplicando comentarios de tablas/columnas (05)...")
+    _run_ddl_file(cur, path)
+
+
 def _trunc_varchar(val: str, limit: int) -> str:
     if len(val.encode("utf-8")) <= limit:
         return val
@@ -385,6 +396,7 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
         cur = conn.cursor()
         try:
             _prepare_schema(cur, root)
+            _apply_column_comments(cur, root)
             conn.commit()
 
             for tabla in TRUNCATE_ORDEN:

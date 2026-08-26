@@ -17,6 +17,7 @@ Módulo tipo: `python/io/cargar_dw.py`. Patrón **full refresh**: TRUNCATE hijos
 2. Si falta modelo core (`MI_DIM_TIEMPO`…`MI_DQ_HALLAZGO`): aplicar DDL `01`→`02`→`03`→`04`.
 3. Si core existe pero falta `MI_INDICADOR_RESULTADO`: solo DDL `04` (**no** droppear todo el modelo).
 4. Si `MI_DQ_HALLAZGO` es esquema VARCHAR legacy: DROP + recrear `03`.
+5. Tras schema listo: aplicar `05_comentarios.sql` (`COMMENT ON TABLE/COLUMN`) en cada corrida.
 
 ## DDL desde Python
 
@@ -78,7 +79,8 @@ Criterio: `n_bd == n_df` por tabla (excepto identity auto-generada no usada).
 
 ## Extender con tabla nueva
 
-1. `docs/lineamientos/ddl/05_*.sql`
+1. DDL en `01`–`04` (estructura) + `COMMENT ON` en `05_comentarios.sql`
 2. `REQUIRED_CORE` o lista aparte; `TRUNCATE_ORDEN` / `INSERT_ORDEN`
-3. `_prepare_schema`: aplicar `05` si falta
-4. `main.py`: incluir en `tablas_dw`
+3. `_prepare_schema`: aplicar DDL nuevo si falta
+4. `_apply_column_comments`: añadir `COMMENT ON` de la tabla/columnas
+5. `main.py`: incluir en `tablas_dw`
