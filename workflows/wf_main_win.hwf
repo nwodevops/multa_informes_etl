@@ -210,7 +210,9 @@ h2\scripts\reset_and_create.bat</script>
       <set_append_logfile>N</set_append_logfile>
       <insertScript>Y</insertScript>
       <script>cd /d "%PROJECT_HOME%"
-python python\create_stg.py</script>
+set PY=python
+if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
+"%PY%" python\create_stg.py</script>
       <name>Python create STG</name>
       <description>inputs.yaml → introspect fuentes → CREATE TABLE STG_* en H2 (no extrae filas) — Windows</description>
       <type>SHELL</type>
@@ -235,7 +237,9 @@ python python\create_stg.py</script>
       <set_append_logfile>N</set_append_logfile>
       <insertScript>Y</insertScript>
       <script>cd /d "%PROJECT_HOME%"
-python python\main.py</script>
+set PY=python
+if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
+"%PY%" python\main.py</script>
       <name>Run Python</name>
       <description>python/main.py: lee H2, ejecuta la logica (unico .py en logica/) y escribe Excel/MySQL/Oracle — Windows</description>
       <type>SHELL</type>
