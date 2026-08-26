@@ -84,7 +84,7 @@ Fuente única: `project-config.json` → `config.variables`. Entorno: `./switch-
 | `import io` falla | colisión con stdlib; cargar módulos por ruta en `main.py` |
 | `#N/A` tumba pipeline | Sheets/Excel → VARCHAR en STG |
 | Hop sobrescribe variables | `hop-conf.sh --project-create` sin `--project-keep-config-file` |
-| `stage_if_configured.sh` proyecto wrong | `HOP_PROJECT` debe ser el basename real del repo |
+| Hop staging Oracle/MySQL falla | Credenciales en `environments/*.json`; `./switch-env.sh local|remote`; `HOP_PROJECT` = basename del repo |
 
 ## Skills relacionadas
 

@@ -36,3 +36,22 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 **Notas:** Regresión «tabla vacía» resuelta — cliente SQL debe usar puerto **1524** (ver `impl_fase-7-indicadores.md`).
 
 **Siguiente:** `fase-8-powerbi` (`pending`).
+
+---
+
+## 2026-08-25 — Staging directo sin wrappers
+
+**Feature:** `infra-staging-directo` → `done`
+
+**Cambios:**
+
+- Eliminados `stage_if_configured.sh` y `should_stage_external.py`.
+- `wf_main.hwf`: staging Oracle/Informes/MySQL como actions PIPELINE nativos.
+- `init.sh`: `hop-run` directo; verificación Oracle DW obligatoria.
+- Python: `require_live_conn()` en lugar de skips placeholder.
+- `environments/remote.json` rellenado; `project-config.json` = local vía `./switch-env.sh local`.
+- Plantillas `environments/*.example.json`; secretos en `.gitignore`.
+
+**Evidencia:** `./init.sh` → **HARNESS OK** (585 filas `INDICADOR_RESULTADO`, K1–K5).
+
+**Siguiente:** `fase-8-powerbi` (`pending`).

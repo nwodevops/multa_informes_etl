@@ -9,7 +9,7 @@
       {
         "name": "DB_H2_URL",
         "value": "jdbc:h2:tcp://localhost:9092/mem:csep;DB_CLOSE_DELAY=-1;MODE=Oracle;DATABASE_TO_UPPER=TRUE;DEFAULT_NULL_ORDERING=HIGH;AUTO_RECONNECT=TRUE",
-        "description": "JDBC URL H2 - BD in-memory mem:csep (puerto 9092)"
+        "description": "JDBC URL H2 - BD in-memory mem:csep (igual en todos los entornos)"
       },
       {
         "name": "DB_H2_HOST",

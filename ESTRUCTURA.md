@@ -78,8 +78,8 @@ etl_cursor/
 │   └── io/                              #   CAPA post-staging: I/O (no introspect)
 │       ├── leer_h2.py                   #     ENTRADA: H2 STG_* → DataFrames (dict LECTURAS)
 │       ├── escribir_excel.py            #     SALIDA default: output/resultado.xlsx
-│       ├── escribir_mysql.py            #     SALIDA default: MySQL (skip si placeholders)
-│       └── escribir_oracle.py           #     SALIDA legado: Oracle BD_CURSOR (skip si placeholders)
+│       ├── escribir_mysql.py            #     SALIDA default: MySQL
+│       └── escribir_oracle.py           #     SALIDA legado: Oracle BD_CURSOR
 │
 ├── logica/                              # Zona de pegado (fuera de python/): un solo .py
 │   ├── LEEME.md
@@ -127,7 +127,7 @@ Start → Reset H2 clean (SHELL: ./h2/scripts/reset_and_create.sh)
 - **Stage Excel**: `pl_stage_excel.hpl` lee `input_excel/*.xlsx` (todo String) y carga `STG_GS1_*` / `STG_GS2_*` (truncate).
 - **Stage Oracle / Informes / MySQL**: TableInput 1:1 hacia `STG_ORA_VW_MULTA_COERCITIVA`, `STG_ORA_CSEP_INFORMES`, `STG_MYSQL_T_MVC_MULTACOERCITIVA` (truncate).
 - **Pipeline demo**: lee `PUBLIC.DEMO_TABLA_EJEMPLO` (creada en `01_schema.sql`) por la conexión `h2`. Es un smoke test: funciona sin BDs externas. Los extract `pl_stage_*` se cablean **después** de Python.
-- **Run Python**: ejecuta `python/main.py` → lee H2 (`python/io/leer_h2.py`), corre la lógica (el único `.py` en `logica/`, zona de pegado), escribe `output/resultado.xlsx` y omite MySQL/Oracle si las credenciales son placeholders.
+- **Run Python**: ejecuta `python/main.py` → lee H2 (`python/io/leer_h2.py`), corre la lógica (el único `.py` en `logica/`, zona de pegado), escribe `output/resultado.xlsx` y carga Oracle DW vía `cargar_dw.py` (conexión obligatoria).
 
 ## Cómo se propaga a un proyecto nuevo
 

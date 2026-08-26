@@ -31,9 +31,9 @@ Este repo (`etl_phyton_cursor`) **extiende** ese arquetipo con lógica OEFA (Fas
   --project-keep-config-file
 ```
 
-3. **Completar variables** en `project-config.json`:
+3. **Completar variables** con `./switch-env.sh local|remote` (lee `environments/local.json` o `remote.json` y regenera `project-config.json`):
    - `DB_H2_*` ya vienen listas (in-memory `mem:csep`).
-   - Oracle (2 conexiones) y MySQL tienen placeholders `<...>`: rellenar con las credenciales reales (usar `./switch-env.sh local|remote` con `environments/*.json` si se manejan entornos).
+   - Oracle, MySQL y DW requieren credenciales reales en el entorno elegido.
    - `DB_ORA_SISUD_*` → **Oracle oefabd** (SISUD, fuente).
    - `DB_ORA_REPO_*` → **Oracle BD_CURSOR** (destino).
    - `DB_MYSQL_*` → MySQL gapps.
@@ -45,7 +45,7 @@ Este repo (`etl_phyton_cursor`) **extiende** ese arquetipo con lógica OEFA (Fas
 - Dos capas: `python/create_stg.py` + `introspect/` (DDL STG, sin filas) y `python/main.py` + `io/` + `logica/` en la raíz (post-staging). Mapa: `python/LEEME.md`.
 - Para un ETL nuevo: copiar `python/plantilla_logica.py` → `logica/<tu_logica>.py` (**un solo `.py`**), escribir la transformación con los DataFrames de entrada (nombres = claves de `LECTURAS` en `python/io/leer_h2.py`) y dejar el DataFrame `RESULTADO`. `main.py` lo auto-descubre y lo ejecuta.
 - **Prerequisitos**: Java en PATH (H2), venv con `pip install -r python/requirements.txt` (incluye pandas y openpyxl). No se usa R ni `ojdbc11.jar`.
-- **Smoke**: escribe `output/resultado.xlsx`. MySQL y Oracle se omiten si las credenciales son placeholders `<...>`.
+- **Smoke**: `./init.sh` exige credenciales reales y staging Hop Oracle/MySQL; falla si la conexión no responde.
 
 ## Plataforma
 
@@ -85,4 +85,4 @@ Corrida completa con staging externo: `workflows/wf_main.hwf` en Apache Hop (`~/
 - La BD in-memory se llama `mem:csep` en el arquetipo (igual que `etl_diego`). Si se renombra, hay que cambiarla en 4 lugares: `h2/scripts/reset_and_create.sh`, `project-config.json`, `environments/*.json` y `metadata/rdbms/h2.json`.
 - Los scripts usan rutas relativas al propio script, así que funcionan copiados tal cual. Requieren `java` en PATH.
 - `h2-2.4.240.jar`, puerto `9092` (H2 TCP + WEB `8082`).
-- Contraseñas de BDs van en texto plano en `project-config.json` / `environments/*.json`: no commitear ni propagar.
+- Contraseñas de BDs van en `environments/local.json` o `remote.json` (plantillas: `*.example.json`); aplicar con `./switch-env.sh local|remote`. No commitear archivos con secretos (ver `.gitignore`).

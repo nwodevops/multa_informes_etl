@@ -2,8 +2,6 @@
 
 INT_*: CREATE si no existe, TRUNCATE + INSERT + COUNT leido de vuelta.
 QA_* / DQ_*: CREATE si no existe, APPEND (historico por ID_CARGA).
-
-Skip si las credenciales DB_ORA_DW_* son placeholders.
 Excel se escribe igual; si el PDB no responde, este modulo lanza error.
 """
 
@@ -13,7 +11,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from config import conn_vars, is_placeholder, load_vars
+from config import load_vars, require_live_conn
 
 ESQUEMA = "APP"
 VARCHAR_MAX = 4000
@@ -55,15 +53,7 @@ def _ora_type(series: pd.Series) -> str:
 
 def _connect(root: Path):
     variables = load_vars(root)
-    cv = conn_vars("oracle_dw", variables)
-    if (
-        is_placeholder(cv["host"])
-        or is_placeholder(cv["username"])
-        or is_placeholder(cv["password"])
-        or is_placeholder(cv["database"])
-    ):
-        print("AVISO: credenciales Oracle DW placeholder -> se OMITE el write a BD_CURSOR.")
-        return None
+    cv = require_live_conn("oracle_dw", variables)
 
     try:
         import oracledb
@@ -161,8 +151,6 @@ def escribir_dw(tablas: dict[str, pd.DataFrame], root: Path) -> dict[str, int]:
         return {}
 
     conn = _connect(root)
-    if conn is None:
-        return {}
 
     counts: dict[str, int] = {}
     try:

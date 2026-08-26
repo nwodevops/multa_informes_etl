@@ -167,7 +167,7 @@ flowchart LR
 | F4 | MySQL GAPP | `STG_MYSQL_*` | Sí* | *Requiere credenciales MySQL |
 | F5 | SISUD vista multas | `STG_ORA_VW_*` | Sí* | *Requiere credenciales Oracle |
 
-`create_stg.py` omite Oracle/MySQL si `project-config.json` tiene placeholders.
+`create_stg.py` exige credenciales Oracle/MySQL válidas (`require_live_conn`); falla si faltan o son placeholder.
 
 ---
 

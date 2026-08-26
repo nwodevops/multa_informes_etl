@@ -1,4 +1,7 @@
-docs/creadenciales.txt
+
+project-config.json
+environments/local.json
+environments/remote.json
 client_secret.json
 *.xlsx
 .~*

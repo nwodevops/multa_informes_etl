@@ -91,8 +91,8 @@ flowchart TB
   subgraph io [I O generico, no se toca por proyecto]
     LEER["io/leer_h2.py<br/>LECTURAS: nombre a query"]
     XLS["io/escribir_excel.py"]
-    MYW["io/escribir_mysql.py skip placeholder"]
-    ORAW["io/escribir_oracle.py legado skip"]
+    MYW["io/escribir_mysql.py"]
+    ORAW["io/escribir_oracle.py legado"]
   end
 
   subgraph zona [Zona de pegado, se reemplaza por proyecto]
@@ -177,7 +177,7 @@ sequenceDiagram
   MAIN->>LOG: exec del unico .py
   LOG-->>MAIN: RESULTADO
   MAIN->>XLS: output/resultado.xlsx
-  MAIN->>ESC: skip si placeholders; si no TRUNCATE INSERT COUNT
+  MAIN->>ESC: TRUNCATE INSERT COUNT
 ```
 
 Los escritores a BD consultan `COUNT(*)` **después** del `INSERT`. Contar el DataFrame en

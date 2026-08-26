@@ -16,7 +16,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-from config import conn_vars, is_placeholder, load_vars, project_root  # noqa: E402
+from config import load_vars, project_root, require_live_conn  # noqa: E402
 
 ESQUEMA = "APP"
 TABLAS = (
@@ -29,15 +29,7 @@ TABLAS = (
 
 def main() -> int:
     root = project_root()
-    cv = conn_vars("oracle_dw", load_vars(root))
-    if (
-        is_placeholder(cv["host"])
-        or is_placeholder(cv["username"])
-        or is_placeholder(cv["password"])
-        or is_placeholder(cv["database"])
-    ):
-        print("Oracle DW omitido (credenciales placeholder en project-config.json)")
-        return 0
+    cv = require_live_conn("oracle_dw", load_vars(root))
 
     try:
         import oracledb

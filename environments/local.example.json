@@ -1,0 +1,154 @@
+{
+  "variables": [
+    {
+      "name": "DB_H2_URL",
+      "value": "jdbc:h2:tcp://localhost:9092/mem:csep;DB_CLOSE_DELAY=-1;MODE=Oracle;DATABASE_TO_UPPER=TRUE;DEFAULT_NULL_ORDERING=HIGH;AUTO_RECONNECT=TRUE",
+      "description": "JDBC URL H2 - BD in-memory mem:csep"
+    },
+    {
+      "name": "DB_H2_HOST",
+      "value": "localhost",
+      "description": "Host H2 (in-memory)"
+    },
+    {
+      "name": "DB_H2_PORT",
+      "value": "9092",
+      "description": "Puerto H2 (in-memory)"
+    },
+    {
+      "name": "DB_H2_DATABASE",
+      "value": "mem:csep",
+      "description": "Base H2 (in-memory)"
+    },
+    {
+      "name": "DB_H2_USERNAME",
+      "value": "sa",
+      "description": "Usuario H2"
+    },
+    {
+      "name": "DB_H2_PASSWORD",
+      "value": "csep",
+      "description": "Password H2"
+    },
+    {
+      "name": "DB_ORA_SISUD_URL",
+      "value": "jdbc:oracle:thin:@//localhost:1523/XEPDB1",
+      "description": "JDBC URL Oracle SISUD (fuente) LOCAL — copiar a local.json y completar"
+    },
+    {
+      "name": "DB_ORA_SISUD_HOST",
+      "value": "localhost",
+      "description": "Host Oracle SISUD LOCAL"
+    },
+    {
+      "name": "DB_ORA_SISUD_PORT",
+      "value": "1523",
+      "description": "Puerto Oracle SISUD LOCAL"
+    },
+    {
+      "name": "DB_ORA_SISUD_DATABASE",
+      "value": "XEPDB1",
+      "description": "Service Oracle SISUD LOCAL"
+    },
+    {
+      "name": "DB_ORA_SISUD_USERNAME",
+      "value": "SISUD",
+      "description": "Usuario Oracle SISUD LOCAL"
+    },
+    {
+      "name": "DB_ORA_SISUD_PASSWORD",
+      "value": "<PASSWORD>",
+      "description": "Password Oracle SISUD LOCAL"
+    },
+    {
+      "name": "DB_ORA_REPO_URL",
+      "value": "jdbc:oracle:thin:@//localhost:1524/BD_CURSOR",
+      "description": "JDBC URL Oracle BD_CURSOR (destino legado) LOCAL"
+    },
+    {
+      "name": "DB_ORA_REPO_HOST",
+      "value": "localhost",
+      "description": "Host Oracle BD_CURSOR LOCAL"
+    },
+    {
+      "name": "DB_ORA_REPO_PORT",
+      "value": "1524",
+      "description": "Puerto Oracle BD_CURSOR LOCAL"
+    },
+    {
+      "name": "DB_ORA_REPO_DATABASE",
+      "value": "BD_CURSOR",
+      "description": "Service Oracle BD_CURSOR LOCAL"
+    },
+    {
+      "name": "DB_ORA_REPO_USERNAME",
+      "value": "app",
+      "description": "Usuario Oracle BD_CURSOR LOCAL"
+    },
+    {
+      "name": "DB_ORA_REPO_PASSWORD",
+      "value": "<PASSWORD>",
+      "description": "Password Oracle BD_CURSOR LOCAL"
+    },
+    {
+      "name": "DB_ORA_DW_URL",
+      "value": "jdbc:oracle:thin:@//localhost:1524/BD_CURSOR",
+      "description": "JDBC URL Oracle DW LOCAL"
+    },
+    {
+      "name": "DB_ORA_DW_HOST",
+      "value": "localhost",
+      "description": "Host Oracle DW LOCAL"
+    },
+    {
+      "name": "DB_ORA_DW_PORT",
+      "value": "1524",
+      "description": "Puerto Oracle DW LOCAL"
+    },
+    {
+      "name": "DB_ORA_DW_DATABASE",
+      "value": "BD_CURSOR",
+      "description": "Service Oracle DW LOCAL"
+    },
+    {
+      "name": "DB_ORA_DW_USERNAME",
+      "value": "app",
+      "description": "Usuario Oracle DW LOCAL"
+    },
+    {
+      "name": "DB_ORA_DW_PASSWORD",
+      "value": "<PASSWORD>",
+      "description": "Password Oracle DW LOCAL"
+    },
+    {
+      "name": "DB_MYSQL_URL",
+      "value": "jdbc:mysql://localhost:3307/gappsdb",
+      "description": "JDBC URL MySQL LOCAL"
+    },
+    {
+      "name": "DB_MYSQL_HOST",
+      "value": "localhost",
+      "description": "Host MySQL LOCAL"
+    },
+    {
+      "name": "DB_MYSQL_PORT",
+      "value": "3307",
+      "description": "Puerto MySQL LOCAL"
+    },
+    {
+      "name": "DB_MYSQL_DATABASE",
+      "value": "gappsdb",
+      "description": "Database MySQL LOCAL"
+    },
+    {
+      "name": "DB_MYSQL_USERNAME",
+      "value": "gapps",
+      "description": "Usuario MySQL LOCAL"
+    },
+    {
+      "name": "DB_MYSQL_PASSWORD",
+      "value": "<PASSWORD>",
+      "description": "Password MySQL LOCAL"
+    }
+  ]
+}

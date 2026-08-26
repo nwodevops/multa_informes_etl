@@ -1,0 +1,26 @@
+# Credenciales REMOTO — referencia humana (no commitear secretos en git)
+# Aplicar: ./switch-env.sh remote  →  regenera project-config.json
+
+# INPUT — MySQL (conexión Hop: mysql → DB_MYSQL_*)
+Host: 10.1.1.217
+Port: 3306
+Database: gappsdb
+User: gapps
+Password: Knjux4a9tJCbrly!
+Tabla: T_MVC_MULTACOERCITIVA_MC
+
+# INPUT — Oracle SISUD (conexión Hop: oracle_sisud → DB_ORA_SISUD_*)
+# Nota: usuario remoto CSEPDV (no SISUD); schema preferido en metadata sigue SISUD
+Host: odaprod-scan
+Port: 1534
+Service: oefabd
+User: CSEPDV
+Password: vWqFlNPWZQ0Fov
+Tablas: CSEP_INFORMES_VIEW, VW_MULTA_COERCITIVA
+
+# OUTPUT — Oracle DW / BD_CURSOR (DB_ORA_DW_* y DB_ORA_REPO_*)
+Host: 10.6.0.15
+Port: 1532
+Service: dvoefacore
+User: REPOCSEP
+Password: desarrollo24

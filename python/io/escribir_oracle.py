@@ -1,7 +1,6 @@
 """SALIDA legado: DataFrame -> tabla Oracle BD_CURSOR (TRUNCATE + INSERT + COUNT).
 
-Skip si las credenciales DB_ORA_REPO_* son placeholders. Smoke test H2-only
-sin Oracle. ETLs nuevos: MySQL o Excel, no este escritor.
+ETLs nuevos: MySQL o Excel, no este escritor.
 """
 
 from __future__ import annotations
@@ -10,7 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from config import conn_vars, is_placeholder, load_vars
+from config import load_vars, require_live_conn
 
 
 def escribir_oracle(
@@ -21,19 +20,7 @@ def escribir_oracle(
     esquema: str = "MI_ESQUEMA",
 ) -> int | None:
     variables = load_vars(root)
-    cv = conn_vars("oracle_BD_CURSOR", variables)
-    if (
-        is_placeholder(cv["host"])
-        or is_placeholder(cv["username"])
-        or is_placeholder(cv["password"])
-        or is_placeholder(cv["database"])
-    ):
-        print(
-            f"AVISO: credenciales Oracle placeholder -> se OMITE el write "
-            f"(tabla {esquema}.{tabla})."
-        )
-        print(f"Resultado en memoria: {len(df)} filas x {len(df.columns)} columnas")
-        return None
+    cv = require_live_conn("oracle_BD_CURSOR", variables)
 
     try:
         import oracledb

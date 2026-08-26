@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from config import conn_vars, is_placeholder, load_vars, project_root
+from config import load_vars, project_root, require_live_conn
 
 ESQUEMA = "APP"
 DDL_DIR = "docs/lineamientos/ddl"
@@ -53,15 +53,7 @@ INSERT_ORDEN = (
 
 def _connect(root: Path):
     variables = load_vars(root)
-    cv = conn_vars("oracle_dw", variables)
-    if (
-        is_placeholder(cv["host"])
-        or is_placeholder(cv["username"])
-        or is_placeholder(cv["password"])
-        or is_placeholder(cv["database"])
-    ):
-        print("AVISO: credenciales Oracle DW placeholder -> se OMITE carga BD_CURSOR.")
-        return None, cv
+    cv = require_live_conn("oracle_dw", variables)
     try:
         import oracledb
     except ImportError as exc:
@@ -356,8 +348,6 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
         return {}
 
     conn, cv = _connect(root)
-    if conn is None:
-        return {}
 
     counts: dict[str, int] = {}
     try:

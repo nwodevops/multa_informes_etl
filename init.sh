@@ -61,10 +61,14 @@ else
   warn "hop-run no encontrado ($HOP_RUN); STG Excel puede quedar vacío"
 fi
 
-step "Staging Oracle / MySQL (si credenciales configuradas)"
-./h2/scripts/stage_if_configured.sh oracle_sisud pipelines/pl_stage_oracle.hpl || true
-./h2/scripts/stage_if_configured.sh oracle_sisud pipelines/pl_stage_informes.hpl || true
-./h2/scripts/stage_if_configured.sh mysql pipelines/pl_stage_mysql.hpl || true
+step "Staging Oracle / MySQL (Hop directo)"
+if [ -x "$HOP_RUN" ]; then
+  "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_oracle.hpl" -r local
+  "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_informes.hpl" -r local
+  "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_mysql.hpl" -r local
+else
+  fail "hop-run no encontrado ($HOP_RUN); requerido para staging Oracle/MySQL"
+fi
 
 step "Python main (logica Fases 2-7 + carga DW)"
 set +e
@@ -85,7 +89,7 @@ if grep -q "DW:" "$LOG"; then
   fi
   grep "DW:.*(OK)" "$LOG" || warn "carga DW sin líneas (OK); revisar credenciales oracle_dw"
 else
-  warn "sin líneas DW: (Oracle omitido o placeholders DB_ORA_DW_*)"
+  fail "sin líneas DW: en log (carga Oracle obligatoria)"
 fi
 
 if grep -q '\${[A-Za-z0-9_]\+}' "$LOG"; then
@@ -99,17 +103,9 @@ from pathlib import Path
 
 ROOT = Path(".")
 sys.path.insert(0, str(ROOT / "python"))
-from config import conn_vars, is_placeholder, load_vars  # noqa: E402
+from config import require_live_conn, load_vars  # noqa: E402
 
-cv = conn_vars("oracle_dw", load_vars(ROOT))
-if (
-    is_placeholder(cv["host"])
-    or is_placeholder(cv["username"])
-    or is_placeholder(cv["password"])
-    or is_placeholder(cv["database"])
-):
-    print("Oracle omitido (credenciales placeholder)")
-    sys.exit(0)
+cv = require_live_conn("oracle_dw", load_vars(ROOT))
 
 import oracledb  # noqa: E402
 

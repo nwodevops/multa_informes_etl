@@ -109,6 +109,5 @@ Fuera de la capa Python; no la cubre `./init.sh` completo.
 
 - Corrida GUI completa de `wf_main.hwf` (Hop visual).
 - Validación Power BI (Fase 8).
-- Staging Oracle/MySQL si credenciales son placeholders `<...>` (se omite con AVISO).
 
-Para smoke con datos reales: `./init.sh` con Excel local + credenciales completas, o Play `wf_main.hwf` en Hop.
+Para smoke con datos reales: `./switch-env.sh local` y `./init.sh` (Oracle/MySQL/Hop obligatorios), o Play `wf_main.hwf` en Hop.

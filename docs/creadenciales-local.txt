@@ -1,0 +1,28 @@
+# Credenciales LOCAL — referencia humana (no commitear secretos en git)
+# Aplicar: ./switch-env.sh local  →  regenera project-config.json
+
+# INPUT — MySQL (conexión Hop: mysql → DB_MYSQL_*)
+Host: localhost
+Port: 3307
+Database: gappsdb
+User: gapps
+Password: gapps2026
+RootPassword: MysqlRoot2026
+Tabla: T_MVC_MULTACOERCITIVA_MC
+
+# INPUT — Oracle SISUD (conexión Hop: oracle_sisud → DB_ORA_SISUD_*)
+Host: localhost
+Port: 1523
+Service: XEPDB1
+SysPassword: OraclePwd2026
+User: SISUD
+Password: sisud2026
+Tablas: CSEP_INFORMES_VIEW, VW_MULTA_COERCITIVA
+
+# OUTPUT — Oracle DW / BD_CURSOR (DB_ORA_DW_* y DB_ORA_REPO_*)
+Host: localhost
+Port: 1524
+Service: BD_CURSOR
+SysPassword: OraclePwd2026
+User: app
+Password: app2026

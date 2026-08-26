@@ -59,6 +59,13 @@
       "evidencia": "progress/impl_fase-7-indicadores.md"
     },
     {
+      "id": "infra-staging-directo",
+      "title": "Staging Hop directo + credenciales local/remote",
+      "status": "done",
+      "criterio": "./init.sh → HARNESS OK sin skips placeholder",
+      "doc": "docs/verification.md"
+    },
+    {
       "id": "fase-8-powerbi",
       "title": "Power BI contra tablas BD_CURSOR",
       "status": "pending",

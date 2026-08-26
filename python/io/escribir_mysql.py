@@ -1,7 +1,4 @@
-"""SALIDA default: DataFrame -> tabla MySQL (TRUNCATE + INSERT + COUNT).
-
-Skip si las credenciales DB_MYSQL_* son placeholders.
-"""
+"""SALIDA default: DataFrame -> tabla MySQL (TRUNCATE + INSERT + COUNT)."""
 
 from __future__ import annotations
 
@@ -9,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from config import conn_vars, is_placeholder, load_vars
+from config import load_vars, require_live_conn
 
 
 def escribir_mysql(
@@ -19,17 +16,7 @@ def escribir_mysql(
     tabla: str = "RESULTADO",
 ) -> int | None:
     variables = load_vars(root)
-    cv = conn_vars("mysql", variables)
-    if (
-        is_placeholder(cv["host"])
-        or is_placeholder(cv["username"])
-        or is_placeholder(cv["password"])
-        or is_placeholder(cv["database"])
-    ):
-        print(
-            f"AVISO: credenciales MySQL placeholder -> se OMITE el write (tabla {tabla})."
-        )
-        return None
+    cv = require_live_conn("mysql", variables)
 
     try:
         import mysql.connector

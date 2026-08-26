@@ -3,7 +3,7 @@
     {
       "name": "DB_H2_URL",
       "value": "jdbc:h2:tcp://localhost:9092/mem:csep;DB_CLOSE_DELAY=-1;MODE=Oracle;DATABASE_TO_UPPER=TRUE;DEFAULT_NULL_ORDERING=HIGH;AUTO_RECONNECT=TRUE",
-      "description": "JDBC URL H2 - BD in-memory mem:csep (igual en todos los entornos)"
+      "description": "JDBC URL H2 - BD in-memory mem:csep"
     },
     {
       "name": "DB_H2_HOST",
@@ -32,122 +32,122 @@
     },
     {
       "name": "DB_ORA_SISUD_URL",
-      "value": "jdbc:oracle:thin:@//odaprod-scan:1534/oefabd",
+      "value": "jdbc:oracle:thin:@//<HOST>:<PUERTO>/<SERVICE>",
       "description": "JDBC URL Oracle oefabd (SISUD fuente) REMOTO"
     },
     {
       "name": "DB_ORA_SISUD_HOST",
-      "value": "odaprod-scan",
-      "description": "Host Oracle oefabd (SISUD fuente) REMOTO"
+      "value": "<HOST>",
+      "description": "Host Oracle oefabd REMOTO"
     },
     {
       "name": "DB_ORA_SISUD_PORT",
-      "value": "1534",
-      "description": "Puerto Oracle oefabd (SISUD fuente) REMOTO"
+      "value": "<PUERTO>",
+      "description": "Puerto Oracle oefabd REMOTO"
     },
     {
       "name": "DB_ORA_SISUD_DATABASE",
-      "value": "oefabd",
-      "description": "Service Oracle oefabd (SISUD fuente) REMOTO"
+      "value": "<SERVICE>",
+      "description": "Service Oracle oefabd REMOTO"
     },
     {
       "name": "DB_ORA_SISUD_USERNAME",
-      "value": "CSEPDV",
-      "description": "Usuario Oracle oefabd (SISUD fuente) REMOTO"
+      "value": "<USUARIO>",
+      "description": "Usuario Oracle oefabd REMOTO"
     },
     {
       "name": "DB_ORA_SISUD_PASSWORD",
-      "value": "vWqFlNPWZQ0Fov",
-      "description": "Password Oracle oefabd (SISUD fuente) REMOTO"
+      "value": "<PASSWORD>",
+      "description": "Password Oracle oefabd REMOTO"
     },
     {
       "name": "DB_ORA_REPO_URL",
-      "value": "jdbc:oracle:thin:@//10.6.0.15:1532/dvoefacore",
-      "description": "JDBC URL Oracle BD_CURSOR (destino legado) REMOTO"
+      "value": "jdbc:oracle:thin:@//<HOST>:<PUERTO>/<SERVICE>",
+      "description": "JDBC URL Oracle BD_CURSOR (destino) REMOTO"
     },
     {
       "name": "DB_ORA_REPO_HOST",
-      "value": "10.6.0.15",
-      "description": "Host Oracle BD_CURSOR (destino legado) REMOTO"
+      "value": "<HOST>",
+      "description": "Host Oracle BD_CURSOR REMOTO"
     },
     {
       "name": "DB_ORA_REPO_PORT",
-      "value": "1532",
-      "description": "Puerto Oracle BD_CURSOR (destino legado) REMOTO"
+      "value": "<PUERTO>",
+      "description": "Puerto Oracle BD_CURSOR REMOTO"
     },
     {
       "name": "DB_ORA_REPO_DATABASE",
-      "value": "dvoefacore",
-      "description": "Service Oracle BD_CURSOR (destino legado) REMOTO"
+      "value": "<SERVICE>",
+      "description": "Service Oracle BD_CURSOR REMOTO"
     },
     {
       "name": "DB_ORA_REPO_USERNAME",
-      "value": "REPOCSEP",
-      "description": "Usuario Oracle BD_CURSOR (destino legado) REMOTO"
+      "value": "<USUARIO>",
+      "description": "Usuario Oracle BD_CURSOR REMOTO"
     },
     {
       "name": "DB_ORA_REPO_PASSWORD",
-      "value": "desarrollo24",
-      "description": "Password Oracle BD_CURSOR (destino legado) REMOTO"
+      "value": "<PASSWORD>",
+      "description": "Password Oracle BD_CURSOR REMOTO"
     },
     {
       "name": "DB_ORA_DW_URL",
-      "value": "jdbc:oracle:thin:@//10.6.0.15:1532/dvoefacore",
-      "description": "JDBC URL Oracle DW BD_CURSOR REMOTO"
+      "value": "jdbc:oracle:thin:@//<HOST>:<PUERTO>/<SERVICE>",
+      "description": "JDBC URL Oracle DW REMOTO"
     },
     {
       "name": "DB_ORA_DW_HOST",
-      "value": "10.6.0.15",
+      "value": "<HOST>",
       "description": "Host Oracle DW REMOTO"
     },
     {
       "name": "DB_ORA_DW_PORT",
-      "value": "1532",
+      "value": "<PUERTO>",
       "description": "Puerto Oracle DW REMOTO"
     },
     {
       "name": "DB_ORA_DW_DATABASE",
-      "value": "dvoefacore",
+      "value": "<SERVICE>",
       "description": "Service Oracle DW REMOTO"
     },
     {
       "name": "DB_ORA_DW_USERNAME",
-      "value": "REPOCSEP",
+      "value": "<USUARIO>",
       "description": "Usuario Oracle DW REMOTO"
     },
     {
       "name": "DB_ORA_DW_PASSWORD",
-      "value": "desarrollo24",
+      "value": "<PASSWORD>",
       "description": "Password Oracle DW REMOTO"
     },
     {
       "name": "DB_MYSQL_URL",
-      "value": "jdbc:mysql://10.1.1.217:3306/gappsdb",
+      "value": "jdbc:mysql://<HOST>:<PUERTO>/<DB>",
       "description": "JDBC URL MySQL REMOTO"
     },
     {
       "name": "DB_MYSQL_HOST",
-      "value": "10.1.1.217",
+      "value": "<HOST>",
       "description": "Host MySQL REMOTO"
     },
     {
       "name": "DB_MYSQL_PORT",
-      "value": "3306",
+      "value": "<PUERTO>",
       "description": "Puerto MySQL REMOTO"
     },
     {
       "name": "DB_MYSQL_DATABASE",
-      "value": "gappsdb",
+      "value": "<DB>",
       "description": "Database MySQL REMOTO"
     },
     {
       "name": "DB_MYSQL_USERNAME",
-      "value": "gapps",
+      "value": "<USUARIO>",
       "description": "Usuario MySQL REMOTO"
     },
     {
       "name": "DB_MYSQL_PASSWORD",
-      "value": "Knjux4a9tJCbrly!",
+      "value": "<PASSWORD>",
       "description": "Password MySQL REMOTO"
     }
   ]

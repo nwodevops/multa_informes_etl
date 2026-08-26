@@ -18,7 +18,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
-from config import conn_vars, is_placeholder, load_sources, load_vars, project_root  # noqa: E402
+from config import load_sources, load_vars, project_root, require_live_conn  # noqa: E402
 from introspect import excel, mysql, oracle, sheets  # noqa: E402
 from introspect.h2_ddl import apply_h2, create_table_sql, write_script  # noqa: E402
 
@@ -62,13 +62,7 @@ def main(argv: list[str] | None = None) -> int:
                 "oracle_sisud" if typ == "oracle" else "mysql" if typ == "mysql" else None
             )
             if conn_name:
-                try:
-                    cv = conn_vars(conn_name, variables)
-                except ValueError:
-                    cv = {}
-                if is_placeholder(cv.get("host")) or is_placeholder(cv.get("username")):
-                    print(f"AVISO: {stg} omitido (credenciales placeholder {conn_name})")
-                    continue
+                require_live_conn(conn_name, variables)
         cols = handler(src, variables, root)
         sql = create_table_sql(stg, cols)
         statements.append((stg, sql))
