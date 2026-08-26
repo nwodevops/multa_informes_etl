@@ -5,6 +5,7 @@ project-config.json
 .~*
 h2/sql/02_stg.sql
 h2/h2_server.log
+output/init_win_*.log
 .venv/
 __pycache__/
 *.pyc
