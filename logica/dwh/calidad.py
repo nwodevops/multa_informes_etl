@@ -1,4 +1,4 @@
-"""Fase 4 — reglas R01–R05 y bitácora DQ_HALLAZGO (lineamiento sec. 4)."""
+"""Fase 4 — reglas R01–R05 y bitácora MI_DQ_HALLAZGO (lineamiento sec. 4)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from .catalogos import DIM_PARAMETRO_UIT
+from .catalogos import MI_DIM_PARAMETRO_UIT
 from .constantes import ID_CARGA
 from .homologacion import vacio
 
@@ -75,7 +75,7 @@ def _anio_fecha(v) -> int | None:
 def _uit_anio(anio: int | None) -> float | None:
     if anio is None:
         return None
-    return DIM_PARAMETRO_UIT.get(anio)
+    return MI_DIM_PARAMETRO_UIT.get(anio)
 
 
 def _validar_multas(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
@@ -92,7 +92,7 @@ def _validar_multas(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
             _hallazgo(
                 regla,
                 str(row.get("FUENTE_ORIGEN", "")),
-                "FACT_MULTA_COERCITIVA",
+                "MI_FACT_MULTA_COERCITIVA",
                 _registro_id(row),
                 campo,
                 valor,
@@ -179,7 +179,7 @@ def _validar_informes(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
                     _hallazgo(
                         "R01",
                         str(row.get("FUENTE_ORIGEN", "SISUD_INF")),
-                        "FACT_INFORME_SUPERVISION",
+                        "MI_FACT_INFORME_SUPERVISION",
                         _registro_id(row),
                         "IDACTIVIDAD",
                         row.get("IDACTIVIDAD"),
@@ -195,7 +195,7 @@ def _validar_informes(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
                             _hallazgo(
                                 "R03",
                                 str(row.get("FUENTE_ORIGEN", "SISUD_INF")),
-                                "FACT_INFORME_SUPERVISION",
+                                "MI_FACT_INFORME_SUPERVISION",
                                 _registro_id(row),
                                 "F_FIN",
                                 fin,
@@ -272,7 +272,7 @@ def aplicar_calidad(
     df_multas: pd.DataFrame,
     df_informes: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Marca conformidad, arma DQ_HALLAZGO y QA_AMARRE. No elimina filas."""
+    """Marca conformidad, arma MI_DQ_HALLAZGO y QA_AMARRE. No elimina filas."""
     multas = df_multas.copy()
     informes = df_informes.copy()
     hallazgos: list[dict] = []

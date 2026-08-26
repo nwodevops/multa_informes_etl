@@ -337,8 +337,8 @@ def _k5_calidad(
 ) -> list[dict]:
     rows: list[dict] = []
     tablas = {
-        "MULTAS": ("FACT_MULTA_COERCITIVA", df_multas),
-        "INFORMES": ("FACT_INFORME_SUPERVISION", df_informes),
+        "MULTAS": ("MI_FACT_MULTA_COERCITIVA", df_multas),
+        "INFORMES": ("MI_FACT_INFORME_SUPERVISION", df_informes),
     }
 
     for etiqueta, (tabla, df) in tablas.items():
@@ -425,7 +425,7 @@ def calcular_indicadores(
     qa_amarre: pd.DataFrame,
     dim_org: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Calcula K1–K5 en memoria listos para INDICADOR_RESULTADO."""
+    """Calcula K1–K5 en memoria listos para MI_INDICADOR_RESULTADO."""
     _ = dim_org
     rows: list[dict] = []
     rows.extend(_k1_cobertura(fact_mc, fact_inf))

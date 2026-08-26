@@ -14,9 +14,9 @@ Módulo tipo: `python/io/cargar_dw.py`. Patrón **full refresh**: TRUNCATE hijos
 ## Flujo `_prepare_schema`
 
 1. DROP vistas legacy (`VW_FCT_*`) si existen.
-2. Si falta modelo core (`DIM_TIEMPO`…`DQ_HALLAZGO`): aplicar DDL `01`→`02`→`03`→`04`.
-3. Si core existe pero falta `INDICADOR_RESULTADO`: solo DDL `04` (**no** droppear todo el modelo).
-4. Si `DQ_HALLAZGO` es esquema VARCHAR legacy: DROP + recrear `03`.
+2. Si falta modelo core (`MI_DIM_TIEMPO`…`MI_DQ_HALLAZGO`): aplicar DDL `01`→`02`→`03`→`04`.
+3. Si core existe pero falta `MI_INDICADOR_RESULTADO`: solo DDL `04` (**no** droppear todo el modelo).
+4. Si `MI_DQ_HALLAZGO` es esquema VARCHAR legacy: DROP + recrear `03`.
 
 ## DDL desde Python
 
@@ -33,8 +33,8 @@ cur.execute("SELECT tablespace_name FROM user_ts_quotas WHERE ...")
 ## Orden TRUNCATE / INSERT
 
 ```
-INDICADOR_RESULTADO → DET_* → FACT_* → DIM_* → DQ_HALLAZGO
-INSERT: DIM_* → FACT_* → DET_* → DQ_* → INDICADOR_RESULTADO
+MI_INDICADOR_RESULTADO → DET_* → FACT_* → DIM_* → MI_DQ_HALLAZGO
+INSERT: DIM_* → FACT_* → DET_* → DQ_* → MI_INDICADOR_RESULTADO
 ```
 
 ## Coerción de tipos (`_coerce_for_oracle`)
@@ -56,7 +56,7 @@ No pasar float a columna VARCHAR (DPY-3013).
 ## Verificación
 
 ```
-DW: FACT_MULTA_COERCITIVA: 571 filas -> 571 en BD (OK)
+DW: MI_FACT_MULTA_COERCITIVA: 571 filas -> 571 en BD (OK)
 ```
 
 Criterio: `n_bd == n_df` por tabla (excepto identity auto-generada no usada).

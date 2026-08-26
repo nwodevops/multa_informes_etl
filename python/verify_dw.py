@@ -20,10 +20,10 @@ from config import load_vars, project_root, require_live_conn  # noqa: E402
 
 ESQUEMA = "APP"
 TABLAS = (
-    "FACT_MULTA_COERCITIVA",
-    "FACT_INFORME_SUPERVISION",
-    "INDICADOR_RESULTADO",
-    "DQ_HALLAZGO",
+    "MI_FACT_MULTA_COERCITIVA",
+    "MI_FACT_INFORME_SUPERVISION",
+    "MI_INDICADOR_RESULTADO",
+    "MI_DQ_HALLAZGO",
 )
 
 
@@ -60,7 +60,7 @@ def main() -> int:
             cur.execute(
                 f"""
                 SELECT COD_INDICADOR, COUNT(*)
-                FROM {ESQUEMA}.INDICADOR_RESULTADO
+                FROM {ESQUEMA}.MI_INDICADOR_RESULTADO
                 GROUP BY COD_INDICADOR ORDER BY 1
                 """
             )
@@ -70,7 +70,7 @@ def main() -> int:
                 for cod, n in rows:
                     print(f"  {cod}: {n}")
             else:
-                print("INDICADOR_RESULTADO: 0 filas — ejecuta ./init.sh o wf_main.hwf")
+                print("MI_INDICADOR_RESULTADO: 0 filas — ejecuta ./init.sh o wf_main.hwf")
         except Exception as exc:
             print(f"Indicadores: ERROR {exc}")
 

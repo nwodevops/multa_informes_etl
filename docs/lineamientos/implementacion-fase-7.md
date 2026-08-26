@@ -6,7 +6,7 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) secciones 5
 
 | Módulo | Fase | Entregable |
 |---|---|---|
-| `logica/dwh/indicadores.py` | 7 | K1–K5 → `INDICADOR_RESULTADO` en memoria |
+| `logica/dwh/indicadores.py` | 7 | K1–K5 → `MI_INDICADOR_RESULTADO` en memoria |
 | `docs/lineamientos/ddl/04_indicadores.sql` | 7 | DDL Oracle |
 | `python/io/cargar_dw.py` | 6–7 | TRUNCATE+INSERT incluye indicadores |
 | `logica/dwh/pipeline.py` | 2–7 | Orquestación extendida |
@@ -25,7 +25,7 @@ Entrada: hechos y dataframes post-calidad en memoria (no re-lectura Oracle).
 
 ## Criterio de avance
 
-- Tabla `INDICADOR_RESULTADO` en BD_CURSOR con DDL formal (`04_indicadores.sql`).
+- Tabla `MI_INDICADOR_RESULTADO` en BD_CURSOR con DDL formal (`04_indicadores.sql`).
 - `COUNT(*)` Oracle = filas del DataFrame.
 - Presencia de K1–K5; segunda corrida con mismo H2 → mismos `VALOR`/`NUMERADOR`/`DENOMINADOR`.
 
@@ -39,11 +39,11 @@ Consulta Oracle:
 
 ```sql
 SELECT COD_INDICADOR, METRICA, COUNT(*)
-FROM APP.INDICADOR_RESULTADO
+FROM APP.MI_INDICADOR_RESULTADO
 GROUP BY COD_INDICADOR, METRICA
 ORDER BY 1, 2;
 ```
 
 ## Pendiente (Fase 8)
 
-- Conectar/validar Power BI contra `INDICADOR_RESULTADO` y tablas del modelo.
+- Conectar/validar Power BI contra `MI_INDICADOR_RESULTADO` y tablas del modelo.

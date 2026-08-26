@@ -20,10 +20,10 @@ Detalle por fase: [phases.md](phases.md).
 |:---:|---|---|
 | 2 | `PROF_*`, `DICCIONARIO` | `perfilamiento.py`, `diccionario.py` |
 | 3 | `DF_MULTAS`, `DF_INFORMES`, `DF_ETAPAS` | `homologacion.py`, `integracion.py` |
-| 4 | `FG_CONFORME`, `DQ_HALLAZGO`, `QA_AMARRE` | `calidad.py` |
+| 4 | `FG_CONFORME`, `MI_DQ_HALLAZGO`, `QA_AMARRE` | `calidad.py` |
 | 5 | `DIM_*`, `FACT_*`, `DET_*` | `dimensional.py` |
 | 6 | Carga Oracle | `python/io/cargar_dw.py` |
-| 7 | `INDICADOR_RESULTADO` K1–K5 | `indicadores.py` |
+| 7 | `MI_INDICADOR_RESULTADO` K1–K5 | `indicadores.py` |
 
 Orquestación: `logica/dwh/pipeline.py` → `logica/ejecutar.py` → `python/main.py`.
 
@@ -67,7 +67,7 @@ logica/dwh/
 
 ## Indicadores (Fase 7)
 
-- Una tabla `INDICADOR_RESULTADO` (filas largas: `COD_INDICADOR`, `METRICA`, `NUMERADOR`, `DENOMINADOR`, `VALOR`).
+- Una tabla `MI_INDICADOR_RESULTADO` (filas largas: `COD_INDICADOR`, `METRICA`, `NUMERADOR`, `DENOMINADOR`, `VALOR`).
 - Calcular **en memoria** tras construir hechos; no re-leer Oracle.
 - Grano común K1–K4: `(ANIO, ID_ORGANO)` + fila `SUBGRANO=TOTAL`.
 - Reproducibilidad: misma corrida H2 → mismos valores (criterio de aceptación).

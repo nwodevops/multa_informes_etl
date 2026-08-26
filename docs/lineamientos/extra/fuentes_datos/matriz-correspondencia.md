@@ -5,7 +5,7 @@
 | Medida administrativa | `COD_MA` | `COD_MA` / `AUX_COD_MA` | — | (en `MEDIDA_ADMINISTRATIVA`) | `COD_MA` |
 | Código CUM | — | — | `TX_IDCUM` | `CUM` | `CUM` (normalizado) |
 | Código CAM | — | — | `TX_IDCAM` | `CAM` | `CAM` (normalizado) |
-| Expediente supervisión | `EXP_INF_INCUMP` | `EXP_INF_INCUMP` | — | `NUMERO_EXPEDIENTE` | `NUMERO_EXPEDIENTE` → FK a `FACT_INFORME_SUPERVISION` (`TXCUC`/`TXNUMEXP`) |
+| Expediente supervisión | `EXP_INF_INCUMP` | `EXP_INF_INCUMP` | — | `NUMERO_EXPEDIENTE` | `NUMERO_EXPEDIENTE` → FK a `MI_FACT_INFORME_SUPERVISION` (`TXCUC`/`TXNUMEXP`) |
 | Resolución MC | `N_RES_MC` | `N_RES_MC` | — | `RESOLUCION` | `N_RES_MC` |
 | Monto UIT | `MULTA_UIT` | `MULTA_UIT` | `NU_MONTOMCUIT` | `MONTO_MULTA` | `MONTO_UIT` (conciliado R07) |
 | Monto S/ | `MULTA_S` | `MULTA_S` | `NU_MONTOMCS` | — | `MONTO_S` |

@@ -16,21 +16,21 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 
 **Evidencia:**
 
-- Smoke: `INDICADOR_RESULTADO` ~585 filas en Oracle; segunda corrida reproducible.
+- Smoke: `MI_INDICADOR_RESULTADO` ~585 filas en Oracle; segunda corrida reproducible.
 - Docs: `docs/lineamientos/implementacion-fase-*.md`, `docs/fase1-3/status.md`.
 
 **Siguiente feature pendiente:** `fase-8-powerbi` (Power BI; validación manual).
 
 ---
 
-## 2026-08-19 — Fase 7 cerrada (regresión INDICADOR_RESULTADO)
+## 2026-08-19 — Fase 7 cerrada (regresión MI_INDICADOR_RESULTADO)
 
 **Feature:** `fase-7-indicadores` → `done`
 
 **Evidencia wf_main (21:57):**
 
-- `INDICADOR_RESULTADO: 585 filas -> 585 en BD (OK)`
-- POST-CARGA APP.INDICADOR_RESULTADO = 585; K1–K5 presentes
+- `MI_INDICADOR_RESULTADO: 585 filas -> 585 en BD (OK)`
+- POST-CARGA APP.MI_INDICADOR_RESULTADO = 585; K1–K5 presentes
 - Destino: `app@localhost:1524/BD_CURSOR` esquema APP
 
 **Notas:** Regresión «tabla vacía» resuelta — cliente SQL debe usar puerto **1524** (ver `impl_fase-7-indicadores.md`).
@@ -52,6 +52,6 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 - `environments/remote.json` rellenado; `project-config.json` = local vía `./switch-env.sh local`.
 - Plantillas `environments/*.example.json`; secretos en `.gitignore`.
 
-**Evidencia:** `./init.sh` → **HARNESS OK** (585 filas `INDICADOR_RESULTADO`, K1–K5).
+**Evidencia:** `./init.sh` → **HARNESS OK** (585 filas `MI_INDICADOR_RESULTADO`, K1–K5).
 
 **Siguiente:** `fase-8-powerbi` (`pending`).

@@ -100,7 +100,7 @@ construir.
 | H5 | Lógica de negocio atrapada en fórmulas de Google Sheets (`WORKDAY.INTL`, `IMPORTRANGE`) | Migración a reglas Python documentadas |
 | H6 | Catálogos con `IMPORTRANGE` roto (feriados, UBIGEO, parámetros, diccionario) | Solicitud a CSEP de exportación con valores + siembra de valores oficiales (UIT-MEF) como contingencia |
 | H7 | Dos versiones del registro de multas (F1 32 col. vs F2 48 col.) | Una sola tabla integrada con columna `FUENTE_ORIGEN` |
-| H8 | Estados como texto libre sin catálogo único | Tabla `DIM_ESTADO` homologada y aprobada por CSEP |
+| H8 | Estados como texto libre sin catálogo único | Tabla `MI_DIM_ESTADO` homologada y aprobada por CSEP |
 | H9 | Claves de cruce sin correspondencia total entre fuentes | Tabla de equivalencias + % de amarre como métrica de calidad (no bloqueante) |
 
 ---
@@ -135,20 +135,20 @@ completo se calcula en Python y se materializa **únicamente** en Oracle BD_CURS
 
 | Tabla (en BD_CURSOR) | Grano | Notas |
 |---|---|---|
-| `FACT_MULTA_COERCITIVA` | Una medida administrativa con su multa coercitiva, integrando F1+F2+F4+F5 | Hecho acumulativo: una sola fila recorre notificación → descargos → análisis → imposición → verificación → cobranza. Fechas de cada hito como columnas `DATE` directas |
-| `FACT_INFORME_SUPERVISION` | Un informe de supervisión (fila de F3) | Vínculo opcional a `FACT_MULTA_COERCITIVA` por expediente, cuando existe amarre |
-| `DET_ETAPA_MC` | Una etapa del workflow de elaboración de la multa (hoja "2) Etapas" de F2) | Tabla de detalle simple, no un tercer hecho dimensional — información operativa de apoyo |
+| `MI_FACT_MULTA_COERCITIVA` | Una medida administrativa con su multa coercitiva, integrando F1+F2+F4+F5 | Hecho acumulativo: una sola fila recorre notificación → descargos → análisis → imposición → verificación → cobranza. Fechas de cada hito como columnas `DATE` directas |
+| `MI_FACT_INFORME_SUPERVISION` | Un informe de supervisión (fila de F3) | Vínculo opcional a `MI_FACT_MULTA_COERCITIVA` por expediente, cuando existe amarre |
+| `MI_DET_ETAPA_MC` | Una etapa del workflow de elaboración de la multa (hoja "2) Etapas" de F2) | Tabla de detalle simple, no un tercer hecho dimensional — información operativa de apoyo |
 
 ### 3.2 Dimensiones
 
 | Tabla (en BD_CURSOR) | Contenido | Actualización |
 |---|---|---|
-| `DIM_TIEMPO` | Fecha, año, mes, trimestre, flag día hábil | Generada una vez, se reutiliza |
-| `DIM_ADMINISTRADO` | Código y razón social normalizada | `UPDATE` simple con marca de última actualización (sin SCD2) |
-| `DIM_ORGANO_UNIDAD` | Oficina/coordinación/dirección (ej. DSIS-CRES, DSEM-CMIN, ODES-MOQ) | ídem |
-| `DIM_MATERIA_SUBSECTOR` | Hidrocarburos, pesquería, minería, etc. | ídem |
-| `DIM_ESTADO` | Catálogo homologado de estados (resuelve H8) | ídem |
-| `DIM_PARAMETRO_UIT` | Año y valor UIT oficial (MEF) | Sembrada una vez, se actualiza al publicarse un nuevo valor |
+| `MI_DIM_TIEMPO` | Fecha, año, mes, trimestre, flag día hábil | Generada una vez, se reutiliza |
+| `MI_DIM_ADMINISTRADO` | Código y razón social normalizada | `UPDATE` simple con marca de última actualización (sin SCD2) |
+| `MI_DIM_ORGANO_UNIDAD` | Oficina/coordinación/dirección (ej. DSIS-CRES, DSEM-CMIN, ODES-MOQ) | ídem |
+| `MI_DIM_MATERIA_SUBSECTOR` | Hidrocarburos, pesquería, minería, etc. | ídem |
+| `MI_DIM_ESTADO` | Catálogo homologado de estados (resuelve H8) | ídem |
+| `MI_DIM_PARAMETRO_UIT` | Año y valor UIT oficial (MEF) | Sembrada una vez, se actualiza al publicarse un nuevo valor |
 
 **Sin SCD Tipo 2.** Un `UPDATE` con marca de última fecha de actualización es suficiente para
 este alcance: las dimensiones de referencia rara vez cambian de nombre en el corto plazo del
@@ -158,7 +158,7 @@ proyecto.
 
 | Tabla (en BD_CURSOR) | Contenido |
 |---|---|
-| `DQ_HALLAZGO` | Regla, fuente, registro, campo, severidad, estado (pendiente/corregido/aceptado). Se materializa en BD_CURSOR (no solo en logs) para que CSEP la pueda auditar directamente desde Power BI si se desea |
+| `MI_DQ_HALLAZGO` | Regla, fuente, registro, campo, severidad, estado (pendiente/corregido/aceptado). Se materializa en BD_CURSOR (no solo en logs) para que CSEP la pueda auditar directamente desde Power BI si se desea |
 
 ---
 
@@ -169,9 +169,9 @@ proyecto.
 3. **Coherencia temporal** (fecha de vencimiento ≥ fecha de notificación, etc.).
 4. **Montos UIT ≥ 0**.
 5. **Coherencia UIT↔soles**: `MONTO_S = MULTA_UIT × UIT(año de la resolución)`, usando
-   `DIM_PARAMETRO_UIT` sembrada con valores oficiales del MEF.
+   `MI_DIM_PARAMETRO_UIT` sembrada con valores oficiales del MEF.
 
-Cada fila que no pasa una regla crítica se registra en `DQ_HALLAZGO` y no bloquea el resto de la
+Cada fila que no pasa una regla crítica se registra en `MI_DQ_HALLAZGO` y no bloquea el resto de la
 carga (el `TRUNCATE + INSERT` continúa con las filas conformes; las no conformes quedan
 documentadas para revisión de CSEP).
 
@@ -188,7 +188,7 @@ documentadas para revisión de CSEP).
 | K5 | Calidad del dato | % de registros conformes por regla de calidad |
 
 Se calculan sobre el modelo dimensional ya cargado y se persisten en una tabla
-`INDICADOR_RESULTADO` en BD_CURSOR, para que Power BI los lea directo sin tener que recalcularlos
+`MI_INDICADOR_RESULTADO` en BD_CURSOR, para que Power BI los lea directo sin tener que recalcularlos
 en el reporte.
 
 ---
@@ -229,7 +229,7 @@ Fases con dependencia estricta — no se avanza a la siguiente hasta cumplir el 
 | | |
 |---|---|
 | **Entrada** | Dataframes integrados (Fase 3) |
-| **Tareas** | Ejecutar las 5 reglas de calidad (sección 4); separar filas conformes de las que van a `DQ_HALLAZGO`; calcular el % de amarre entre fuentes (H9) |
+| **Tareas** | Ejecutar las 5 reglas de calidad (sección 4); separar filas conformes de las que van a `MI_DQ_HALLAZGO`; calcular el % de amarre entre fuentes (H9) |
 | **Salida** | Dataframes validados + registros de hallazgos listos para insertar |
 | **Criterio de avance** | Las 5 reglas se ejecutan sin error; hallazgos críticos tienen tratamiento definido |
 
@@ -238,7 +238,7 @@ Fases con dependencia estricta — no se avanza a la siguiente hasta cumplir el 
 | | |
 |---|---|
 | **Entrada** | Dataframes validados (Fase 4) |
-| **Tareas** | Construir en memoria las dimensiones (`DIM_TIEMPO`, `DIM_ADMINISTRADO`, `DIM_ORGANO_UNIDAD`, `DIM_MATERIA_SUBSECTOR`, `DIM_ESTADO`, `DIM_PARAMETRO_UIT`) y los hechos (`FACT_MULTA_COERCITIVA`, `FACT_INFORME_SUPERVISION`, `DET_ETAPA_MC`) |
+| **Tareas** | Construir en memoria las dimensiones (`MI_DIM_TIEMPO`, `MI_DIM_ADMINISTRADO`, `MI_DIM_ORGANO_UNIDAD`, `MI_DIM_MATERIA_SUBSECTOR`, `MI_DIM_ESTADO`, `MI_DIM_PARAMETRO_UIT`) y los hechos (`MI_FACT_MULTA_COERCITIVA`, `MI_FACT_INFORME_SUPERVISION`, `MI_DET_ETAPA_MC`) |
 | **Salida** | Estructuras finales listas para cargar |
 | **Criterio de avance** | Ningún hecho queda sin dimensión (uso de un miembro "NO ESPECIFICADO") |
 
@@ -247,7 +247,7 @@ Fases con dependencia estricta — no se avanza a la siguiente hasta cumplir el 
 | | |
 |---|---|
 | **Entrada** | Modelo dimensional construido (Fase 5) |
-| **Tareas** | `TRUNCATE + INSERT` de dimensiones, luego hechos, luego `DQ_HALLAZGO`, siguiendo el mismo patrón que ya usa tu capa lógica actual |
+| **Tareas** | `TRUNCATE + INSERT` de dimensiones, luego hechos, luego `MI_DQ_HALLAZGO`, siguiendo el mismo patrón que ya usa tu capa lógica actual |
 | **Salida** | BD_CURSOR actualizado con el modelo completo |
 | **Criterio de avance** | Conteos en BD_CURSOR coinciden con los dataframes de origen |
 
@@ -256,7 +256,7 @@ Fases con dependencia estricta — no se avanza a la siguiente hasta cumplir el 
 | | |
 |---|---|
 | **Entrada** | BD_CURSOR cargado (Fase 6) |
-| **Tareas** | Calcular K1-K5; insertar en `INDICADOR_RESULTADO` |
+| **Tareas** | Calcular K1-K5; insertar en `MI_INDICADOR_RESULTADO` |
 | **Salida** | Indicadores persistidos y reproducibles |
 | **Criterio de avance** | Recalcular sobre el mismo insumo produce el mismo resultado |
 
@@ -286,7 +286,7 @@ Fases con dependencia estricta — no se avanza a la siguiente hasta cumplir el 
 |---|---|---|
 | H2 en memoria se queda sin espacio si el volumen crece | Bajo (volúmenes actuales son pequeños) | Monitorear tamaño de las tablas espejo; si crece, evaluar H2 en modo archivo en vez de memoria |
 | Falla de credenciales de Google Sheets (`client_secret.json` expirado/revocado) | Medio | Documentar el procedimiento de renovación de credenciales como parte de la Fase 1 |
-| Catálogos con `IMPORTRANGE` roto (H6) | Medio | Solicitar a CSEP la exportación con valores antes de la Fase 3; sembrar `DIM_PARAMETRO_UIT` con valores oficiales del MEF como contingencia |
+| Catálogos con `IMPORTRANGE` roto (H6) | Medio | Solicitar a CSEP la exportación con valores antes de la Fase 3; sembrar `MI_DIM_PARAMETRO_UIT` con valores oficiales del MEF como contingencia |
 | Falta de llave única entre multas e informes (H9) | Medio | Tabla de equivalencias + % de amarre reportado como métrica de calidad (K5), no bloqueante |
 | Doble versión del registro de multas (F1 vs F2, H7) | Bajo | Una sola tabla integrada con `FUENTE_ORIGEN` siempre visible |
 
@@ -295,7 +295,7 @@ Fases con dependencia estricta — no se avanza a la siguiente hasta cumplir el 
 ## 8. Criterios de aceptación
 
 1. El step de Hop invoca correctamente el script Python (reemplazando o complementando al `.R`).
-2. Las 5 reglas de calidad se ejecutan en cada corrida y sus hallazgos quedan en `DQ_HALLAZGO`
+2. Las 5 reglas de calidad se ejecutan en cada corrida y sus hallazgos quedan en `MI_DQ_HALLAZGO`
    dentro de BD_CURSOR.
 3. El diccionario de datos y las homologaciones de estado están aprobados por CSEP.
 4. Los indicadores K1-K5 son reproducibles: misma corrida de H2 produce el mismo resultado en

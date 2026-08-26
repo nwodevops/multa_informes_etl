@@ -167,7 +167,7 @@ Respaldo con literales `TIMESTAMP'YYYY-MM-DD HH24:MI:SS'` propios de Oracle. Gra
 
 | Campo | Tipo | Descripción | Observación |
 |---|---|---|---|
-| `IDADMINISTRADO` | Texto | Código del administrado | `ADM13002` — clave natural de `DIM_ADMINISTRADO` |
+| `IDADMINISTRADO` | Texto | Código del administrado | `ADM13002` — clave natural de `MI_DIM_ADMINISTRADO` |
 | `TXADMINISTRADO` | Texto | Razón social | `MAPLE GAS CORPORATION DEL PERU S.R.L.` |
 | `IDSUBUNIDAD` | Texto | Código de la subunidad (UF) | `SUR22764` — clave natural de `DIM_UNIDAD_FISCALIZABLE` |
 | `IDUF_SIG` | Texto | Código UF en SIG | `UF0002810` |
@@ -284,7 +284,7 @@ resolución de MC** (un expediente puede repetirse con varias medidas y CUM).
 | H5 | Lógica de negocio en fórmulas Excel | `WORKDAY.INTL`, `ArrayFormula`, `INDEX/MATCH` | Migración de reglas a la capa DWH documentada |
 | H6 | IMPORTRANGE rotos | `M_FERIADO`, `M_UBIGEO`, `M_PARAMETROS`, `DIC_VARIABLES`, `PARAMETROS` con `#REF!` | Materialización de catálogos + solicitud a CSEP |
 | H7 | Dos versiones del registro de MC | F1 (32 col) vs F2 (48 col) con códigos comunes | Integración en una tabla con `FUENTE_ORIGEN` |
-| H8 | Estados como texto libre | `INCUMPLIDO` (F1), `ACTIVO`/`INACTIVO` (F5), `1` (F4), `EN REVISIÓN` (F3) | `DIM_ESTADO` con homologación aprobada por CSEP |
+| H8 | Estados como texto libre | `INCUMPLIDO` (F1), `ACTIVO`/`INACTIVO` (F5), `1` (F4), `EN REVISIÓN` (F3) | `MI_DIM_ESTADO` con homologación aprobada por CSEP |
 | H9 | Claves de cruce múltiples sin correspondencia total | `CUM`/`CAM` (F4↔F5), `COD_MA` (F1↔F2), expedientes (F5↔F3) | Tabla puente de equivalencias + tasa de amarre medida |
 
 ---

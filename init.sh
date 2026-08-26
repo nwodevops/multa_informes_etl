@@ -81,7 +81,7 @@ step "Comprobando salidas mínimas en log"
 grep -q "Salida PROF_" "$LOG" || fail "no hay salida PROF_* en el log"
 grep -q "Salida DIM_" "$LOG" || fail "no hay salida DIM_* en el log"
 grep -q "Salida FACT_" "$LOG" || fail "no hay salida FACT_* en el log"
-grep -q "Salida INDICADOR_RESULTADO" "$LOG" || fail "no hay INDICADOR_RESULTADO en el log"
+grep -q "Salida MI_INDICADOR_RESULTADO" "$LOG" || fail "no hay MI_INDICADOR_RESULTADO en el log"
 
 if grep -q "DW:" "$LOG"; then
   if grep "DW:.*REVISAR" "$LOG"; then
@@ -112,11 +112,11 @@ import oracledb  # noqa: E402
 dsn = oracledb.makedsn(cv["host"], int(cv["port"] or "1521"), service_name=cv["database"])
 with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as conn:
     with conn.cursor() as cur:
-        cur.execute("SELECT COUNT(*) FROM APP.INDICADOR_RESULTADO")
+        cur.execute("SELECT COUNT(*) FROM APP.MI_INDICADOR_RESULTADO")
         n, = cur.fetchone()
-        print(f"INDICADOR_RESULTADO: {n} filas en Oracle")
+        print(f"MI_INDICADOR_RESULTADO: {n} filas en Oracle")
         cur.execute(
-            "SELECT DISTINCT COD_INDICADOR FROM APP.INDICADOR_RESULTADO ORDER BY 1"
+            "SELECT DISTINCT COD_INDICADOR FROM APP.MI_INDICADOR_RESULTADO ORDER BY 1"
         )
         codes = {r[0] for r in cur.fetchall()}
         missing = sorted({"K1", "K2", "K3", "K4", "K5"} - codes)

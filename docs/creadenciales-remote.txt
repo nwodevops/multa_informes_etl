@@ -18,7 +18,7 @@ User: CSEPDV
 Password: vWqFlNPWZQ0Fov
 Tablas: CSEP_INFORMES_VIEW, VW_MULTA_COERCITIVA
 
-# OUTPUT — Oracle DW / BD_CURSOR (DB_ORA_DW_* y DB_ORA_REPO_*)
+# OUTPUT — 
 Host: 10.6.0.15
 Port: 1532
 Service: dvoefacore

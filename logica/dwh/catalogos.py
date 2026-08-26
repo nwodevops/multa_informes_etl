@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-# Semillas DIM_ESTADO (ddl/01_dimensiones.sql) — pendiente aprobación CSEP
-DIM_ESTADO: list[tuple[str, str, str, str]] = [
+# Semillas MI_DIM_ESTADO (ddl/01_dimensiones.sql) — pendiente aprobación CSEP
+MI_DIM_ESTADO: list[tuple[str, str, str, str]] = [
     ("RESOLUCION", "ACTIVO", "Resolución activa", "VIGENTE"),
     ("RESOLUCION", "INACTIVO", "Resolución inactiva", "CERRADO"),
     ("MULTA", "ACTIVO", "Multa activa", "VIGENTE"),
@@ -22,7 +22,7 @@ DIM_ESTADO: list[tuple[str, str, str, str]] = [
 ]
 
 # UIT oficial MEF (ddl/01_dimensiones.sql)
-DIM_PARAMETRO_UIT: dict[int, float] = {
+MI_DIM_PARAMETRO_UIT: dict[int, float] = {
     2015: 3850.0,
     2016: 3950.0,
     2017: 4050.0,

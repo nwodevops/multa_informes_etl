@@ -2,7 +2,7 @@
 
 **Fecha:** 2026-08-19  
 **Feature:** `fase-7-indicadores` (`in_progress`)  
-**Reporte:** wf_main terminó OK; log muestra `INDICADOR_RESULTADO: 585 -> 585 (OK)` pero usuario ve tabla vacía.
+**Reporte:** wf_main terminó OK; log muestra `MI_INDICADOR_RESULTADO: 585 -> 585 (OK)` pero usuario ve tabla vacía.
 
 ## Diagnóstico
 
@@ -10,8 +10,8 @@
 
 ```
 Destino: app@localhost:1524/BD_CURSOR  esquema APP
-APP.INDICADOR_RESULTADO: 585 filas
-APP.FACT_MULTA_COERCITIVA: 571 filas
+APP.MI_INDICADOR_RESULTADO: 585 filas
+APP.MI_FACT_MULTA_COERCITIVA: 571 filas
 Indicadores: K1, K2, K3, K4, K5 presentes
 ```
 
@@ -37,8 +37,8 @@ Desde `project-config.json` / `environments/local.json`:
 Consulta de control:
 
 ```sql
-SELECT COUNT(*) FROM APP.INDICADOR_RESULTADO;
-SELECT COD_INDICADOR, COUNT(*) FROM APP.INDICADOR_RESULTADO GROUP BY COD_INDICADOR;
+SELECT COUNT(*) FROM APP.MI_INDICADOR_RESULTADO;
+SELECT COD_INDICADOR, COUNT(*) FROM APP.MI_INDICADOR_RESULTADO GROUP BY COD_INDICADOR;
 ```
 
 ## Cambios en repo
@@ -60,11 +60,11 @@ En el log de Hop debe aparecer ahora:
 
 ```
 DW: destino app@localhost:1524/BD_CURSOR esquema APP
-DW: POST-CARGA APP.INDICADOR_RESULTADO = 585 filas (esperado 585)
+DW: POST-CARGA APP.MI_INDICADOR_RESULTADO = 585 filas (esperado 585)
 DW: indicadores presentes: K1, K2, K3, K4, K5
 ```
 
 ## Cierre (2026-08-19 21:57)
 
-- [x] wf_main OK: POST-CARGA APP.INDICADOR_RESULTADO = 585, K1–K5.
+- [x] wf_main OK: POST-CARGA APP.MI_INDICADOR_RESULTADO = 585, K1–K5.
 - [x] `fase-7-indicadores` → `done` en `feature_list.json`.

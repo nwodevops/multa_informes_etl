@@ -6,7 +6,7 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) secciones 3
 
 | Módulo | Fase | Entregable |
 |---|---|---|
-| `logica/dwh/dimensional.py` | 5 | `DIM_*`, `FACT_*`, `DET_ETAPA_MC` en memoria |
+| `logica/dwh/dimensional.py` | 5 | `DIM_*`, `FACT_*`, `MI_DET_ETAPA_MC` en memoria |
 | `python/io/cargar_dw.py` | 6 | TRUNCATE+INSERT a Oracle BD_CURSOR |
 | `logica/dwh/pipeline.py` | 2–6 | Orquestación extendida |
 
@@ -14,7 +14,7 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) secciones 3
 
 - Ningún hecho sin dimensión resuelta (fallback `ID_* = -1`).
 - Amarre multas↔informes por `NUMERO_EXPEDIENTE` ↔ `TXCUC`/`TXNUMEXP` (H9).
-- `DET_ETAPA_MC.ID_MC` por `COD_PROY_MC` cuando existe hecho padre.
+- `MI_DET_ETAPA_MC.ID_MC` por `COD_PROY_MC` cuando existe hecho padre.
 
 ## Fase 6 — criterio de avance
 

@@ -2,7 +2,7 @@
 name: auditable-soft-quarantine
 description: >-
   Cuarentena blanda para ETLs auditables: defectos se marcan (FG_CONFORME,
-  DQ_HALLAZGO) en lugar de descartarse porque son parte del entregable. Reglas
+  MI_DQ_HALLAZGO) en lugar de descartarse porque son parte del entregable. Reglas
   R01–R05, QA_AMARRE entre fuentes sin llave conformada, conteos por capa.
   Usar en consultorías/TDR donde hay que defender cifras ante un tercero, al
   diseñar calidad de datos o indicadores K5 de amarre.
@@ -17,7 +17,7 @@ description: >-
 | Pregunta | Si sí → |
 |---|---|
 | ¿Los defectos son hallazgo entregable? | Cuarentena blanda |
-| ¿Hay que defender cifras ante un tercero? | `DQ_HALLAZGO` materializado |
+| ¿Hay que defender cifras ante un tercero? | `MI_DQ_HALLAZGO` materializado |
 | ¿Varias fuentes sin llave única? | `QA_AMARRE` + KPI de amarre (K5), no INNER JOIN forzado |
 
 Si solo hay que limpiar datos y nadie audita → ETL clásico con rechazo es más simple.
@@ -28,9 +28,9 @@ Si solo hay que limpiar datos y nadie audita → ETL clásico con rechazo es má
 flowchart LR
   STG["STG_* H2"]
   DF["DF_* integrados"]
-  QA["FG_CONFORME + DQ_HALLAZGO"]
+  QA["FG_CONFORME + MI_DQ_HALLAZGO"]
   DIM["DIM_* / FACT_*"]
-  IND["INDICADOR_RESULTADO"]
+  IND["MI_INDICADOR_RESULTADO"]
 
   STG --> DF --> QA --> DIM --> IND
 ```
@@ -40,9 +40,9 @@ flowchart LR
 | `STG_*` | Copia 1:1, efímera, VARCHAR tolerante |
 | `DF_*` | Integración + homologación tipada |
 | `FG_CONFORME` | Marca S/N por fila; **no filtra** |
-| `DQ_HALLAZGO` | Bitácora por regla, registro, campo |
+| `MI_DQ_HALLAZGO` | Bitácora por regla, registro, campo |
 | `FACT_*` | Carga **todas** las filas; defectos también van al hecho |
-| `INDICADOR_RESULTADO` | K5 reporta % conforme y % amarre |
+| `MI_INDICADOR_RESULTADO` | K5 reporta % conforme y % amarre |
 
 ## Reglas de calidad (plantilla R01–R05)
 
@@ -65,7 +65,7 @@ Implementación: `aplicar_calidad()` devuelve dataframes **sin drop** + lista/`D
 ## Invariantes a loguear (no bloqueantes)
 
 - `sum(K1 por grano) = COUNT(hecho)` si cada fila cae en un bucket.
-- `COUNT(DQ_HALLAZGO)` coherente con no conformes (puede haber múltiples reglas por registro).
+- `COUNT(MI_DQ_HALLAZGO)` coherente con no conformes (puede haber múltiples reglas por registro).
 - Segunda corrida mismo insumo → mismos conteos y KPIs.
 
 ## Anti-patrones
@@ -83,4 +83,4 @@ Una rama por **fase de servicio** del contrato (fase-1, fase-2, fase-3), no carp
 
 - `logica/dwh/calidad.py` — reglas y `QA_AMARRE`
 - `logica/dwh/indicadores.py` — K5 `PCT_CONFORME`, `PCT_AMARRE`
-- `docs/lineamientos/ddl/03_bitacora.sql` — `DQ_HALLAZGO`
+- `docs/lineamientos/ddl/03_bitacora.sql` — `MI_DQ_HALLAZGO`

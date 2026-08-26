@@ -1,5 +1,5 @@
 {
-  "project": "etl_phyton_cursor",
+  "project": "multa_informes_etl",
   "lineamiento": "docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md",
   "branch_trabajo": "fase-1-lineamiento",
   "reglas": {
@@ -71,6 +71,27 @@
       "status": "pending",
       "criterio": "CHECKPOINTS.md#fase-8",
       "doc": null
+    },
+    {
+      "id": "fase-win-compat",
+      "title": "Windows workflows (wf_main_win.hwf, wf_create_stg_win.hwf, init.bat)",
+      "status": "done",
+      "criterio": "wf_main_win.hwf ejecuta en Hop Windows sin errores SHELL",
+      "doc": null
+    },
+    {
+      "id": "fase-remote-deploy",
+      "title": "Despliegue remoto (credenciales REPOCSEP → 10.6.0.15:1532/dvoefacore)",
+      "status": "done",
+      "criterio": "project-config.json con credenciales remote, init.bat → HARNESS OK",
+      "doc": "environments/remote.json"
+    },
+    {
+      "id": "fase-rename-dw",
+      "title": "Rename DW tables to MI_ prefix (MI_DIM_*, MI_FACT_*, MI_DET_*, MI_DQ_*, MI_INDICADOR_RESULTADO)",
+      "status": "in_progress",
+      "criterio": "All 11 DW tables renamed across DDL, Python, docs; init.bat → HARNESS OK",
+      "doc": "docs/lineamientos/ddl/"
     }
   ]
 }

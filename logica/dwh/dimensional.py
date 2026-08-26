@@ -8,7 +8,7 @@ from datetime import date, datetime
 
 import pandas as pd
 
-from .catalogos import DIM_ESTADO as SEMILLAS_ESTADO, DIM_PARAMETRO_UIT as UIT_MEF
+from .catalogos import MI_DIM_ESTADO as SEMILLAS_ESTADO, MI_DIM_PARAMETRO_UIT as UIT_MEF
 from .constantes import ID_CARGA
 from .homologacion import homologar_estado, vacio
 
@@ -578,7 +578,7 @@ def construir_modelo(
     df_informes: pd.DataFrame,
     df_etapas: pd.DataFrame,
 ) -> dict[str, pd.DataFrame]:
-    """Fase 5: arma DIM_*, FACT_* y DET_ETAPA_MC listos para carga Oracle."""
+    """Fase 5: arma DIM_*, FACT_* y MI_DET_ETAPA_MC listos para carga Oracle."""
     dim_tiempo = _build_dim_tiempo()
     dim_estado = _build_dim_estado(df_multas, df_informes)
     dim_uit = _build_dim_uit()
@@ -595,13 +595,13 @@ def construir_modelo(
     det_etapas = _build_det_etapas(df_etapas, fact_multas)
 
     return {
-        "DIM_TIEMPO": dim_tiempo,
-        "DIM_ADMINISTRADO": dim_admin,
-        "DIM_ORGANO_UNIDAD": dim_organo,
-        "DIM_MATERIA_SUBSECTOR": dim_materia,
-        "DIM_ESTADO": dim_estado,
-        "DIM_PARAMETRO_UIT": dim_uit,
-        "FACT_INFORME_SUPERVISION": fact_informes,
-        "FACT_MULTA_COERCITIVA": fact_multas,
-        "DET_ETAPA_MC": det_etapas,
+        "MI_DIM_TIEMPO": dim_tiempo,
+        "MI_DIM_ADMINISTRADO": dim_admin,
+        "MI_DIM_ORGANO_UNIDAD": dim_organo,
+        "MI_DIM_MATERIA_SUBSECTOR": dim_materia,
+        "MI_DIM_ESTADO": dim_estado,
+        "MI_DIM_PARAMETRO_UIT": dim_uit,
+        "MI_FACT_INFORME_SUPERVISION": fact_informes,
+        "MI_FACT_MULTA_COERCITIVA": fact_multas,
+        "MI_DET_ETAPA_MC": det_etapas,
     }

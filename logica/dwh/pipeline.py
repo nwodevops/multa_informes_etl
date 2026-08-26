@@ -44,13 +44,13 @@ def ejecutar(
     df_multas, df_informes, dq_hallazgo, qa_amarre = aplicar_calidad(df_multas, df_informes)
     modelo = construir_modelo(df_multas, df_informes, df_etapas)
     indicadores = calcular_indicadores(
-        modelo["FACT_MULTA_COERCITIVA"],
-        modelo["FACT_INFORME_SUPERVISION"],
+        modelo["MI_FACT_MULTA_COERCITIVA"],
+        modelo["MI_FACT_INFORME_SUPERVISION"],
         df_multas,
         df_informes,
         dq_hallazgo,
         qa_amarre,
-        modelo.get("DIM_ORGANO_UNIDAD"),
+        modelo.get("MI_DIM_ORGANO_UNIDAD"),
     )
 
     n_conf_m = int((df_multas.get("FG_CONFORME") == "S").sum()) if len(df_multas) else 0
@@ -68,12 +68,12 @@ def ejecutar(
                 "N_DF_MULTAS": len(df_multas),
                 "N_DF_INFORMES": len(df_informes),
                 "N_DF_ETAPAS": len(df_etapas),
-                "N_DQ_HALLAZGO": len(dq_hallazgo),
+                "N_MI_DQ_HALLAZGO": len(dq_hallazgo),
                 "N_MULTAS_CONFORMES": n_conf_m,
                 "N_INFORMES_CONFORMES": n_conf_i,
-                "N_FACT_MULTAS": len(modelo["FACT_MULTA_COERCITIVA"]),
-                "N_FACT_INFORMES": len(modelo["FACT_INFORME_SUPERVISION"]),
-                "N_DET_ETAPAS": len(modelo["DET_ETAPA_MC"]),
+                "N_FACT_MULTAS": len(modelo["MI_FACT_MULTA_COERCITIVA"]),
+                "N_FACT_INFORMES": len(modelo["MI_FACT_INFORME_SUPERVISION"]),
+                "N_DET_ETAPAS": len(modelo["MI_DET_ETAPA_MC"]),
                 "N_INDICADORES": len(indicadores),
             }
         ]
@@ -86,9 +86,9 @@ def ejecutar(
         "DF_MULTAS": df_multas,
         "DF_INFORMES": df_informes,
         "DF_ETAPAS": df_etapas,
-        "DQ_HALLAZGO": dq_hallazgo,
+        "MI_DQ_HALLAZGO": dq_hallazgo,
         "QA_AMARRE": qa_amarre,
-        "INDICADOR_RESULTADO": indicadores,
+        "MI_INDICADOR_RESULTADO": indicadores,
         "RESULTADO": resultado,
     }
     out.update(modelo)

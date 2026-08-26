@@ -48,7 +48,7 @@ Módulos: `logica/dwh/homologacion.py`, `logica/dwh/integracion.py`.
 ## Fase 4 — Calidad {#fase-4}
 
 - [ ] `FG_CONFORME` en dataframes; reglas R01–R05 aplicadas.
-- [ ] `DQ_HALLAZGO` append (cuarentena blanda: no se eliminan filas).
+- [ ] `MI_DQ_HALLAZGO` append (cuarentena blanda: no se eliminan filas).
 - [ ] `QA_AMARRE` con % puente H9 documentado.
 
 Módulo: `logica/dwh/calidad.py`. Skill: `.agents/skills/auditable-soft-quarantine/`.
@@ -57,7 +57,7 @@ Módulo: `logica/dwh/calidad.py`. Skill: `.agents/skills/auditable-soft-quaranti
 
 ## Fase 5 — Modelo dimensional {#fase-5}
 
-- [ ] Seis `DIM_*`, `FACT_MULTA_COERCITIVA`, `FACT_INFORME_SUPERVISION`, `DET_ETAPA_MC`.
+- [ ] Seis `DIM_*`, `MI_FACT_MULTA_COERCITIVA`, `MI_FACT_INFORME_SUPERVISION`, `MI_DET_ETAPA_MC`.
 - [ ] Miembro `-1` en dimensiones; ningún hecho con FK huérfana sin `-1`.
 
 Módulo: `logica/dwh/dimensional.py`.
@@ -69,7 +69,7 @@ Módulo: `logica/dwh/dimensional.py`.
 - [ ] DDL formal aplicado (`docs/lineamientos/ddl/01`–`03`).
 - [ ] Vistas legacy `VW_FCT_*` eliminadas si existían.
 - [ ] Por cada tabla cargada: log `DW: <tabla>: N filas -> N en BD (OK)`.
-- [ ] `COUNT(*)` Oracle = filas del DataFrame (excepto `DQ_HALLAZGO`: `>=`).
+- [ ] `COUNT(*)` Oracle = filas del DataFrame (excepto `MI_DQ_HALLAZGO`: `>=`).
 
 Módulo: `python/io/cargar_dw.py`. Skill: `.agents/skills/oracle-cargar-dw/`.
 
@@ -77,7 +77,7 @@ Módulo: `python/io/cargar_dw.py`. Skill: `.agents/skills/oracle-cargar-dw/`.
 
 ## Fase 7 — Indicadores {#fase-7}
 
-- [ ] Tabla `INDICADOR_RESULTADO` con DDL `04_indicadores.sql`.
+- [ ] Tabla `MI_INDICADOR_RESULTADO` con DDL `04_indicadores.sql`.
 - [ ] Presencia de códigos K1, K2, K3, K4, K5.
 - [ ] Segunda corrida con mismo staging → mismos `VALOR` / `NUMERADOR` / `DENOMINADOR`.
 - [ ] Conteo típico de referencia: ~585 filas (depende del entorno de datos).
@@ -88,7 +88,7 @@ Consulta Oracle:
 
 ```sql
 SELECT COD_INDICADOR, METRICA, COUNT(*)
-FROM APP.INDICADOR_RESULTADO
+FROM APP.MI_INDICADOR_RESULTADO
 GROUP BY COD_INDICADOR, METRICA
 ORDER BY 1, 2;
 ```
@@ -98,7 +98,7 @@ ORDER BY 1, 2;
 ## Fase 8 — Power BI {#fase-8}
 
 - [ ] `.pbix` conectado a Oracle BD_CURSOR (`oracle_dw` / `DB_ORA_DW_*`).
-- [ ] Medidas/visualizaciones leen `INDICADOR_RESULTADO` y hechos validados.
+- [ ] Medidas/visualizaciones leen `MI_INDICADOR_RESULTADO` y hechos validados.
 - [ ] Validación manual documentada en `progress/impl_fase-8-powerbi.md`.
 
 Fuera de la capa Python; no la cubre `./init.sh` completo.

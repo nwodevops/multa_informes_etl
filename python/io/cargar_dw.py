@@ -19,35 +19,35 @@ VISTAS_LEGACY = (
     "VW_FCT_MC_SISUD_VALIDADA",
 )
 TABLAS_DIM = (
-    "DIM_TIEMPO",
-    "DIM_ADMINISTRADO",
-    "DIM_ORGANO_UNIDAD",
-    "DIM_MATERIA_SUBSECTOR",
-    "DIM_ESTADO",
-    "DIM_PARAMETRO_UIT",
+    "MI_DIM_TIEMPO",
+    "MI_DIM_ADMINISTRADO",
+    "MI_DIM_ORGANO_UNIDAD",
+    "MI_DIM_MATERIA_SUBSECTOR",
+    "MI_DIM_ESTADO",
+    "MI_DIM_PARAMETRO_UIT",
 )
 TABLAS_HECHOS = (
-    "FACT_INFORME_SUPERVISION",
-    "FACT_MULTA_COERCITIVA",
-    "DET_ETAPA_MC",
+    "MI_FACT_INFORME_SUPERVISION",
+    "MI_FACT_MULTA_COERCITIVA",
+    "MI_DET_ETAPA_MC",
 )
-REQUIRED_CORE = (*TABLAS_DIM, *TABLAS_HECHOS, "DQ_HALLAZGO")
-REQUIRED_TABLES = (*REQUIRED_CORE, "INDICADOR_RESULTADO")
+REQUIRED_CORE = (*TABLAS_DIM, *TABLAS_HECHOS, "MI_DQ_HALLAZGO")
+REQUIRED_TABLES = (*REQUIRED_CORE, "MI_INDICADOR_RESULTADO")
 TRUNCATE_ORDEN = (
-    "INDICADOR_RESULTADO",
-    "DET_ETAPA_MC",
-    "FACT_MULTA_COERCITIVA",
-    "FACT_INFORME_SUPERVISION",
+    "MI_INDICADOR_RESULTADO",
+    "MI_DET_ETAPA_MC",
+    "MI_FACT_MULTA_COERCITIVA",
+    "MI_FACT_INFORME_SUPERVISION",
     *TABLAS_DIM,
-    "DQ_HALLAZGO",
+    "MI_DQ_HALLAZGO",
 )
 INSERT_ORDEN = (
     *TABLAS_DIM,
-    "FACT_INFORME_SUPERVISION",
-    "FACT_MULTA_COERCITIVA",
-    "DET_ETAPA_MC",
-    "DQ_HALLAZGO",
-    "INDICADOR_RESULTADO",
+    "MI_FACT_INFORME_SUPERVISION",
+    "MI_FACT_MULTA_COERCITIVA",
+    "MI_DET_ETAPA_MC",
+    "MI_DQ_HALLAZGO",
+    "MI_INDICADOR_RESULTADO",
 )
 
 
@@ -71,21 +71,21 @@ def _verificar_post_carga(cur, counts: dict[str, int], cv: dict[str, str]) -> No
     """Log explícito para cruzar con el cliente SQL (evita falso 'tabla vacía')."""
     dest = _destino_label(cv)
     print(f"DW: destino {dest}")
-    for tabla in ("FACT_MULTA_COERCITIVA", "INDICADOR_RESULTADO"):
+    for tabla in ("MI_FACT_MULTA_COERCITIVA", "MI_INDICADOR_RESULTADO"):
         if tabla not in counts:
             continue
         cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.{tabla}")
         n = int(cur.fetchone()[0])
         print(f"DW: POST-CARGA {ESQUEMA}.{tabla} = {n} filas (esperado {counts[tabla]})")
-    if "INDICADOR_RESULTADO" in counts:
+    if "MI_INDICADOR_RESULTADO" in counts:
         cur.execute(
-            f"SELECT DISTINCT COD_INDICADOR FROM {ESQUEMA}.INDICADOR_RESULTADO ORDER BY 1"
+            f"SELECT DISTINCT COD_INDICADOR FROM {ESQUEMA}.MI_INDICADOR_RESULTADO ORDER BY 1"
         )
         codes = [r[0] for r in cur.fetchall()]
         print(f"DW: indicadores presentes: {', '.join(codes) or '(ninguno)'}")
         print(
             f"DW: verificar en SQL*Plus/SQL Developer con la MISMA conexión ({dest}): "
-            f"SELECT COUNT(*) FROM {ESQUEMA}.INDICADOR_RESULTADO;"
+            f"SELECT COUNT(*) FROM {ESQUEMA}.MI_INDICADOR_RESULTADO;"
         )
 
 
@@ -158,7 +158,7 @@ def _model_complete(cur) -> bool:
 
 
 def _indicadores_ready(cur) -> bool:
-    return _table_exists(cur, "INDICADOR_RESULTADO")
+    return _table_exists(cur, "MI_INDICADOR_RESULTADO")
 
 
 def _drop_model_tables(cur) -> None:
@@ -205,13 +205,13 @@ def _prepare_schema(cur, root: Path) -> None:
         _run_ddl_file(cur, ddl_root / "02_hechos.sql", ts)
         _run_ddl_file(cur, ddl_root / "03_bitacora.sql", ts)
         _run_ddl_file(cur, ddl_root / "04_indicadores.sql", ts)
-    elif _table_exists(cur, "DQ_HALLAZGO") and not _column_exists(cur, "DQ_HALLAZGO", "ID_HALLAZGO"):
-        print("DW: DROP DQ_HALLAZGO (esquema legacy VARCHAR) -> recrear")
-        cur.execute(f"DROP TABLE {ESQUEMA}.DQ_HALLAZGO PURGE")
+    elif _table_exists(cur, "MI_DQ_HALLAZGO") and not _column_exists(cur, "MI_DQ_HALLAZGO", "ID_HALLAZGO"):
+        print("DW: DROP MI_DQ_HALLAZGO (esquema legacy VARCHAR) -> recrear")
+        cur.execute(f"DROP TABLE {ESQUEMA}.MI_DQ_HALLAZGO PURGE")
         _run_ddl_file(cur, ddl_root / "03_bitacora.sql", ts)
         if not _indicadores_ready(cur):
             _run_ddl_file(cur, ddl_root / "04_indicadores.sql", ts)
-    elif not _table_exists(cur, "DQ_HALLAZGO"):
+    elif not _table_exists(cur, "MI_DQ_HALLAZGO"):
         _run_ddl_file(cur, ddl_root / "03_bitacora.sql", ts)
         if not _indicadores_ready(cur):
             _run_ddl_file(cur, ddl_root / "04_indicadores.sql", ts)
@@ -302,7 +302,7 @@ def _cell(v, data_type: str = "VARCHAR2", varchar_limit: int | None = None):
 
 
 def _insert_df(cur, tabla: str, df: pd.DataFrame, skip_identity: bool = True) -> int:
-    if df.empty and tabla != "DQ_HALLAZGO":
+    if df.empty and tabla != "MI_DQ_HALLAZGO":
         cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.{tabla}")
         return int(cur.fetchone()[0])
     meta = _column_meta(cur, tabla)
@@ -370,11 +370,11 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
                     cur,
                     tabla,
                     df,
-                    skip_identity=(tabla in ("DQ_HALLAZGO", "INDICADOR_RESULTADO")),
+                    skip_identity=(tabla in ("MI_DQ_HALLAZGO", "MI_INDICADOR_RESULTADO")),
                 )
                 conn.commit()
                 counts[tabla] = n_bd
-                ok = "OK" if n_bd == n_df or (tabla == "DQ_HALLAZGO" and n_bd >= n_df) else "REVISAR"
+                ok = "OK" if n_bd == n_df or (tabla == "MI_DQ_HALLAZGO" and n_bd >= n_df) else "REVISAR"
                 print(f"DW: {tabla}: {n_df} filas -> {n_bd} en BD ({ok})")
             _verificar_post_carga(cur, counts, cv)
             conn.commit()

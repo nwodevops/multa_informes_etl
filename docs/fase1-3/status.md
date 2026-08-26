@@ -57,10 +57,10 @@ flowchart TB
 | **1** | Entorno Python: leer H2, conectar BD_CURSOR, invocado desde Hop | **Listo** | `python/main.py`, `leer_h2.py`, `escribir_dw.py`, `.venv`, `wf_main.hwf` |
 | **2** | Perfilamiento + diccionario de las 5 fuentes; evidencia H1–H9 | **Implementado** | `logica/dwh/perfilamiento.py`, `diccionario.py` → `PROF_*`, `DICCIONARIO` |
 | **3** | Homologación + dataframes integrados tipificados en memoria | **Implementado** | `homologacion.py`, `integracion.py` → `DF_MULTAS`, `DF_INFORMES`, `DF_ETAPAS` |
-| **4** | R01–R05, `DQ_HALLAZGO`, % amarre H9 | **Implementado** | `calidad.py` |
-| **5** | `DIM_*`, `FACT_*`, `DET_ETAPA_MC` en memoria | **Implementado** | `dimensional.py` |
+| **4** | R01–R05, `MI_DQ_HALLAZGO`, % amarre H9 | **Implementado** | `calidad.py` |
+| **5** | `DIM_*`, `FACT_*`, `MI_DET_ETAPA_MC` en memoria | **Implementado** | `dimensional.py` |
 | **6** | Carga TRUNCATE+INSERT a BD_CURSOR | **Implementado** | `python/io/cargar_dw.py` |
-| **7** | KPIs `INDICADOR_RESULTADO` K1–K5 | **Implementado** | `logica/dwh/indicadores.py`, `ddl/04_indicadores.sql` |
+| **7** | KPIs `MI_INDICADOR_RESULTADO` K1–K5 | **Implementado** | `logica/dwh/indicadores.py`, `ddl/04_indicadores.sql` |
 | **8+** | Power BI contra BD_CURSOR | **Pendiente** | Fase 8 lineamiento |
 
 ---
@@ -72,7 +72,7 @@ flowchart LR
   STG["STG_* H2"]
   P2["PROF_RESUMEN<br/>PROF_HALLAZGO<br/>DICCIONARIO"]
   P3["DF_MULTAS<br/>DF_INFORMES<br/>DF_ETAPAS"]
-  P4["FG_CONFORME<br/>DQ_HALLAZGO<br/>QA_AMARRE"]
+  P4["FG_CONFORME<br/>MI_DQ_HALLAZGO<br/>QA_AMARRE"]
   RES["RESULTADO"]
 
   STG --> P2 --> P3 --> P4 --> RES
@@ -86,7 +86,7 @@ flowchart LR
 | `DF_MULTAS` | 3–4 | No (incluye `FG_CONFORME`) |
 | `DF_INFORMES` | 3–4 | No (incluye `FG_CONFORME`) |
 | `DF_ETAPAS` | 3 | No |
-| `DQ_HALLAZGO` | 4 | Append a BD_CURSOR si credenciales OK |
+| `MI_DQ_HALLAZGO` | 4 | Append a BD_CURSOR si credenciales OK |
 | `QA_AMARRE` | 4 | No — memoria + log |
 | `RESULTADO` | 2–4 | No — resumen de corrida |
 
@@ -130,12 +130,12 @@ Tablas previstas (DDL en [`lineamientos/ddl/`](../lineamientos/ddl/)), **pendien
 
 | Grupo | Tablas |
 |---|---|
-| Dimensiones | `DIM_TIEMPO`, `DIM_ADMINISTRADO`, `DIM_ORGANO_UNIDAD`, `DIM_MATERIA_SUBSECTOR`, `DIM_ESTADO`, `DIM_PARAMETRO_UIT` |
-| Hechos | `FACT_MULTA_COERCITIVA`, `FACT_INFORME_SUPERVISION`, `DET_ETAPA_MC` |
-| Calidad | `DQ_HALLAZGO` (Fase 4+) |
-| Indicadores | `INDICADOR_RESULTADO` (Fase 7) |
+| Dimensiones | `MI_DIM_TIEMPO`, `MI_DIM_ADMINISTRADO`, `MI_DIM_ORGANO_UNIDAD`, `MI_DIM_MATERIA_SUBSECTOR`, `MI_DIM_ESTADO`, `MI_DIM_PARAMETRO_UIT` |
+| Hechos | `MI_FACT_MULTA_COERCITIVA`, `MI_FACT_INFORME_SUPERVISION`, `MI_DET_ETAPA_MC` |
+| Calidad | `MI_DQ_HALLAZGO` (Fase 4+) |
+| Indicadores | `MI_INDICADOR_RESULTADO` (Fase 7) |
 
-El módulo [`python/io/cargar_dw.py`](../../python/io/cargar_dw.py) aplica DDL formal, elimina vistas `VW_FCT_*` legacy y carga `DIM_*`/`FACT_*`/`DET_*`/`DQ_HALLAZGO` con TRUNCATE+INSERT.
+El módulo [`python/io/cargar_dw.py`](../../python/io/cargar_dw.py) aplica DDL formal, elimina vistas `VW_FCT_*` legacy y carga `DIM_*`/`FACT_*`/`DET_*`/`MI_DQ_HALLAZGO` con TRUNCATE+INSERT.
 
 ```mermaid
 flowchart LR
@@ -143,7 +143,7 @@ flowchart LR
     STG8["8 tablas STG_* + DEMO"]
   end
   subgraph oranow [Oracle hoy]
-    DQonly["Append DQ_HALLAZGO"]
+    DQonly["Append MI_DQ_HALLAZGO"]
   end
   subgraph orafut [BD_CURSOR futuro Fase 6]
     DIM["DIM_*"]
@@ -196,4 +196,4 @@ Detalle técnico: [`lineamientos/implementacion-fase-2-3.md`](../lineamientos/im
 
 ## Próximo hito (Fase 8 del lineamiento)
 
-Validar tablero Power BI contra `INDICADOR_RESULTADO` y tablas `DIM_*`/`FACT_*` en BD_CURSOR.
+Validar tablero Power BI contra `MI_INDICADOR_RESULTADO` y tablas `DIM_*`/`FACT_*` en BD_CURSOR.

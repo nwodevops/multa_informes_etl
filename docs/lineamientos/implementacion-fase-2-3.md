@@ -16,7 +16,7 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) sección 6.
 
 **Fase 2:** todo campo F1–F5 en `DICCIONARIO`; `PROF_HALLAZGO` documenta H1–H9.
 
-**Fase 3:** `DF_MULTAS`, `DF_INFORMES`, `DF_ETAPAS` sin errores de tipo; estados mapeados a catálogo `DIM_ESTADO` (semillas ddl/01).
+**Fase 3:** `DF_MULTAS`, `DF_INFORMES`, `DF_ETAPAS` sin errores de tipo; estados mapeados a catálogo `MI_DIM_ESTADO` (semillas ddl/01).
 
 ## Verificación
 
@@ -31,6 +31,6 @@ Revisar log: conteos de `PROF_*`, `DICCIONARIO`, `DF_*`.
 
 ## Pendiente (Fase 4+)
 
-- ~~Reglas R01–R05 → `DQ_HALLAZGO`~~ → ver [`implementacion-fase-4.md`](implementacion-fase-4.md)
+- ~~Reglas R01–R05 → `MI_DQ_HALLAZGO`~~ → ver [`implementacion-fase-4.md`](implementacion-fase-4.md)
 - `FACT_*` / `DIM_*` en memoria y carga Oracle (Fases 5–6)
-- `INDICADOR_RESULTADO` K1–K5 (Fase 7)
+- `MI_INDICADOR_RESULTADO` K1–K5 (Fase 7)

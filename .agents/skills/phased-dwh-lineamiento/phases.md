@@ -16,15 +16,15 @@ Referencia canónica: `docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`.
 
 ## Fase 4 — Calidad
 
-**Salida:** `FG_CONFORME` en dataframes; `DQ_HALLAZGO`; `QA_AMARRE` (% puente H9).
+**Salida:** `FG_CONFORME` en dataframes; `MI_DQ_HALLAZGO`; `QA_AMARRE` (% puente H9).
 
 **Reglas:** R01 completitud, R02 CUM/CAM, R03 temporal, R04 UIT≥0, R05 UIT↔soles.
 
-**Principio:** no eliminar filas; marcar y registrar en `DQ_HALLAZGO`.
+**Principio:** no eliminar filas; marcar y registrar en `MI_DQ_HALLAZGO`.
 
 ## Fase 5 — Modelo dimensional
 
-**Salida:** `DIM_*` (6), `FACT_MULTA_COERCITIVA`, `FACT_INFORME_SUPERVISION`, `DET_ETAPA_MC`.
+**Salida:** `DIM_*` (6), `MI_FACT_MULTA_COERCITIVA`, `MI_FACT_INFORME_SUPERVISION`, `MI_DET_ETAPA_MC`.
 
 **Avance:** ningún hecho sin dimensión (`ID_* = -1` si falta lookup).
 
@@ -36,7 +36,7 @@ Referencia canónica: `docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`.
 
 ## Fase 7 — Indicadores
 
-**Salida:** `INDICADOR_RESULTADO` con K1–K5.
+**Salida:** `MI_INDICADOR_RESULTADO` con K1–K5.
 
 | Código | Métrica |
 |---|---|

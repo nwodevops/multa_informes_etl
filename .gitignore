@@ -1,9 +1,7 @@
 
 project-config.json
-environments/local.json
-environments/remote.json
-client_secret.json
-*.xlsx
+
+
 .~*
 h2/sql/02_stg.sql
 h2/h2_server.log

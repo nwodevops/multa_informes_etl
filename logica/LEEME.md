@@ -6,9 +6,9 @@
   - `diccionario.py` — Fase 2: DICCIONARIO
   - `homologacion.py` — Fase 3: CUM/CAM, fechas, texto, estados
   - `integracion.py` — Fase 3: DF_MULTAS, DF_INFORMES, DF_ETAPAS
-  - `calidad.py` — Fase 4: R01–R05, DQ_HALLAZGO, QA_AMARRE (H9)
-  - `dimensional.py` — Fase 5: DIM_*, FACT_*, DET_ETAPA_MC
-  - `indicadores.py` — Fase 7: INDICADOR_RESULTADO (K1–K5)
+  - `calidad.py` — Fase 4: R01–R05, MI_DQ_HALLAZGO, QA_AMARRE (H9)
+  - `dimensional.py` — Fase 5: DIM_*, FACT_*, MI_DET_ETAPA_MC
+  - `indicadores.py` — Fase 7: MI_INDICADOR_RESULTADO (K1–K5)
   - `pipeline.py` — orquesta Fase 2 + 3 + 4 + 5 + 6 + 7 (carga vía main.py)
 - Entrada: DataFrames de `LECTURAS`. Salida: en memoria (ver `python/CONTRATO.md`).
 - No abrir conexiones aqui.
