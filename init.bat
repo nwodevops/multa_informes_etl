@@ -30,8 +30,11 @@ set PY=python
 if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
 
 REM --- Hop (Windows: hop-run.bat; override con set HOP_RUN=...) ---
+REM Orden: HOP_RUN env > D:\Eder\hop > %USERPROFILE%\apps\hop > PATH
 if not defined HOP_RUN (
-    if exist "%USERPROFILE%\apps\hop\hop-run.bat" (
+    if exist "D:\Eder\hop\hop-run.bat" (
+        set "HOP_RUN=D:\Eder\hop\hop-run.bat"
+    ) else if exist "%USERPROFILE%\apps\hop\hop-run.bat" (
         set "HOP_RUN=%USERPROFILE%\apps\hop\hop-run.bat"
     ) else if exist "%USERPROFILE%\apps\hop\hop-run.cmd" (
         set "HOP_RUN=%USERPROFILE%\apps\hop\hop-run.cmd"
@@ -44,6 +47,7 @@ echo PY=%PY%>> "%RUN_LOG%"
 echo HOP_RUN=%HOP_RUN%>> "%RUN_LOG%"
 echo HOP_PROJECT=%HOP_PROJECT%>> "%RUN_LOG%"
 echo.>> "%RUN_LOG%"
+echo %GREEN%==>%NC% HOP_RUN=%HOP_RUN%
 
 call :step "Validando feature_list.json (max. una in_progress)"
 "%PY%" -c "import json,sys; d=json.loads(open('feature_list.json',encoding='utf-8').read()); act=[f for f in d.get('features',[]) if f.get('status')=='in_progress']; print(f'features: {len(d.get(\"features\",[]))}, in_progress: {len(act)}') if len(act)<=1 else sys.exit(f'mas de una feature in_progress: {[f[\"id\"] for f in act]}')" >> "%RUN_LOG%" 2>&1
