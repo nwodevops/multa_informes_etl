@@ -24,7 +24,7 @@ Las filas no conformes se marcan con `FG_CONFORME = N` pero **no se eliminan**.
 ## Criterio de avance
 
 - Las 5 reglas se ejecutan sin error en cada corrida.
-- `MI_DQ_HALLAZGO` listo para insertar (append a BD_CURSOR vía `python/io/escribir_dw.py` si hay credenciales).
+- `MI_DQ_HALLAZGO` listo para insertar (carga a BD_CURSOR vía `python/io/cargar_dw.py` si hay credenciales).
 - `QA_AMARRE` reporta % de amarre entre puentes de fuentes (H9).
 
 ## Verificación

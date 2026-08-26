@@ -50,7 +50,7 @@ flowchart TB
 
 | Fase | Qué pide el lineamiento | Status | Evidencia en repo |
 |:---:|---|:---:|---|
-| **1** | Entorno Python: leer H2, conectar BD_CURSOR, invocado desde Hop | **Listo** | `python/main.py`, `leer_h2.py`, `escribir_dw.py`, `.venv`, `wf_main.hwf` |
+| **1** | Entorno Python: leer H2, conectar BD_CURSOR, invocado desde Hop | **Listo** | `python/main.py`, `leer_h2.py`, `cargar_dw.py`, `.venv`, `wf_main.hwf` |
 | **2** | Perfilamiento + diccionario de las 5 fuentes; evidencia H1–H9 | **Implementado** | `logica/dwh/perfilamiento.py`, `diccionario.py` → `PROF_*`, `DICCIONARIO` |
 | **3** | Homologación + dataframes integrados tipificados en memoria | **Implementado** | `homologacion.py`, `integracion.py` → `DF_MULTAS`, `DF_INFORMES`, `DF_ETAPAS` |
 | **4** | R01–R05, `MI_DQ_HALLAZGO`, % amarre H9 | **Implementado** | `calidad.py` |

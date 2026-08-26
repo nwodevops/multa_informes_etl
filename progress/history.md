@@ -101,3 +101,16 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 **Feature in_progress:** `fase-remote-deploy` — lógica Win OK (~53k informes); falta re-corrida post schema-fix → HARNESS OK / Success DW.
 
 **Comandos Win:** `.\switch-env.ps1 remote` + Hop `wf_main_win.hwf` o `init.bat`
+
+---
+
+## 2026-08-26 — Rama windows limpia (exclusiva Win)
+
+**Hecho:**
+
+- `python/io`: solo `leer_h2.py` + `cargar_dw.py` (borrados `escribir_*` legacy).
+- `AGENTS.md` / `feature_list.json`: rama marcada Windows-exclusive; verificación = `init.bat` / `wf_main_win`.
+- Feature `python-io-cleanup` → done.
+- `fase-remote-deploy` sigue `in_progress` (re-corrida Win pendiente).
+
+**Uso:** solo Windows. Linux → `main`.

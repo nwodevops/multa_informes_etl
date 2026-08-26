@@ -73,8 +73,8 @@ Criterio: `n_bd == n_df` por tabla (excepto identity auto-generada no usada).
 
 ## No reutilizar
 
-- `escribir_dw.py` append VARCHAR auto-CREATE para `DIM_`/`FACT_`.
 - Vistas `VW_FCT_*_VALIDADA` del modelo medallion viejo.
+- Escritores legacy VARCHAR (`escribir_dw` / `escribir_oracle`) — eliminados; solo `cargar_dw.py`.
 
 ## Extender con tabla nueva
 

@@ -70,21 +70,19 @@ etl_cursor/
 │   ├── plantilla_logica.py              #   Plantilla (copiar a logica/; no dejarla ahí)
 │   ├── requirements.txt
 │   ├── introspect/                      #   CAPA STG: schema vivo → Column (no filas)
-│   │   ├── h2_ddl.py                    #     mapeo tipos + CREATE + apply JDBC
+│   │   ├── h2_ddl.py
 │   │   ├── excel.py
 │   │   ├── oracle.py
 │   │   ├── mysql.py
-│   │   └── sheets.py
-│   └── io/                              #   CAPA post-staging: I/O (no introspect)
-│       ├── leer_h2.py                   #     ENTRADA: H2 STG_* → DataFrames (dict LECTURAS)
-│       ├── escribir_excel.py            #     SALIDA default: output/resultado.xlsx
-│       ├── escribir_mysql.py            #     SALIDA default: MySQL
-│       └── escribir_oracle.py           #     SALIDA legado: Oracle BD_CURSOR
+│   │   └── sheets.py                    #   handler opcional (inputs type sheets)
+│   └── io/                              #   CAPA post-staging: I/O
+│       ├── leer_h2.py                   #     ENTRADA: H2 STG_* → DataFrames
+│       └── cargar_dw.py                 #     SALIDA: TRUNCATE+INSERT MI_* → Oracle DW
 │
-├── logica/                              # Zona de pegado (fuera de python/): un solo .py
+├── logica/                              # Zona de pegado: un solo .py (+ paquete dwh/)
 │   ├── LEEME.md
-│   └── ejemplo_demo.py
-│
+│   ├── ejecutar.py
+│   └── dwh/
 ├── workflows/
 │   ├── wf_create_stg.hwf                # Diseño: Reset H2 → Python STG → Success (H2 vivo)
 │   └── wf_main.hwf                      # Corrida: Reset H2 → Python STG → Excel + Oracle + MySQL → demo → Run Python

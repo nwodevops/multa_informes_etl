@@ -1,13 +1,14 @@
-# python/io/ — I/O de la capa post-staging
+# python/io/ — I/O post-staging
 
-Hop ya cargó `STG_*`. Aquí solo se lee H2 y se escribe el destino.
+Hop ya cargó `STG_*`. Aquí solo lectura H2 y carga Oracle DW.
 
-- `leer_h2.py` — `LECTURAS` (contrato de entrada de `logica/` en la raíz)
-- `escribir_excel.py` — `output/fase1.xlsx` (multi-hoja)
-- `escribir_dw.py` — Oracle BD_CURSOR (`INT_` refresh, `QA_` append)
-- `escribir_mysql.py` / `escribir_oracle.py` — no los llama `main.py` en fase 1
-  (MySQL es fuente; BD_CURSOR es legado)
+| Archivo | Rol |
+|---|---|
+| `leer_h2.py` | ENTRADA: `LECTURAS` → DataFrames para `logica/` |
+| `cargar_dw.py` | SALIDA: DDL formal + TRUNCATE+INSERT `MI_*` → Oracle (`DB_ORA_DW_*`) |
 
-No crear `STG_*`. No introspectar Oracle/MySQL/Excel. Eso es `python/introspect/` vía `create_stg.py`.
+No crear `STG_*`. No introspectar fuentes. Eso es `python/introspect/` vía `create_stg.py`.
 
-No importar este paquete como `import io`: choca con la stdlib. `main.py` carga estos módulos por ruta.
+No `import io` (choca con stdlib). `main.py` carga estos módulos por ruta.
+
+Escritores legacy (`escribir_excel` / `escribir_mysql` / `escribir_oracle` / `escribir_dw` VARCHAR) **eliminados** — no los usa este proyecto.

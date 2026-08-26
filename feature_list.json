@@ -2,10 +2,12 @@
   "project": "multa_informes_etl",
   "lineamiento": "docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md",
   "branch_trabajo": "windows",
+  "entorno": "windows-exclusive",
   "reglas": {
     "una_feature_activa": "Como máximo un item con status in_progress",
-    "verificacion": "./init.sh (Linux) o init.bat / wf_main_win.hwf (Windows) → HARNESS OK antes de marcar done",
-    "trazabilidad": "Implementador escribe progress/impl_<id>.md; revisor progress/review_<id>.md"
+    "verificacion": "Windows: .\\switch-env.ps1 remote + init.bat o wf_main_win.hwf → HARNESS OK / Success",
+    "trazabilidad": "Implementador escribe progress/impl_<id>.md; revisor progress/review_<id>.md",
+    "rama": "Esta rama windows es exclusiva para ejecución en Windows; Linux usa main"
   },
   "features": [
     {
@@ -95,12 +97,19 @@
       "doc": "python/io/cargar_dw.py"
     },
     {
+      "id": "python-io-cleanup",
+      "title": "python/io: solo leer_h2 + cargar_dw (sin escribir_* legacy)",
+      "status": "done",
+      "criterio": "main.py usa cargar_dw; borrados escribir_dw/excel/mysql/oracle; LEEME/CONTRATO alineados",
+      "doc": "python/LEEME.md"
+    },
+    {
       "id": "fase-remote-deploy",
       "title": "Despliegue remoto Windows (REPOCSEP → 10.6.0.15:1532/dvoefacore)",
       "status": "in_progress",
       "criterio": "git pull + switch-env.ps1 remote + wf_main_win/init.bat → Success + DW (OK) K1–K5",
       "doc": "environments/remote.json",
-      "nota": "Lógica OK en Win (~53k informes); pendiente re-corrida post fix-dw-schema-user"
+      "nota": "Lógica Win OK (~53k informes); pendiente re-corrida post fix-dw-schema-user"
     }
   ]
 }
