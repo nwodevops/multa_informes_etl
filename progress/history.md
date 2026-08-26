@@ -69,3 +69,19 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 - Nota en `PROPUESTA_ADAPTADA_ETL.md` (sección Fase 8): fuera de alcance en esta implementación.
 
 **Siguiente:** continuar `fase-rename-dw` (`in_progress`) si aplica; lineamiento Fases 1–7 cerrado.
+
+---
+
+## 2026-08-25 — Rename DW MI_ cerrado
+
+**Feature:** `fase-rename-dw` → `done`
+
+**Cambios:**
+
+- DROP legacy sin `MI_` + constraints renombrados (fix `ORA-02264`).
+- `main.py` exporta/carga `MI_DIM_*` / `MI_FACT_*` / `MI_DQ_*`.
+- `init.sh` greps alineados; evidencia Linux: **HARNESS OK**.
+
+**Evidencia:** [`progress/impl_fase-rename-dw.md`](impl_fase-rename-dw.md) — 53288 informes, 571 multas, 585 indicadores, K1–K5.
+
+**Siguiente:** backlog harness vacío (Fase 8 fuera de alcance).

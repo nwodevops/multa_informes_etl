@@ -40,8 +40,22 @@ def _es_salida(nombre: str) -> bool:
         return True
     return any(
         nombre.startswith(p)
-        for p in ("PROF_", "DF_", "DQ_", "QA_", "DIM_", "FACT_", "DET_", "IND_")
-    ) or nombre == "MI_INDICADOR_RESULTADO"
+        for p in (
+            "PROF_",
+            "DF_",
+            "DQ_",
+            "QA_",
+            "DIM_",
+            "FACT_",
+            "DET_",
+            "IND_",
+            "MI_DIM_",
+            "MI_FACT_",
+            "MI_DET_",
+            "MI_DQ_",
+            "MI_INDICADOR_",
+        )
+    )
 
 
 def main() -> int:
@@ -94,7 +108,8 @@ def main() -> int:
     tablas_dw = {
         k: v
         for k, v in salidas.items()
-        if k.startswith(("DIM_", "FACT_", "DET_")) or k in ("MI_DQ_HALLAZGO", "MI_INDICADOR_RESULTADO")
+        if k.startswith(("DIM_", "FACT_", "DET_", "MI_DIM_", "MI_FACT_", "MI_DET_"))
+        or k in ("DQ_HALLAZGO", "MI_DQ_HALLAZGO", "INDICADOR_RESULTADO", "MI_INDICADOR_RESULTADO")
     }
     if tablas_dw:
         cargar = _load("cargar_dw", HERE / "io" / "cargar_dw.py")

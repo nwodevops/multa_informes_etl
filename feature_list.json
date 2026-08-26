@@ -82,9 +82,10 @@
     {
       "id": "fase-rename-dw",
       "title": "Rename DW tables to MI_ prefix (MI_DIM_*, MI_FACT_*, MI_DET_*, MI_DQ_*, MI_INDICADOR_RESULTADO)",
-      "status": "in_progress",
-      "criterio": "All 11 DW tables renamed across DDL, Python, docs; init.bat → HARNESS OK",
-      "doc": "docs/lineamientos/ddl/"
+      "status": "done",
+      "criterio": "All 11 DW tables renamed across DDL, Python, docs; ./init.sh → HARNESS OK",
+      "doc": "docs/lineamientos/ddl/",
+      "evidencia": "progress/impl_fase-rename-dw.md"
     }
   ]
 }

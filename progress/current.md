@@ -6,19 +6,20 @@
 
 | Campo | Valor |
 |---|---|
-| ID | **fase-rename-dw** |
-| Status | in_progress |
-| Criterio | Prefijo `MI_` en 11 tablas DW; `init.bat` / `./init.sh` → HARNESS OK |
+| ID | *(ninguna)* |
+| Status | — |
+| Criterio | — |
 
 ## Plan
 
-1. Cerrar `fase-rename-dw` cuando rename + smoke estén verificados.
-2. Lineamiento Fases 1–7 + infra staging: **cerrados**.
-3. Fase 8 Power BI: **fuera de alcance** (no se realizará).
+1. Lineamiento Fases 1–7 + infra (staging, Windows, remote, rename `MI_`): **cerrados**.
+2. Fase 8 Power BI: **fuera de alcance**.
+3. Siguiente trabajo: abrir feature nueva en `feature_list.json` cuando haga falta.
 
 ## Comandos
 
 ```bash
-.venv/bin/python python/verify_dw.py
+./switch-env.sh local
 ./init.sh
+.venv/bin/python python/verify_dw.py
 ```

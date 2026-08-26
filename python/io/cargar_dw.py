@@ -33,6 +33,20 @@ TABLAS_HECHOS = (
 )
 REQUIRED_CORE = (*TABLAS_DIM, *TABLAS_HECHOS, "MI_DQ_HALLAZGO")
 REQUIRED_TABLES = (*REQUIRED_CORE, "MI_INDICADOR_RESULTADO")
+# Tablas pre-rename (sin prefijo MI_). Sus constraints chocan con el DDL nuevo (ORA-02264).
+TABLAS_LEGACY = (
+    "INDICADOR_RESULTADO",
+    "DET_ETAPA_MC",
+    "FACT_MULTA_COERCITIVA",
+    "FACT_INFORME_SUPERVISION",
+    "DIM_TIEMPO",
+    "DIM_ADMINISTRADO",
+    "DIM_ORGANO_UNIDAD",
+    "DIM_MATERIA_SUBSECTOR",
+    "DIM_ESTADO",
+    "DIM_PARAMETRO_UIT",
+    "DQ_HALLAZGO",
+)
 TRUNCATE_ORDEN = (
     "MI_INDICADOR_RESULTADO",
     "MI_DET_ETAPA_MC",
@@ -148,7 +162,7 @@ def _run_ddl_file(cur, path: Path, tablespace: str | None = None) -> None:
             cur.execute(stmt)
         except Exception as exc:
             msg = str(exc)
-            if "ORA-00955" in msg or "ORA-01430" in msg:
+            if "ORA-00955" in msg or "ORA-01430" in msg or "ORA-02264" in msg:
                 continue
             raise
 
@@ -161,11 +175,27 @@ def _indicadores_ready(cur) -> bool:
     return _table_exists(cur, "MI_INDICADOR_RESULTADO")
 
 
+def _drop_table(cur, tabla: str) -> None:
+    if not _table_exists(cur, tabla):
+        return
+    cur.execute(f"DROP TABLE {ESQUEMA}.{tabla} CASCADE CONSTRAINTS PURGE")
+    print(f"DW: DROP TABLE {tabla}")
+
+
 def _drop_model_tables(cur) -> None:
     for tabla in TRUNCATE_ORDEN:
+        _drop_table(cur, tabla)
+
+
+def _drop_legacy_tables(cur) -> None:
+    """Elimina modelo sin prefijo MI_ (rename). Evita ORA-02264 por constraints reutilizados."""
+    dropped = False
+    for tabla in TABLAS_LEGACY:
         if _table_exists(cur, tabla):
-            cur.execute(f"DROP TABLE {ESQUEMA}.{tabla} PURGE")
-            print(f"DW: DROP TABLE {tabla}")
+            _drop_table(cur, tabla)
+            dropped = True
+    if dropped:
+        print("DW: tablas legacy (sin MI_) eliminadas")
 
 
 def _table_exists(cur, tabla: str) -> bool:
@@ -197,6 +227,7 @@ def _prepare_schema(cur, root: Path) -> None:
     ts = _user_tablespace(cur)
 
     if not _model_complete(cur):
+        _drop_legacy_tables(cur)
         if any(_table_exists(cur, t) for t in REQUIRED_CORE):
             print("DW: esquema incompleto -> eliminar tablas parciales")
             _drop_model_tables(cur)

@@ -79,8 +79,8 @@ set -e
 
 step "Comprobando salidas mínimas en log"
 grep -q "Salida PROF_" "$LOG" || fail "no hay salida PROF_* en el log"
-grep -q "Salida DIM_" "$LOG" || fail "no hay salida DIM_* en el log"
-grep -q "Salida FACT_" "$LOG" || fail "no hay salida FACT_* en el log"
+grep -q "Salida MI_DIM_" "$LOG" || fail "no hay salida MI_DIM_* en el log"
+grep -q "Salida MI_FACT_" "$LOG" || fail "no hay salida MI_FACT_* en el log"
 grep -q "Salida MI_INDICADOR_RESULTADO" "$LOG" || fail "no hay MI_INDICADOR_RESULTADO en el log"
 
 if grep -q "DW:" "$LOG"; then

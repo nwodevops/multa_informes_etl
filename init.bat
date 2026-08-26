@@ -96,16 +96,16 @@ if errorlevel 1 (
     del "%LOG%"
     exit /b 1
 )
-findstr /C:"Salida DIM_" "%LOG%" >nul 2>&1
+findstr /C:"Salida MI_DIM_" "%LOG%" >nul 2>&1
 if errorlevel 1 (
-    echo %RED%FAIL:%NC% no hay salida DIM_* en el log
+    echo %RED%FAIL:%NC% no hay salida MI_DIM_* en el log
     type "%LOG%"
     del "%LOG%"
     exit /b 1
 )
-findstr /C:"Salida FACT_" "%LOG%" >nul 2>&1
+findstr /C:"Salida MI_FACT_" "%LOG%" >nul 2>&1
 if errorlevel 1 (
-    echo %RED%FAIL:%NC% no hay salida FACT_* en el log
+    echo %RED%FAIL:%NC% no hay salida MI_FACT_* en el log
     type "%LOG%"
     del "%LOG%"
     exit /b 1
