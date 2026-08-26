@@ -85,3 +85,19 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 **Evidencia:** [`progress/impl_fase-rename-dw.md`](impl_fase-rename-dw.md) — 53288 informes, 571 multas, 585 indicadores, K1–K5.
 
 **Siguiente:** backlog harness vacío (Fase 8 fuera de alcance).
+
+---
+
+## 2026-08-26 — Windows remote + docs reorg
+
+**Rama:** `windows`
+
+**Features done:**
+
+- `docs-reorg` — `docs/fases/`, `docs/credenciales/`, `docs/vista-general.md`, `docs/modelo-kimball.md`, índice `docs/README.md`
+- `fix-dw-schema-user` — `cargar_dw.py` / `verify_dw.py` usan Oracle USER (evita ORA-00942 APP vs REPOCSEP)
+- `fase-win-compat` (refuerzo) — `init.bat` log `output/init_win_*.log`, Hop `D:\Eder\hop`, workflows Win usan `.venv`
+
+**Feature in_progress:** `fase-remote-deploy` — lógica Win OK (~53k informes); falta re-corrida post schema-fix → HARNESS OK / Success DW.
+
+**Comandos Win:** `.\switch-env.ps1 remote` + Hop `wf_main_win.hwf` o `init.bat`

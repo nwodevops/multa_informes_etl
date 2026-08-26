@@ -1,10 +1,10 @@
 {
   "project": "multa_informes_etl",
   "lineamiento": "docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md",
-  "branch_trabajo": "fase-1-lineamiento",
+  "branch_trabajo": "windows",
   "reglas": {
     "una_feature_activa": "Como máximo un item con status in_progress",
-    "verificacion": "./init.sh debe terminar en verde antes de marcar done",
+    "verificacion": "./init.sh (Linux) o init.bat / wf_main_win.hwf (Windows) → HARNESS OK antes de marcar done",
     "trazabilidad": "Implementador escribe progress/impl_<id>.md; revisor progress/review_<id>.md"
   },
   "features": [
@@ -69,15 +69,8 @@
       "id": "fase-win-compat",
       "title": "Windows workflows (wf_main_win.hwf, wf_create_stg_win.hwf, init.bat)",
       "status": "done",
-      "criterio": "wf_main_win.hwf ejecuta en Hop Windows sin errores SHELL",
-      "doc": null
-    },
-    {
-      "id": "fase-remote-deploy",
-      "title": "Despliegue remoto (credenciales REPOCSEP → 10.6.0.15:1532/dvoefacore)",
-      "status": "done",
-      "criterio": "project-config.json con credenciales remote, init.bat → HARNESS OK",
-      "doc": "environments/remote.json"
+      "criterio": "Hop Win: hop-run en D:\\Eder\\hop; .venv Python; init.bat log en output/init_win_*.log",
+      "doc": "docs/verification.md"
     },
     {
       "id": "fase-rename-dw",
@@ -86,6 +79,28 @@
       "criterio": "All 11 DW tables renamed across DDL, Python, docs; ./init.sh → HARNESS OK",
       "doc": "docs/lineamientos/ddl/",
       "evidencia": "progress/impl_fase-rename-dw.md"
+    },
+    {
+      "id": "docs-reorg",
+      "title": "Reorganizar docs/ (fases, credenciales, vista-general, kimball)",
+      "status": "done",
+      "criterio": "docs/README.md índice; fases/; credenciales/; vista-general.md + modelo-kimball.md; sin duplicado fuentes",
+      "doc": "docs/README.md"
+    },
+    {
+      "id": "fix-dw-schema-user",
+      "title": "cargar_dw: ESQUEMA = Oracle USER (APP local / REPOCSEP remote)",
+      "status": "done",
+      "criterio": "Sin ORA-00942 al DROP legacy; log 'DW: esquema sesión = …'",
+      "doc": "python/io/cargar_dw.py"
+    },
+    {
+      "id": "fase-remote-deploy",
+      "title": "Despliegue remoto Windows (REPOCSEP → 10.6.0.15:1532/dvoefacore)",
+      "status": "in_progress",
+      "criterio": "git pull + switch-env.ps1 remote + wf_main_win/init.bat → Success + DW (OK) K1–K5",
+      "doc": "environments/remote.json",
+      "nota": "Lógica OK en Win (~53k informes); pendiente re-corrida post fix-dw-schema-user"
     }
   ]
 }
