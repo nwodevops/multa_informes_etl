@@ -1,6 +1,6 @@
 # Glosario
 
-Nombres cortos que usa este ETL. Dónde vive cada dato (antes / H2 / Oracle): [`antes-durante-fase1.md`](antes-durante-fase1.md). Vista de fase 1: [`fase-1-vista.md`](fase-1-vista.md). Detalle: [`fase-1.md`](fase-1.md).
+Nombres cortos que usa este ETL. Dónde vive cada dato (antes / H2 / Oracle): [`fases/antes-durante-fase1.md`](fases/antes-durante-fase1.md). Status fases: [`fases/status.md`](fases/status.md). Vista general: [`vista-general.md`](vista-general.md). Kimball: [`modelo-kimball.md`](modelo-kimball.md).
 
 El `_` al final (`STG_`, `INT_`) significa “todas las tablas de esa capa”.
 

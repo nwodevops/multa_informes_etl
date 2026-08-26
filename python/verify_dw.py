@@ -18,7 +18,8 @@ if str(HERE) not in sys.path:
 
 from config import load_vars, project_root, require_live_conn  # noqa: E402
 
-ESQUEMA = "APP"
+ESQUEMA_DEFAULT = "APP"
+ESQUEMA = ESQUEMA_DEFAULT
 TABLAS = (
     "MI_FACT_MULTA_COERCITIVA",
     "MI_FACT_INFORME_SUPERVISION",
@@ -42,16 +43,14 @@ def main() -> int:
     except Exception:
         pass
 
-    dest = f"{cv['username']}@{cv['host']}:{cv['port']}/{cv['database']}"
-    print(f"Destino: {dest}  esquema {ESQUEMA}")
-    print(f"JDBC:    {cv.get('url') or '(makedsn)'}")
-    print()
-
-    dsn = oracledb.makedsn(cv["host"], int(cv["port"] or "1521"), service_name=cv["database"])
     with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as conn:
+        global ESQUEMA
         cur = conn.cursor()
         cur.execute("SELECT USER FROM dual")
-        print(f"Conectado como: {cur.fetchone()[0]}")
+        ESQUEMA = str(cur.fetchone()[0])
+        print(f"Conectado como: {ESQUEMA}")
+        print(f"Destino: {dest}  esquema {ESQUEMA}")
+        print(f"JDBC:    {cv.get('url') or '(makedsn)'}")
         print()
         for tabla in TABLAS:
             try:

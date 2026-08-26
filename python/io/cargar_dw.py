@@ -9,7 +9,10 @@ import pandas as pd
 
 from config import load_vars, project_root, require_live_conn
 
-ESQUEMA = "APP"
+# Esquema por defecto (local app). En runtime se usa USER de la conexión
+# (p.ej. remote REPOCSEP) para evitar ORA-00942 al DROP/TRUNCATE/INSERT.
+ESQUEMA_DEFAULT = "APP"
+ESQUEMA = ESQUEMA_DEFAULT
 DDL_DIR = "docs/lineamientos/ddl"
 VISTAS_LEGACY = (
     "VW_FCT_INFORMES_VALIDADA",
@@ -83,6 +86,16 @@ def _connect(root: Path):
 
 def _destino_label(cv: dict[str, str]) -> str:
     return f"{cv['username']}@{cv['host']}:{cv['port']}/{cv['database']} esquema {ESQUEMA}"
+
+
+def _bind_schema(cur) -> str:
+    """Alinea ESQUEMA al usuario Oracle de la sesión (APP local / REPOCSEP remote)."""
+    global ESQUEMA
+    cur.execute("SELECT USER FROM DUAL")
+    ESQUEMA = str(cur.fetchone()[0])
+    if ESQUEMA.upper() != ESQUEMA_DEFAULT.upper():
+        print(f"DW: esquema sesión = {ESQUEMA} (no {ESQUEMA_DEFAULT})")
+    return ESQUEMA
 
 
 def _verificar_post_carga(cur, counts: dict[str, int], cv: dict[str, str]) -> None:
@@ -182,7 +195,13 @@ def _indicadores_ready(cur) -> bool:
 def _drop_table(cur, tabla: str) -> None:
     if not _table_exists(cur, tabla):
         return
-    cur.execute(f"DROP TABLE {ESQUEMA}.{tabla} CASCADE CONSTRAINTS PURGE")
+    try:
+        cur.execute(f"DROP TABLE {ESQUEMA}.{tabla} CASCADE CONSTRAINTS PURGE")
+    except Exception as exc:
+        # Fallback: tabla en schema del USER sin qualifier APP
+        if "ORA-00942" not in str(exc):
+            raise
+        cur.execute(f"DROP TABLE {tabla} CASCADE CONSTRAINTS PURGE")
     print(f"DW: DROP TABLE {tabla}")
 
 
@@ -388,6 +407,7 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
     try:
         cur = conn.cursor()
         try:
+            _bind_schema(cur)
             _prepare_schema(cur, root)
             conn.commit()
 

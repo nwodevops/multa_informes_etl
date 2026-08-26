@@ -1,6 +1,6 @@
 # AGENTS.md — mapa para agentes
 
-ETL **Apache Hop + H2 in-memory + Python** (OEFA). Requerimiento: [`docs/TDR REQ 3629-2026.pdf`](docs/TDR%20REQ%203629-2026.pdf). Arquitectura: [`docs/arquitectura.md`](docs/arquitectura.md).
+ETL **Apache Hop + H2 in-memory + Python** (OEFA). Requerimiento: [`docs/TDR REQ 3629-2026.pdf`](docs/TDR%20REQ%203629-2026.pdf). Vista general: [`docs/vista-general.md`](docs/vista-general.md). Kimball: [`docs/modelo-kimball.md`](docs/modelo-kimball.md). Arquitectura: [`docs/arquitectura.md`](docs/arquitectura.md). Índice docs: [`docs/README.md`](docs/README.md).
 
 > **Arquetipo base:** plantilla mínima en [`archetype/README.md`](archetype/README.md) (regenerar con `./scripts/sync_archetype.sh`). Este repo es la implementación de referencia consultoría.
 
@@ -25,7 +25,7 @@ Patrón: [ejemplo-harness-subagentes](https://github.com/nwoswo/ejemplo-harness-
 - [`.agents/skills/auditable-soft-quarantine/SKILL.md`](.agents/skills/auditable-soft-quarantine/SKILL.md) — cuarentena blanda, DQ, amarre H9
 - [`.agents/skills/oracle-cargar-dw/SKILL.md`](.agents/skills/oracle-cargar-dw/SKILL.md) — TRUNCATE+INSERT, DDL, gotchas Oracle
 
-Lineamiento canónico: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md). Status: [`docs/fase1-3/status.md`](docs/fase1-3/status.md).
+Lineamiento canónico: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md). Status: [`docs/fases/status.md`](docs/fases/status.md).
 
 ## Inicio rápido
 

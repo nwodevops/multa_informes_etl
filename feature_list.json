@@ -13,7 +13,7 @@
       "title": "Entorno Python + Hop + H2",
       "status": "done",
       "criterio": "CHECKPOINTS.md#fase-1",
-      "doc": "docs/fase1-3/status.md"
+      "doc": "docs/fases/status.md"
     },
     {
       "id": "fase-2-perfil-diccionario",
