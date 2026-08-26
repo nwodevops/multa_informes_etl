@@ -95,19 +95,8 @@ ORDER BY 1, 2;
 
 ---
 
-## Fase 8 — Power BI {#fase-8}
-
-- [ ] `.pbix` conectado a Oracle BD_CURSOR (`oracle_dw` / `DB_ORA_DW_*`).
-- [ ] Medidas/visualizaciones leen `MI_INDICADOR_RESULTADO` y hechos validados.
-- [ ] Validación manual documentada en `progress/impl_fase-8-powerbi.md`.
-
-Fuera de la capa Python; no la cubre `./init.sh` completo.
-
----
-
 ## Qué no cubre init.sh
 
 - Corrida GUI completa de `wf_main.hwf` (Hop visual).
-- Validación Power BI (Fase 8).
 
 Para smoke con datos reales: `./switch-env.sh local` y `./init.sh` (Oracle/MySQL/Hop obligatorios), o Play `wf_main.hwf` en Hop.

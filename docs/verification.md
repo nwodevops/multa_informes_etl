@@ -58,5 +58,4 @@ Dos corridas seguidas con el mismo staging H2 deben dar los mismos conteos y val
 ## Lo que init.sh no sustituye
 
 - Validación visual de pipelines Hop (mapeos, transforms).
-- Power BI (Fase 8).
 - Auditoría de secretos en git (revisar antes de commit).

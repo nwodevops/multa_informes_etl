@@ -6,15 +6,15 @@
 
 | Campo | Valor |
 |---|---|
-| ID | *(ninguna — siguiente: **fase-8-powerbi**)* |
-| Status | — |
-| Criterio | [`CHECKPOINTS.md#fase-8`](../CHECKPOINTS.md#fase-8) |
+| ID | **fase-rename-dw** |
+| Status | in_progress |
+| Criterio | Prefijo `MI_` en 11 tablas DW; `init.bat` / `./init.sh` → HARNESS OK |
 
 ## Plan
 
-1. Poner `fase-8-powerbi` en `in_progress` cuando arranques Power BI.
-2. Conectar `.pbix` a `app@localhost:1524/BD_CURSOR` (esquema APP).
-3. Documentar en `progress/impl_fase-8-powerbi.md`.
+1. Cerrar `fase-rename-dw` cuando rename + smoke estén verificados.
+2. Lineamiento Fases 1–7 + infra staging: **cerrados**.
+3. Fase 8 Power BI: **fuera de alcance** (no se realizará).
 
 ## Comandos
 

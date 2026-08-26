@@ -15,7 +15,7 @@ En Cursor no hace falta `.claude/agents/`; los roles se mapean así:
 Los subagentes **escriben en archivos** y devuelven solo una referencia:
 
 ```text
-done -> progress/impl_fase-8-powerbi.md
+done -> progress/impl_<feature-id>.md
 ```
 
 No pegar logs largos en chat; viven en `progress/` y quedan versionados.
@@ -45,7 +45,7 @@ flowchart LR
 
 ## Alcance por feature
 
-Las fases 5–7 del lineamiento tocaron muchos archivos acoplados; **a partir de ahora** conviene granularidad en `feature_list.json` (p. ej. subtareas de Fase 8: dataset, medidas, validación `.pbix`).
+Las fases 5–7 del lineamiento tocaron muchos archivos acoplados; **a partir de ahora** conviene granularidad en `feature_list.json` (features infra pequeñas: rename, Windows, remote). Fase 8 Power BI está **fuera de alcance**.
 
 ## Skills de dominio (no reemplazan el harness)
 

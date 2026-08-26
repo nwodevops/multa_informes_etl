@@ -262,6 +262,8 @@ Fases con dependencia estricta — no se avanza a la siguiente hasta cumplir el 
 
 ### Fase 8 — Verificación en Power BI
 
+> **Fuera de alcance en esta implementación** (no se realizará en este repo).
+
 | | |
 |---|---|
 | **Entrada** | Indicadores persistidos |

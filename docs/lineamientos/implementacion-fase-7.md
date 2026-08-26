@@ -44,6 +44,6 @@ GROUP BY COD_INDICADOR, METRICA
 ORDER BY 1, 2;
 ```
 
-## Pendiente (Fase 8)
+## Fuera de alcance (Fase 8)
 
-- Conectar/validar Power BI contra `MI_INDICADOR_RESULTADO` y tablas del modelo.
+Power BI **no se realizará** en esta implementación. Consumo de `MI_INDICADOR_RESULTADO` / modelo queda a cargo del cliente si aplica.

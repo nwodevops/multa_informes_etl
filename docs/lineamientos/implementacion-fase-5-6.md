@@ -33,4 +33,4 @@ Esperado (datos actuales F1–F5): ~571 multas, ~53288 informes, 55 etapas en he
 
 ## Pendiente (Fase 7+)
 
-- Ver [`implementacion-fase-7.md`](implementacion-fase-7.md) — Fase 7 implementada; Fase 8 Power BI pendiente.
+- Ver [`implementacion-fase-7.md`](implementacion-fase-7.md) — Fase 7 implementada. Fase 8 Power BI: **fuera de alcance**.

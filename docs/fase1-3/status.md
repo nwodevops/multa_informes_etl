@@ -38,14 +38,10 @@ flowchart TB
     ORA["FACT_* DIM_* IND_*"]
   end
 
-  subgraph pendiente [Pendiente Fase 8]
-    PBI["Power BI"]
-  end
-
   fuentes --> WF
   WF --> RESET --> STG_LOAD --> STG
   STG --> F2b --> F3b --> F4b --> OUT
-  OUT -->|"carga cargar_dw.py"| ORA --> PBI
+  OUT -->|"carga cargar_dw.py"| ORA
 ```
 
 ---
@@ -61,7 +57,7 @@ flowchart TB
 | **5** | `DIM_*`, `FACT_*`, `MI_DET_ETAPA_MC` en memoria | **Implementado** | `dimensional.py` |
 | **6** | Carga TRUNCATE+INSERT a BD_CURSOR | **Implementado** | `python/io/cargar_dw.py` |
 | **7** | KPIs `MI_INDICADOR_RESULTADO` K1–K5 | **Implementado** | `logica/dwh/indicadores.py`, `ddl/04_indicadores.sql` |
-| **8+** | Power BI contra BD_CURSOR | **Pendiente** | Fase 8 lineamiento |
+| **8** | Power BI contra BD_CURSOR | **Fuera de alcance** | No se realizará en este repo |
 
 ---
 
@@ -194,6 +190,6 @@ Detalle técnico: [`lineamientos/implementacion-fase-2-3.md`](../lineamientos/im
 
 ---
 
-## Próximo hito (Fase 8 del lineamiento)
+## Alcance del lineamiento
 
-Validar tablero Power BI contra `MI_INDICADOR_RESULTADO` y tablas `DIM_*`/`FACT_*` en BD_CURSOR.
+Fases 1–7 + infra staging: **cerradas**. Fase 8 (Power BI): **fuera de alcance** — no se realizará.

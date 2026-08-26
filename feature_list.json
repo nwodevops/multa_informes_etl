@@ -66,13 +66,6 @@
       "doc": "docs/verification.md"
     },
     {
-      "id": "fase-8-powerbi",
-      "title": "Power BI contra tablas BD_CURSOR",
-      "status": "pending",
-      "criterio": "CHECKPOINTS.md#fase-8",
-      "doc": null
-    },
-    {
       "id": "fase-win-compat",
       "title": "Windows workflows (wf_main_win.hwf, wf_create_stg_win.hwf, init.bat)",
       "status": "done",

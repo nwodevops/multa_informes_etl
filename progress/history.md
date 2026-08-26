@@ -55,3 +55,17 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 **Evidencia:** `./init.sh` → **HARNESS OK** (585 filas `MI_INDICADOR_RESULTADO`, K1–K5).
 
 **Siguiente:** `fase-8-powerbi` (`pending`).
+
+---
+
+## 2026-08-25 — Fase 8 cancelada (fuera de alcance)
+
+**Feature:** `fase-8-powerbi` — **eliminada** del backlog (Power BI no se realizará).
+
+**Cambios:**
+
+- Quitada de `feature_list.json`.
+- CHECKPOINTS / verification / status / docs de avance actualizados.
+- Nota en `PROPUESTA_ADAPTADA_ETL.md` (sección Fase 8): fuera de alcance en esta implementación.
+
+**Siguiente:** continuar `fase-rename-dw` (`in_progress`) si aplica; lineamiento Fases 1–7 cerrado.

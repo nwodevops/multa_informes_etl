@@ -48,6 +48,6 @@ Referencia canónica: `docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`.
 
 **Avance:** reproducible; presencia de K1–K5; DDL `04_indicadores.sql`.
 
-## Fase 8 (fuera de Python)
+## Fase 8 (fuera de alcance)
 
-Power BI contra tablas actualizadas — validación manual del `.pbix`.
+Power BI contra tablas actualizadas — **no se realizará** en esta implementación.
