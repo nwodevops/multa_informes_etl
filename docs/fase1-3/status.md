@@ -9,10 +9,9 @@ Rama de trabajo: `fase-1-lineamiento`.
 
 ```mermaid
 flowchart TB
-  subgraph fuentes [Fuentes F1-F5]
+  subgraph fuentes [Fuentes de multa]
     F1["F1 Excel Lambayeque"]
     F2["F2 Excel CAGR + DIC"]
-    F3["F3 Oracle informes"]
     F4["F4 MySQL GAPP"]
     F5["F5 Oracle vista MC"]
   end
@@ -51,8 +50,8 @@ flowchart TB
 | Fase | Qué pide el lineamiento | Status | Evidencia en repo |
 |:---:|---|:---:|---|
 | **1** | Entorno Python: leer H2, conectar BD_CURSOR, invocado desde Hop | **Listo** | `python/main.py`, `leer_h2.py`, `escribir_dw.py`, `.venv`, `wf_main.hwf` |
-| **2** | Perfilamiento + diccionario de las 5 fuentes; evidencia H1–H9 | **Implementado** | `logica/dwh/perfilamiento.py`, `diccionario.py` → `PROF_*`, `DICCIONARIO` |
-| **3** | Homologación + dataframes integrados tipificados en memoria | **Implementado** | `homologacion.py`, `integracion.py` → `DF_MULTAS`, `DF_INFORMES`, `DF_ETAPAS` |
+| **2** | Perfilamiento + diccionario de las fuentes de multa; evidencia H1–H9 | **Implementado** | `logica/dwh/perfilamiento.py`, `diccionario.py` → `PROF_*`, `DICCIONARIO` |
+| **3** | Homologación + dataframes integrados tipificados en memoria | **Implementado** | `homologacion.py`, `integracion.py` → `DF_MULTAS`, `DF_ETAPAS` |
 | **4** | R01–R05, `MI_DQ_HALLAZGO`, % amarre H9 | **Implementado** | `calidad.py` |
 | **5** | `DIM_*`, `FACT_*`, `MI_DET_ETAPA_MC` en memoria | **Implementado** | `dimensional.py` |
 | **6** | Carga TRUNCATE+INSERT a BD_CURSOR | **Implementado** | `python/io/cargar_dw.py` |
@@ -67,7 +66,7 @@ flowchart TB
 flowchart LR
   STG["STG_* H2"]
   P2["PROF_RESUMEN<br/>PROF_HALLAZGO<br/>DICCIONARIO"]
-  P3["DF_MULTAS<br/>DF_INFORMES<br/>DF_ETAPAS"]
+  P3["DF_MULTAS<br/>DF_ETAPAS"]
   P4["FG_CONFORME<br/>MI_DQ_HALLAZGO<br/>QA_AMARRE"]
   RES["RESULTADO"]
 
@@ -80,7 +79,6 @@ flowchart LR
 | `PROF_HALLAZGO` | 2 | No |
 | `DICCIONARIO` | 2 | No |
 | `DF_MULTAS` | 3–4 | No (incluye `FG_CONFORME`) |
-| `DF_INFORMES` | 3–4 | No (incluye `FG_CONFORME`) |
 | `DF_ETAPAS` | 3 | No |
 | `MI_DQ_HALLAZGO` | 4 | Append a BD_CURSOR si credenciales OK |
 | `QA_AMARRE` | 4 | No — memoria + log |
@@ -103,7 +101,6 @@ Se recrean al inicio: `reset_and_create.sh` (DDL base) + `create_stg.py` (DDL st
 | `STG_GS1_DIC_TABLAS` | F2 hoja DIC_TABLAS | `create_stg.py` | Pendiente en Hop* |
 | `STG_GS1_DIC_VARIABLES` | F2 hoja DIC_VARIABLES | `create_stg.py` | Pendiente en Hop* |
 | `STG_ORA_VW_MULTA_COERCITIVA` | F5 Oracle SISUD | `create_stg.py` | `pl_stage_oracle.hpl` |
-| `STG_ORA_CSEP_INFORMES` | F3 Oracle SISUD | `create_stg.py` | `pl_stage_informes.hpl` |
 | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | F4 MySQL GAPP | `create_stg.py` | `pl_stage_mysql.hpl` |
 
 \* DIC: el diccionario también puede leerse desde Excel en Python si STG vacío (`logica/dwh/diccionario.py`).
@@ -127,7 +124,7 @@ Tablas previstas (DDL en [`lineamientos/ddl/`](../lineamientos/ddl/)), **pendien
 | Grupo | Tablas |
 |---|---|
 | Dimensiones | `MI_DIM_TIEMPO`, `MI_DIM_ADMINISTRADO`, `MI_DIM_ORGANO_UNIDAD`, `MI_DIM_MATERIA_SUBSECTOR`, `MI_DIM_ESTADO`, `MI_DIM_PARAMETRO_UIT` |
-| Hechos | `MI_FACT_MULTA_COERCITIVA`, `MI_FACT_INFORME_SUPERVISION`, `MI_DET_ETAPA_MC` |
+| Hechos | `MI_FACT_MULTA_COERCITIVA`, `MI_DET_ETAPA_MC` |
 | Calidad | `MI_DQ_HALLAZGO` (Fase 4+) |
 | Indicadores | `MI_INDICADOR_RESULTADO` (Fase 7) |
 
@@ -136,7 +133,7 @@ El módulo [`python/io/cargar_dw.py`](../../python/io/cargar_dw.py) aplica DDL f
 ```mermaid
 flowchart LR
   subgraph h2now [H2 hoy]
-    STG8["8 tablas STG_* + DEMO"]
+    STG8["7 tablas STG_* + DEMO"]
   end
   subgraph oranow [Oracle hoy]
     DQonly["Append MI_DQ_HALLAZGO"]
@@ -159,7 +156,6 @@ flowchart LR
 | F1 | Excel Lambayeque | `STG_GS2_*` | Sí | `pl_stage_excel` |
 | F2 | Excel CAGR multas/etapas | `STG_GS1_*` | Sí | |
 | F2 | DIC_TABLAS / DIC_VARIABLES | `STG_GS1_DIC_*` | Parcial | DDL + `create_stg`; Hop Excel pendiente cablear |
-| F3 | SISUD informes | `STG_ORA_CSEP_INFORMES` | Sí* | *Requiere credenciales Oracle |
 | F4 | MySQL GAPP | `STG_MYSQL_*` | Sí* | *Requiere credenciales MySQL |
 | F5 | SISUD vista multas | `STG_ORA_VW_*` | Sí* | *Requiere credenciales Oracle |
 

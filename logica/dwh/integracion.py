@@ -1,4 +1,4 @@
-"""Fase 3 — integración F1+F2+F4+F5 (DF_MULTAS) y F3 (DF_INFORMES), F2-ET (DF_ETAPAS)."""
+"""Fase 3 — integración F1+F2+F4+F5 (DF_MULTAS) y F2-ET (DF_ETAPAS)."""
 
 from __future__ import annotations
 
@@ -47,29 +47,6 @@ COLS_MULTAS = [
     "ESTADO_MULTA",
     "COORD",
     "ADMINISTRADO",
-]
-
-COLS_INFORMES = [
-    "ID_CARGA",
-    "FUENTE_ORIGEN",
-    "IDACTIVIDAD",
-    "TXCUC",
-    "TXNUMEXP",
-    "TXINFORME",
-    "TXESTADO",
-    "TXTIPSUP",
-    "TXFUENTE",
-    "TXSUBSECTOR_UND",
-    "TXCOORDINACION",
-    "IDADMINISTRADO",
-    "TXADMINISTRADO",
-    "F_INICIO",
-    "F_FIN",
-    "F_INFORME_ESPERADO",
-    "F_INFORME",
-    "F_REG_INFORME",
-    "TX_DOC_DERIVACION",
-    "TXNIVELES_REVISION",
 ]
 
 COLS_ETAPAS = [
@@ -165,21 +142,6 @@ def _integrar_mysql(mysql: pd.DataFrame) -> pd.DataFrame:
     return _a_canonico(h, COLS_MULTAS)
 
 
-def _integrar_informes(informes: pd.DataFrame) -> pd.DataFrame:
-    h = aplicar_homologacion(informes, FUENTE_REGISTRO["INFORMES"])
-    m = {
-        "FEINICIO": "F_INICIO",
-        "FEFIN": "F_FIN",
-        "FEINFORME_ESPERADO": "F_INFORME_ESPERADO",
-        "FEINFORME": "F_INFORME",
-        "FEREG_INFORME": "F_REG_INFORME",
-        "TXNIVELES_REVISION": "TXNIVELES_REVISION",
-        "TX_DOC_DERIVACION": "TX_DOC_DERIVACION",
-    }
-    h = _renombrar(h, m)
-    return _a_canonico(h, COLS_INFORMES)
-
-
 def _integrar_etapas(etapas: pd.DataFrame) -> pd.DataFrame:
     h = aplicar_homologacion(etapas, FUENTE_REGISTRO["ETAPAS"])
     m = {
@@ -203,8 +165,7 @@ def integrar(
     etapas: pd.DataFrame,
     ora: pd.DataFrame,
     mysql: pd.DataFrame,
-    informes: pd.DataFrame,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     partes = [
         _integrar_gs2(gs2),
         _integrar_gs1(gs1),
@@ -212,6 +173,5 @@ def integrar(
         _integrar_ora(ora),
     ]
     df_multas = pd.concat(partes, ignore_index=True, sort=False)
-    df_informes = _integrar_informes(informes)
     df_etapas = _integrar_etapas(etapas)
-    return df_multas, df_informes, df_etapas
+    return df_multas, df_etapas

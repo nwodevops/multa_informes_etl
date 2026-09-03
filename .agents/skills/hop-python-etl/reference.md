@@ -48,4 +48,4 @@ Python create STG va **antes** de los pipelines de extract (in-memory se borra e
 | STG en 0 filas | Hop staging omitido (credenciales `<...>`) o pipeline no cableado |
 | Lógica no ve tabla | Falta clave en `LECTURAS` |
 | `Value too long` en H2 | VARCHAR con longitud; quitar longitud en DDL |
-| Python lento | Normal con ~50k+ filas informes; Oracle insert es el cuello |
+| Python lento | Normal con miles de filas de multa; Oracle insert es el cuello |

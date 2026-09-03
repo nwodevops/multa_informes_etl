@@ -1,5 +1,7 @@
 # 01 - Fuentes de Datos
 
+> **Alcance vigente:** el DW carga solo Multas (F1, F2, F4, F5). La vista `CSEP_INFORMES_VIEW` (F3) no se extrae ni se modela.
+
 ## Inventario de Sistemas Origen
 
 ### 1. Oracle SISUD - Sistema de Supervisión

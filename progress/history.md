@@ -85,3 +85,19 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 **Evidencia:** [`progress/impl_fase-rename-dw.md`](impl_fase-rename-dw.md) — 53288 informes, 571 multas, 585 indicadores, K1–K5.
 
 **Siguiente:** backlog harness vacío (Fase 8 fuera de alcance).
+
+---
+
+## 2026-09-02 — DW solo Multas (F3 fuera)
+
+**Feature:** `dw-solo-multas` → `done`
+
+**Cambios:**
+
+- F3 (`CSEP_INFORMES_VIEW`) fuera de Hop, H2, Python, Kimball y Oracle.
+- Estrella única: `MI_FACT_MULTA_COERCITIVA` + `MI_DET_ETAPA_MC`. K1 solo `N_MULTAS`.
+- Esquema vivo: DROP tabla informe, FK e `ID_INFORME`.
+
+**Evidencia:** [`progress/impl_dw-solo-multas.md`](impl_dw-solo-multas.md) — `./init.sh` → **HARNESS OK**; 571 multas, 152 indicadores; hecho informe inexistente.
+
+**Siguiente:** backlog harness vacío (Fase 8 fuera de alcance).

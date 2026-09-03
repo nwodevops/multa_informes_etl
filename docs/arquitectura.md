@@ -200,7 +200,7 @@ Lo que **no** desapareció: la JVM. H2 solo expone JDBC y `jaydebeapi` arrastra 
 
 ```mermaid
 flowchart LR
-  TDR["TDR: informes de supervision<br/>y multas coercitivas"]
+  TDR["TDR REQ 3629-2026<br/>DW: multas coercitivas"]
 
   subgraph f1 [rama fase-1]
     A["a consolidar"]

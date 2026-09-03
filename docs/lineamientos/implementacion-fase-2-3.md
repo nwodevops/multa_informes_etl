@@ -16,7 +16,7 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) sección 6.
 
 **Fase 2:** todo campo F1–F5 en `DICCIONARIO`; `PROF_HALLAZGO` documenta H1–H9.
 
-**Fase 3:** `DF_MULTAS`, `DF_INFORMES`, `DF_ETAPAS` sin errores de tipo; estados mapeados a catálogo `MI_DIM_ESTADO` (semillas ddl/01).
+**Fase 3:** `DF_MULTAS`, `DF_ETAPAS` sin errores de tipo; estados mapeados a catálogo `MI_DIM_ESTADO` (semillas ddl/01).
 
 ## Verificación
 

@@ -1,4 +1,4 @@
-"""Constantes de corrida y mapa de fuentes F1–F5."""
+"""Constantes de corrida y mapa de fuentes F1/F2/F4/F5 (multas)."""
 
 from __future__ import annotations
 
@@ -9,13 +9,12 @@ FECHA_CARGA = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 VACIOS = {"", "#N/A", "#NA", "N/A", "NA", "NULL", "NONE", "-", "—", "#REF!", "#VALUE!"}
 
-# F1=GS2 Lambayeque, F2=GS1 CAGR, F3=INFORMES, F4=MYSQL, F5=ORA
+# F1=GS2 Lambayeque, F2=GS1 CAGR, F4=MYSQL, F5=ORA
 FUENTE_REGISTRO = {
     "GS2": "LAM_OD",
     "GS1": "CAGR",
     "MYSQL": "GAPPS",
     "ORA": "SISUD_VW",
-    "INFORMES": "SISUD_INF",
     "ETAPAS": "CAGR",
 }
 
@@ -25,7 +24,6 @@ STG_FUENTE = {
     "ETAPAS": ("F2-ET", "STG_GS1_ETAPAS", "CAGR etapas"),
     "ORA": ("F5", "STG_ORA_VW_MULTA_COERCITIVA", "SISUD vista multas"),
     "MYSQL": ("F4", "STG_MYSQL_T_MVC_MULTACOERCITIVA", "GAPP multas"),
-    "INFORMES": ("F3", "STG_ORA_CSEP_INFORMES", "SISUD informes"),
     "DIC_TABLAS": ("F2", "STG_GS1_DIC_TABLAS", "DIC_TABLAS"),
     "DIC_VARIABLES": ("F2", "STG_GS1_DIC_VARIABLES", "DIC_VARIABLES"),
 }

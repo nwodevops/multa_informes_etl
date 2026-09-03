@@ -86,6 +86,14 @@
       "criterio": "All 11 DW tables renamed across DDL, Python, docs; ./init.sh → HARNESS OK",
       "doc": "docs/lineamientos/ddl/",
       "evidencia": "progress/impl_fase-rename-dw.md"
+    },
+    {
+      "id": "dw-solo-multas",
+      "title": "DW netamente Multas: quitar F3 (informes) end-to-end",
+      "status": "done",
+      "criterio": "CHECKPOINTS.md; ./init.sh HARNESS OK sin pl_stage_informes ni MI_FACT_INFORME_SUPERVISION",
+      "doc": "docs/inputs/README.md",
+      "evidencia": "progress/impl_dw-solo-multas.md"
     }
   ]
 }

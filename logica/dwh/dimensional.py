@@ -135,7 +135,7 @@ def _build_dim_tiempo() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _build_dim_estado(df_multas: pd.DataFrame, df_informes: pd.DataFrame) -> pd.DataFrame:
+def _build_dim_estado(df_multas: pd.DataFrame) -> pd.DataFrame:
     seen: set[tuple[str, str]] = set()
     rows = [
         {
@@ -184,7 +184,6 @@ def _build_dim_estado(df_multas: pd.DataFrame, df_informes: pd.DataFrame) -> pd.
     add_from_col(df_multas, "ESTADO_MULTA", "MULTA")
     add_from_col(df_multas, "ESTADO_PAGO_MC", "PAGO")
     add_from_col(df_multas, "ESTADO_RESOLUCION", "RESOLUCION")
-    add_from_col(df_informes, "TXESTADO", "INFORME")
     return pd.DataFrame(rows)
 
 
@@ -195,7 +194,7 @@ def _build_dim_uit() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _build_dim_materia(df_informes: pd.DataFrame) -> pd.DataFrame:
+def _build_dim_materia() -> pd.DataFrame:
     seeds = [
         "NO ESPECIFICADO",
         "HIDROCARBUROS",
@@ -213,23 +212,11 @@ def _build_dim_materia(df_informes: pd.DataFrame) -> pd.DataFrame:
             continue
         seen.add(n)
         rows.append({"ID_MATERIA": ND if i == 0 else len(rows), "NOMBRE": n})
-    if "TXSUBSECTOR_UND" in df_informes.columns:
-        for val in df_informes["TXSUBSECTOR_UND"].dropna().unique():
-            n = _norm_text(val)
-            if not n or n in seen:
-                continue
-            seen.add(n)
-            rows.append({"ID_MATERIA": len(rows), "NOMBRE": n})
     return pd.DataFrame(rows)
 
 
-def _build_dim_organo(df_multas: pd.DataFrame, df_informes: pd.DataFrame) -> pd.DataFrame:
+def _build_dim_organo(df_multas: pd.DataFrame) -> pd.DataFrame:
     siglas: set[str] = set()
-    if "TXCOORDINACION" in df_informes.columns:
-        for v in df_informes["TXCOORDINACION"].dropna():
-            s = str(v).strip().upper()
-            if s:
-                siglas.add(s[:30])
     if "COORD" in df_multas.columns:
         for v in df_multas["COORD"].dropna():
             s = str(v).strip().upper()
@@ -262,7 +249,7 @@ def _build_dim_organo(df_multas: pd.DataFrame, df_informes: pd.DataFrame) -> pd.
     return pd.DataFrame(rows)
 
 
-def _build_dim_administrado(df_multas: pd.DataFrame, df_informes: pd.DataFrame) -> pd.DataFrame:
+def _build_dim_administrado(df_multas: pd.DataFrame) -> pd.DataFrame:
     rows = [
         {
             "ID_ADMINISTRADO": ND,
@@ -289,14 +276,6 @@ def _build_dim_administrado(df_multas: pd.DataFrame, df_informes: pd.DataFrame) 
             }
         )
 
-    if len(df_informes):
-        for _, r in df_informes.iterrows():
-            cod = r.get("IDADMINISTRADO")
-            if not vacio(cod):
-                add(str(cod).strip(), r.get("TXADMINISTRADO"))
-            elif not vacio(r.get("TXADMINISTRADO")):
-                norm = _norm_text(r.get("TXADMINISTRADO"))[:40]
-                add(f"NOM-{norm}", r.get("TXADMINISTRADO"))
     if "ADMINISTRADO" in df_multas.columns:
         for val in df_multas["ADMINISTRADO"].dropna().unique():
             norm = _norm_text(val)[:40]
@@ -339,84 +318,8 @@ def _resolve_estado(lk: dict, val, tipo_default: str) -> int:
     return lk.get((t or tipo_default, c), ND)
 
 
-def _build_fact_informes(
-    df: pd.DataFrame,
-    dim_admin: pd.DataFrame,
-    dim_org: pd.DataFrame,
-    dim_mat: pd.DataFrame,
-    dim_est: pd.DataFrame,
-) -> pd.DataFrame:
-    lk_a = _lk_simple(dim_admin, "COD_ADMINISTRADO")
-    lk_o = _lk_simple(dim_org, "SIGLA")
-    lk_m = _lk_simple(dim_mat, "NOMBRE")
-    lk_e = _lk_estado(dim_est)
-    rows = []
-    for i, r in df.iterrows():
-        id_inf = len(rows) + 1
-        cod_adm = str(r.get("IDADMINISTRADO")).strip() if not vacio(r.get("IDADMINISTRADO")) else None
-        if not cod_adm and not vacio(r.get("TXADMINISTRADO")):
-            cod_adm = f"NOM-{_norm_text(r.get('TXADMINISTRADO'))[:40]}"
-        id_admin = lk_a.get(cod_adm, ND) if cod_adm else ND
-        sigla = str(r.get("TXCOORDINACION", "")).strip().upper()[:30] if not vacio(r.get("TXCOORDINACION")) else None
-        id_org = lk_o.get(sigla, ND) if sigla else ND
-        mat = _norm_text(r.get("TXSUBSECTOR_UND"))
-        id_mat = lk_m.get(mat, ND) if mat else ND
-        id_est = _resolve_estado(lk_e, r.get("TXESTADO"), "INFORME")
-        f_ini, f_fin = r.get("F_INICIO"), r.get("F_FIN")
-        f_inf, f_esp = r.get("F_INFORME"), r.get("F_INFORME_ESPERADO")
-        dias_sup = _dias_entre(f_fin, f_ini)
-        dias_elab = _dias_entre(f_inf, f_fin)
-        flag_op = 0
-        if not vacio(f_inf) and not vacio(f_esp):
-            try:
-                flag_op = 1 if pd.Timestamp(f_inf) <= pd.Timestamp(f_esp) else 0
-            except Exception:
-                pass
-        flag_deriv = 0 if vacio(r.get("TX_DOC_DERIVACION")) else 1
-        rows.append(
-            {
-                "ID_INFORME": id_inf,
-                "IDACTIVIDAD": r.get("IDACTIVIDAD"),
-                "TXCUC": r.get("TXCUC"),
-                "TXNUMEXP": r.get("TXNUMEXP"),
-                "TXINFORME": r.get("TXINFORME"),
-                "ID_ADMINISTRADO": id_admin,
-                "ID_ORGANO": id_org,
-                "ID_MATERIA": id_mat,
-                "ID_ESTADO_INFORME": id_est,
-                "TIPO_SUPERVISION": r.get("TXTIPSUP"),
-                "FUENTE_PROGRAMACION": r.get("TXFUENTE"),
-                "NIVEL_REVISION": r.get("TXNIVELES_REVISION"),
-                "F_INICIO": f_ini,
-                "F_FIN": f_fin,
-                "F_INFORME_ESPERADO": f_esp,
-                "F_INFORME": f_inf,
-                "F_REG_INFORME": r.get("F_REG_INFORME"),
-                "DIAS_SUPERVISION": dias_sup,
-                "DIAS_ELAB_INFORME": dias_elab,
-                "FLAG_INFORME_OPORTUNO": flag_op,
-                "FLAG_DERIVADO": flag_deriv,
-                "FUENTE_REGISTRO": "SISUD_INF",
-                "FECHA_CARGA": datetime.now(),
-            }
-        )
-    return pd.DataFrame(rows)
-
-
-def _amarre_informe(row, idx_cuc: dict, idx_exp: dict) -> int | None:
-    exp = row.get("NUMERO_EXPEDIENTE")
-    if not vacio(exp):
-        k = str(exp).strip().upper()
-        if k in idx_cuc:
-            return idx_cuc[k]
-        if k in idx_exp:
-            return idx_exp[k]
-    return None
-
-
 def _build_fact_multas(
     df: pd.DataFrame,
-    fact_inf: pd.DataFrame,
     dim_admin: pd.DataFrame,
     dim_org: pd.DataFrame,
     dim_mat: pd.DataFrame,
@@ -425,32 +328,17 @@ def _build_fact_multas(
 ) -> pd.DataFrame:
     lk_a = _lk_simple(dim_admin, "COD_ADMINISTRADO")
     lk_o = _lk_simple(dim_org, "SIGLA")
-    lk_m = _lk_simple(dim_mat, "NOMBRE")
     lk_e = _lk_estado(dim_est)
     id_pagado = lk_e.get(("PAGO", "PAGADO"), ND)
     lk_u = _lk_simple(dim_uit, "ANIO")
-    idx_cuc = {}
-    idx_exp = {}
-    if len(fact_inf):
-        for r in fact_inf.itertuples(index=False):
-            if not vacio(r.TXCUC):
-                idx_cuc[str(r.TXCUC).strip().upper()] = int(r.ID_INFORME)
-            if not vacio(r.TXNUMEXP):
-                idx_exp[str(r.TXNUMEXP).strip().upper()] = int(r.ID_INFORME)
-
-    inf_by_id = {int(r.ID_INFORME): r for r in fact_inf.itertuples(index=False)} if len(fact_inf) else {}
+    _ = dim_mat
 
     rows = []
     for _, r in df.iterrows():
         id_mc = len(rows) + 1
-        id_inf = _amarre_informe(r, idx_cuc, idx_exp)
         id_admin = ND
         id_mat = ND
-        if id_inf and id_inf in inf_by_id:
-            inf = inf_by_id[id_inf]
-            id_admin = int(inf.ID_ADMINISTRADO)
-            id_mat = int(inf.ID_MATERIA)
-        elif not vacio(r.get("ADMINISTRADO")):
+        if not vacio(r.get("ADMINISTRADO")):
             norm = _norm_text(r.get("ADMINISTRADO"))[:40]
             id_admin = lk_a.get(f"NOM-{norm}", ND)
 
@@ -493,7 +381,6 @@ def _build_fact_multas(
                 "CUM": r.get("CUM"),
                 "CAM": r.get("CAM"),
                 "NUMERO_REGISTRO_SIGED": r.get("NUMERO_REGISTRO_SIGED"),
-                "ID_INFORME": id_inf,
                 "ID_ADMINISTRADO": id_admin,
                 "ID_ORGANO": id_org,
                 "ID_MATERIA": id_mat,
@@ -575,22 +462,18 @@ def _build_det_etapas(df: pd.DataFrame, fact_mc: pd.DataFrame) -> pd.DataFrame:
 
 def construir_modelo(
     df_multas: pd.DataFrame,
-    df_informes: pd.DataFrame,
     df_etapas: pd.DataFrame,
 ) -> dict[str, pd.DataFrame]:
-    """Fase 5: arma DIM_*, FACT_* y MI_DET_ETAPA_MC listos para carga Oracle."""
+    """Fase 5: arma DIM_*, FACT_MULTA y MI_DET_ETAPA_MC listos para carga Oracle."""
     dim_tiempo = _build_dim_tiempo()
-    dim_estado = _build_dim_estado(df_multas, df_informes)
+    dim_estado = _build_dim_estado(df_multas)
     dim_uit = _build_dim_uit()
-    dim_materia = _build_dim_materia(df_informes)
-    dim_organo = _build_dim_organo(df_multas, df_informes)
-    dim_admin = _build_dim_administrado(df_multas, df_informes)
+    dim_materia = _build_dim_materia()
+    dim_organo = _build_dim_organo(df_multas)
+    dim_admin = _build_dim_administrado(df_multas)
 
-    fact_informes = _build_fact_informes(
-        df_informes, dim_admin, dim_organo, dim_materia, dim_estado
-    )
     fact_multas = _build_fact_multas(
-        df_multas, fact_informes, dim_admin, dim_organo, dim_materia, dim_estado, dim_uit
+        df_multas, dim_admin, dim_organo, dim_materia, dim_estado, dim_uit
     )
     det_etapas = _build_det_etapas(df_etapas, fact_multas)
 
@@ -601,7 +484,6 @@ def construir_modelo(
         "MI_DIM_MATERIA_SUBSECTOR": dim_materia,
         "MI_DIM_ESTADO": dim_estado,
         "MI_DIM_PARAMETRO_UIT": dim_uit,
-        "MI_FACT_INFORME_SUPERVISION": fact_informes,
         "MI_FACT_MULTA_COERCITIVA": fact_multas,
         "MI_DET_ETAPA_MC": det_etapas,
     }

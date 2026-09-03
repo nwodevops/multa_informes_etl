@@ -46,8 +46,8 @@ Smoke sin Hop: [`./init.sh`](../../init.sh) o manualmente:
 | Metadata | Variables | Uso |
 |---|---|---|
 | `h2` | `DB_H2_*` | Staging |
-| `oracle_sisud` | `DB_ORA_SISUD_*` | Fuente SISUD |
-| `oracle_dw` | `DB_ORA_DW_*` | Destino DW (carga Fase 6–7) |
+| `oracle_sisud` | `DB_ORA_SISUD_*` | Fuente SISUD (solo F5 `VW_MULTA_COERCITIVA`; sandbox local: `localhost:1525/CSEP`) |
+| `oracle_dw` | `DB_ORA_DW_*` | Destino DW (carga Fase 6–7; local: `localhost:1524/BD_CURSOR`) |
 | `oracle_BD_CURSOR` | `DB_ORA_REPO_*` | Legado |
 | `mysql` | `DB_MYSQL_*` | Fuente GAPP |
 

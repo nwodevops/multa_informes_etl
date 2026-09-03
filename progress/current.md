@@ -6,15 +6,14 @@
 
 | Campo | Valor |
 |---|---|
-| ID | *(ninguna)* |
+| ID | *(ninguna `in_progress`; `dw-solo-multas` cerrada)* |
 | Status | — |
-| Criterio | — |
+| Criterio | [`CHECKPOINTS.md`](../CHECKPOINTS.md) |
 
 ## Plan
 
-1. Lineamiento Fases 1–7 + infra (staging, Windows, remote, rename `MI_`): **cerrados**.
-2. Fase 8 Power BI: **fuera de alcance**.
-3. Siguiente trabajo: abrir feature nueva en `feature_list.json` cuando haga falta.
+1. Elegir siguiente feature `pending` en [`feature_list.json`](../feature_list.json) si aplica.
+2. `./init.sh` → HARNESS OK.
 
 ## Comandos
 

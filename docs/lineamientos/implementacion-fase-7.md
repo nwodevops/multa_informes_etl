@@ -15,7 +15,7 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) secciones 5
 
 | Código | Métrica(s) | Grano |
 |---|---|---|
-| K1 | `N_MULTAS`, `N_INFORMES` | `(ANIO, ID_ORGANO)` + fila `TOTAL` |
+| K1 | `N_MULTAS` | `(ANIO, ID_ORGANO)` + fila `TOTAL` |
 | K2 | `PROM_DIAS_NOTIF_FIRMA` | idem (solo casos con días válidos) |
 | K3 | `RATIO_COBRANZA_SOLES`, `RATIO_COBRANZA_UIT` | idem (multas con resolución) |
 | K4 | `TASA_VERIF_POST_MC` | idem |

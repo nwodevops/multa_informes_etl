@@ -1,5 +1,7 @@
 # Antes → durante → fase 1
 
+> **Nota:** este documento conserva cifras históricas de una corrida con F3. El DW vigente es **solo Multas**; F3 ya no se extrae.
+
 Dónde viven los datos en cada momento de una corrida de `wf_main`, y **en qué se diferencian**.
 
 Nombres: [`glosario.md`](glosario.md). Qué hace la fase 1: [`fase-1-vista.md`](fase-1-vista.md).

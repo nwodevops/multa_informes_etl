@@ -52,7 +52,7 @@ No pasar float a columna VARCHAR (DPY-3013).
 ## Identity columns
 
 - `ID_HALLAZGO`, `ID_RESULTADO`: omitir en INSERT (`skip_identity=True`).
-- Claves de hechos (`ID_MC`, `ID_INFORME`): asignadas en Python antes del insert.
+- Claves de hechos (`ID_MC`): asignadas en Python antes del insert.
 
 ## Verificación
 

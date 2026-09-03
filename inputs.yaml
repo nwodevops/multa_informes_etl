@@ -46,11 +46,6 @@ sources:
     connection: oracle_sisud
     object: SISUD.VW_MULTA_COERCITIVA
 
-  - stg_table: STG_ORA_CSEP_INFORMES
-    type: oracle
-    connection: oracle_sisud
-    object: SISUD.CSEP_INFORMES_VIEW
-
   - stg_table: STG_MYSQL_T_MVC_MULTACOERCITIVA
     type: mysql
     connection: mysql

@@ -19,7 +19,7 @@ Detalle por fase: [phases.md](phases.md).
 | Fase | Entregable | Módulo |
 |:---:|---|---|
 | 2 | `PROF_*`, `DICCIONARIO` | `perfilamiento.py`, `diccionario.py` |
-| 3 | `DF_MULTAS`, `DF_INFORMES`, `DF_ETAPAS` | `homologacion.py`, `integracion.py` |
+| 3 | `DF_MULTAS`, `DF_ETAPAS` | `homologacion.py`, `integracion.py` |
 | 4 | `FG_CONFORME`, `MI_DQ_HALLAZGO`, `QA_AMARRE` | `calidad.py` |
 | 5 | `DIM_*`, `FACT_*`, `DET_*` | `dimensional.py` |
 | 6 | Carga Oracle | `python/io/cargar_dw.py` |
