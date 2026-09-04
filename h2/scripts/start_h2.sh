@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Levanta el server H2 (TCP 9092 + WEB 8082). Equivalente Linux de start_h2.bat.
-set -uo pipefail
+set -euo pipefail
 
 cd "$(dirname "$(readlink -f "$0")")/.."
 
@@ -15,15 +15,15 @@ if [ ! -f "$H2_JAR" ]; then
   exit 1
 fi
 
-port_listening() {
+port_up() {
   if command -v ss >/dev/null 2>&1; then
-    ss -ltn 2>/dev/null | grep -q ":${H2_PORT}[[:space:]]"
+    ss -ltn 2>/dev/null | grep -qE ":${H2_PORT}[[:space:]]"
   else
-    (exec 3<>"/dev/tcp/127.0.0.1/${H2_PORT}") 2>/dev/null
+    netstat -ltn 2>/dev/null | grep -qE ":${H2_PORT}[[:space:]]"
   fi
 }
 
-if port_listening; then
+if port_up; then
   echo "H2 ya esta arriba en puerto ${H2_PORT}"
   exit 0
 fi
@@ -37,12 +37,12 @@ nohup java -cp "$H2_JAR" org.h2.tools.Server \
 disown
 
 for _ in $(seq 1 30); do
-  if port_listening; then
+  if port_up; then
     echo "H2 OK puerto ${H2_PORT}"
     exit 0
   fi
   sleep 1
 done
 
-echo "FAIL: H2 no abrio puerto ${H2_PORT}. Revisa h2/${H2_LOG}" >&2
+echo "FAIL: H2 no abrio puerto ${H2_PORT}. Revisa ${H2_LOG}" >&2
 exit 1

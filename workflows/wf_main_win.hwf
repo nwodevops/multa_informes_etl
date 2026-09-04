@@ -47,7 +47,7 @@
       <script>cd /d "%PROJECT_HOME%"
 h2\scripts\reset_and_create.bat</script>
       <name>Reset H2 clean</name>
-      <description>stop + start H2 mem + DDL (00_reset.sql + 01_schema.sql) — Windows .bat</description>
+      <description>verifica/levanta H2 (tarea) + DDL (00_reset.sql + 01_schema.sql) — Windows .bat</description>
       <type>SHELL</type>
       <attributes/>
       <xloc>208</xloc>
@@ -294,7 +294,7 @@ if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
     <notepad>
       <note>CORRIDA / smoke WINDOWS (cmd.exe).
 Equivalente de wf_main.hwf para entorno Windows.
-H2 se resetea en cada corrida: stop + start + DDL (h2\scripts\reset_and_create.bat).
+H2 se resetea en cada corrida: verifica/levanta el server (tarea) + DDL (h2\scripts\reset_and_create.bat).
 Python create STG: python python\create_stg.py.
 Stage Excel: pl_stage_excel.hpl. Stage Oracle VW/MySQL: TableInput truncate a H2.
 Pipeline demo: lee DEMO_TABLA_EJEMPLO.

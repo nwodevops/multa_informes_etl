@@ -2,10 +2,14 @@
 # Reset clean de H2 in-memory + DDL del proyecto. Equivalente Linux de
 # reset_and_create.bat.
 #
-# H2 es in-memory (mem:csep): al parar el server se limpia sola, por eso el DDL
-# se aplica por TCP DESPUES del start. El reset no ejecuta sql/02_stg.sql (eso
-# lo hace python/create_stg.py).
-set -uo pipefail
+# En Linux el server se para y se levanta aqui mismo (nohup + redireccion, sin
+# la consola de Hop), por lo que no hace falta la tarea programada
+# start_h2_svc.bat. En Windows reset_and_create.bat SOLO verifica el puerto:
+# el server corre como tarea independiente (start_h2_svc.bat).
+#
+# H2 es in-memory (mem:csep): al parar el server se limpia sola. El reset no
+# ejecuta sql/02_stg.sql (eso lo hace python/create_stg.py).
+set -euo pipefail
 
 cd "$(dirname "$(readlink -f "$0")")/.."
 
