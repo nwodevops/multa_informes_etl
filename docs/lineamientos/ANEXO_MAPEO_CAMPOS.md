@@ -4,9 +4,9 @@
 > entre "qué tablas construir" y "de dónde sale exactamente cada columna", para que la capa
 > lógica (Python) se pueda escribir sin ambigüedad.
 >
-> Basado en el inventario campo por campo verificado con datos reales de las 5 fuentes
+> Basado en el inventario campo por campo verificado con datos reales de las fuentes de multa
 > (`propuesta_5/docs/dwh/01-fuentes-de-datos.md`), adaptado a los nombres de columna
-> definidos en `ddl/01_dimensiones.sql` y `ddl/02_hechos.sql`.
+> definidos en `ddl/01_dimensiones.sql` y `ddl/02_hechos.sql`. F3 (informes) está **fuera de alcance**.
 
 ---
 
@@ -17,7 +17,6 @@
 | F1 | Excel OD Lambayeque | hoja `5) Multas Coercitivas` | 32 |
 | F2 | Excel CAGR | hoja `1) Multas coercitivas` | 48 (incluye las 32 de F1 + 16 propias) |
 | F2-ET | Excel CAGR | hoja `2) Etapas` | 12 |
-| F3 | Oracle SISUD | `CSEP_INFORMES_VIEW` | 56 |
 | F4 | MySQL gapps | `T_MVC_MULTACOERCITIVA_MC` | 17 |
 | F5 | Oracle SISUD | `VW_MULTA_COERCITIVA` | 13 |
 
@@ -40,10 +39,9 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | `CUM` | F5 `CUM` | F4 `TX_IDCUM` (conciliar, regla R04) | solo dígitos, relleno a 11 posiciones (H2) |
 | `CAM` | F5 `CAM` | F4 `TX_IDCAM` (conciliar, regla R04) | patrón `AAAA`(4)+segmento(2)+correlativo(7)=13 (H2) |
 | `NUMERO_REGISTRO_SIGED` | F5 `NUMERO_REGISTRO` | F1/F2 `SIGED`; F4 `TX_EXP_SIGED_DOC` | ninguna |
-| `ID_INFORME` | resuelto por amarre | `NUMERO_EXPEDIENTE` ↔ F3 `TXCUC`/`TXNUMEXP` | FK a `MI_FACT_INFORME_SUPERVISION`; `NULL`/`-1` si no amarra (H9) |
-| `ID_ADMINISTRADO` | resuelto vía informe amarrado (F3 `IDADMINISTRADO`) | F5 `ADMINISTRADO` (si no hay amarre) | lookup en `MI_DIM_ADMINISTRADO`; `-1` si no resuelve |
+| `ID_ADMINISTRADO` | F5 `ADMINISTRADO` | F1/F2 nombre si existe | lookup en `MI_DIM_ADMINISTRADO` (`NOM-…`); `-1` si no resuelve |
 | `ID_ORGANO` | F2 `COORD` | sigla final de `NUMERO_EXPEDIENTE` (ej. `...-DSIS-CRES`) | lookup en `MI_DIM_ORGANO_UNIDAD`; `-1` si no resuelve |
-| `ID_MATERIA` | vía informe amarrado (F3 `TXSUBSECTOR_UND`) | — | lookup en `MI_DIM_MATERIA_SUBSECTOR`; `-1` si no resuelve |
+| `ID_MATERIA` | catálogo semilla | — | lookup en `MI_DIM_MATERIA_SUBSECTOR`; `-1` si no resuelve |
 | `ID_ESTADO_RESOLUCION` | F5 `ESTADO_RESOLUCION` | — | homologar contra `MI_DIM_ESTADO` (`TIPO_ESTADO='RESOLUCION'`) |
 | `ID_ESTADO_MULTA` | F1/F2 `ESTADO_MC` | F5 `ESTADO_MULTA`; F4 `FG_ESTADOMULTA` (conciliar) | homologar contra `MI_DIM_ESTADO` (`TIPO_ESTADO='MULTA'`) |
 | `ID_ESTADO_PAGO` | F2 `ESTADO_PAGO_MC` | — | homologar contra `MI_DIM_ESTADO` (`TIPO_ESTADO='PAGO'`) |
@@ -90,34 +88,7 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 
 ## 2. `MI_FACT_INFORME_SUPERVISION`
 
-| Columna destino | Origen (F3 `CSEP_INFORMES_VIEW`) | Transformación |
-|---|---|---|
-| `IDACTIVIDAD` | `IDACTIVIDAD` | ninguna |
-| `TXCUC` | `TXCUC` | ninguna (clave de amarre con `NUMERO_EXPEDIENTE`) |
-| `TXNUMEXP` | `TXNUMEXP` | ninguna (frecuentemente nulo en la muestra) |
-| `TXINFORME` | `TXINFORME` | ninguna |
-| `ID_ADMINISTRADO` | `IDADMINISTRADO` / `TXADMINISTRADO` | lookup/alta en `MI_DIM_ADMINISTRADO` |
-| `ID_ORGANO` | `TXCOORDINACION` | lookup/alta en `MI_DIM_ORGANO_UNIDAD` |
-| `ID_MATERIA` | `TXSUBSECTOR_UND` | lookup/alta en `MI_DIM_MATERIA_SUBSECTOR` |
-| `ID_ESTADO_INFORME` | `TXESTADO` (o `TXPRY_ESTADO` si aplica al ciclo del informe) | homologar contra `MI_DIM_ESTADO` (`TIPO_ESTADO='INFORME'`) |
-| `TIPO_SUPERVISION` | `TXTIPSUP` | ninguna (`ESPECIAL`/`REGULAR`) |
-| `FUENTE_PROGRAMACION` | `TXFUENTE` | ninguna (`PLANEFA`/`OTRA`) |
-| `NIVEL_REVISION` | `TXNIVELES_REVISION` | ninguna (texto con fechas embebidas, se conserva tal cual) |
-| `F_INICIO` | `FEINICIO` | parsear `TIMESTAMP'...'` de Oracle a `DATE` |
-| `F_FIN` | `FEFIN` | ídem |
-| `F_INFORME_ESPERADO` | `FEINFORME_ESPERADO` | ídem |
-| `F_INFORME` | `FEINFORME` | ídem |
-| `F_REG_INFORME` | `FEREG_INFORME` | ídem |
-| `DIAS_SUPERVISION` | calculado | `F_FIN − F_INICIO` |
-| `DIAS_ELAB_INFORME` | calculado | `F_INFORME − F_FIN` |
-| `FLAG_INFORME_OPORTUNO` | calculado | `1` si `F_INFORME ≤ F_INFORME_ESPERADO` |
-| `FLAG_DERIVADO` | calculado | `1` si `TX_DOC_DERIVACION` no es nulo |
-| `FUENTE_REGISTRO` | asignado | `'SISUD_INF'` constante |
-| `FECHA_CARGA` | asignado | `SYSDATE` al insertar |
-
-**Campos de F3 que NO suben al datamart** (permanecen solo en la capa de integración/H2 por
-tratarse de datos personales, según gobierno de datos): `TXNOMBRE_RESP_COMISION`,
-`TXNOMBRE_RESP_MONITOREO`, `TXNOMBRE_ANAL_LEGAL`, `TXNOMBRE_JEFE_ACTIVIDAD`.
+**Fuera de alcance.** El DW es solo Multas. F3 (`CSEP_INFORMES_VIEW`) no se extrae ni se modela.
 
 ---
 
@@ -147,15 +118,15 @@ tratarse de datos personales, según gobierno de datos): `TXNOMBRE_RESP_COMISION
 
 | Columna | Origen | Transformación |
 |---|---|---|
-| `COD_ADMINISTRADO` | F3 `IDADMINISTRADO` (`ADM#####`) | si la fuente solo trae nombre (F1/F2/F5 `ADMINISTRADO`), usar `NOM-<razón social normalizada>` como clave natural |
-| `RAZON_SOCIAL` | F3 `TXADMINISTRADO` / F5 `ADMINISTRADO` | conservar tal cual |
+| `COD_ADMINISTRADO` | F5 `ADMINISTRADO` (nombre) | clave natural `NOM-<razón social normalizada>` |
+| `RAZON_SOCIAL` | F5 `ADMINISTRADO` | conservar tal cual |
 | `RAZON_SOCIAL_NORM` | calculado | mayúsculas, sin dobles espacios, sin tildes opcional |
 
 ### `MI_DIM_ORGANO_UNIDAD`
 
 | Columna | Origen | Transformación |
 |---|---|---|
-| `SIGLA` | F3 `TXCOORDINACION`; F2 `COORD` | si no viene explícita, extraer de la sigla final de `NUMERO_EXPEDIENTE` (ej. `0209-2023-DSIS-CRES` → `DSIS-CRES`) |
+| `SIGLA` | F2 `COORD` | si no viene explícita, extraer de la sigla final de `NUMERO_EXPEDIENTE` (ej. `0209-2023-DSIS-CRES` → `DSIS-CRES`) |
 | `NOMBRE` | igual a `SIGLA` si no hay nombre largo disponible | catálogo institucional a completar con CSEP |
 | `TIPO` | inferido de la sigla | `DIRECCION`/`COORDINACION`/`ODES`/`OD` según catálogo (Fase 3) |
 
@@ -163,7 +134,7 @@ tratarse de datos personales, según gobierno de datos): `TXNOMBRE_RESP_COMISION
 
 | Columna | Origen |
 |---|---|
-| `NOMBRE` | F3 `TXSUBSECTOR_UND` |
+| `NOMBRE` | catálogo semilla (Hidrocarburos, Minería, etc.) |
 
 ### `MI_DIM_ESTADO`
 
@@ -174,7 +145,6 @@ tratarse de datos personales, según gobierno de datos): `TXNOMBRE_RESP_COMISION
 | `PAGO` | F2 `ESTADO_PAGO_MC` |
 | `ETAPA` | F2-ET `EST_ETAPA_MC` |
 | `DESCARGOS` | F1/F2 `PRESENT_DCG_ADM`, F2 `EST_DCG` |
-| `INFORME` | F3 `TXESTADO`, `TXPRY_ESTADO` |
 
 Las semillas ya cargadas en `ddl/01_dimensiones.sql` cubren los valores observados en el
 diagnóstico; deben confirmarse/ampliarse con CSEP en la Fase 3 del plan de implementación.

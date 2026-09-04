@@ -1,7 +1,7 @@
 # Propuesta Adaptada — DWH OEFA sobre tu arquitectura real (Apache Hop + H2 + Python + Oracle BD_CURSOR)
 
 **Evaluación de la efectividad de las estrategias de promoción del cumplimiento**
-*(informes de supervisión y multas coercitivas)*
+*(multas coercitivas)*
 
 | | |
 |---|---|
@@ -85,7 +85,6 @@ construir.
 |---|---|---|---|
 | F1 | Excel "Medidas Administrativas OD Lambayeque" | Google Sheets (vía `client_secret.json`) | Tracking operativo de multas coercitivas (32 columnas) + catálogos (feriados, UBIGEO, parámetros) |
 | F2 | Excel "CAGR Multas Coercitivas" | Google Sheets (vía `client_secret.json`) | Versión evolucionada del tracking (48 columnas) + etapas del workflow + diccionario de datos |
-| F3 | `CSEP_INFORMES_VIEW` | Oracle SISUD | Informes de supervisión |
 | F4 | `T_MVC_MULTACOERCITIVA_MC` | MySQL gapps | Tabla transaccional de la app de multas coercitivas |
 | F5 | `VW_MULTA_COERCITIVA` | Oracle SISUD | Vista institucional consolidada de multas |
 
@@ -136,8 +135,7 @@ completo se calcula en Python y se materializa **únicamente** en Oracle BD_CURS
 | Tabla (en BD_CURSOR) | Grano | Notas |
 |---|---|---|
 | `MI_FACT_MULTA_COERCITIVA` | Una medida administrativa con su multa coercitiva, integrando F1+F2+F4+F5 | Hecho acumulativo: una sola fila recorre notificación → descargos → análisis → imposición → verificación → cobranza. Fechas de cada hito como columnas `DATE` directas |
-| `MI_FACT_INFORME_SUPERVISION` | Un informe de supervisión (fila de F3) | Vínculo opcional a `MI_FACT_MULTA_COERCITIVA` por expediente, cuando existe amarre |
-| `MI_DET_ETAPA_MC` | Una etapa del workflow de elaboración de la multa (hoja "2) Etapas" de F2) | Tabla de detalle simple, no un tercer hecho dimensional — información operativa de apoyo |
+| `MI_DET_ETAPA_MC` | Una etapa del workflow de elaboración de la multa (hoja "2) Etapas" de F2) | Tabla de detalle simple, no un segundo hecho dimensional — información operativa de apoyo |
 
 ### 3.2 Dimensiones
 
@@ -181,7 +179,7 @@ documentadas para revisión de CSEP).
 
 | # | Indicador | Definición |
 |---|---|---|
-| K1 | Cobertura | N.° de multas e informes por año y órgano/unidad |
+| K1 | Cobertura | N.° de multas por año y órgano/unidad |
 | K2 | Oportunidad del ciclo de multa | Días promedio entre notificación de descargos y firma de resolución |
 | K3 | Efectividad de cobranza | Monto cobrado / monto impuesto (en UIT y soles) |
 | K4 | Tasa de verificación post-multa | Multas con verificación posterior registrada / multas con resolución |
@@ -220,7 +218,7 @@ Fases con dependencia estricta — no se avanza a la siguiente hasta cumplir el 
 | | |
 |---|---|
 | **Entrada** | Diccionario completo (Fase 2) |
-| **Tareas** | Normalizar CUM/CAM; parsear fechas heterogéneas; limpiar texto (saltos de línea, tokens de error); integrar F1+F2+F4+F5 en un dataframe único de multas con columna `FUENTE_ORIGEN`; integrar F3 en un dataframe de informes; homologar estados (aprobado por CSEP) |
+| **Tareas** | Normalizar CUM/CAM; parsear fechas heterogéneas; limpiar texto (saltos de línea, tokens de error); integrar F1+F2+F4+F5 en un dataframe único de multas con columna `FUENTE_ORIGEN`; homologar estados (aprobado por CSEP) |
 | **Salida** | Dataframes integrados y tipificados, en memoria de Python |
 | **Criterio de avance** | Cero errores de tipo al procesar cada dataframe; catálogo de estados aprobado |
 
@@ -238,7 +236,7 @@ Fases con dependencia estricta — no se avanza a la siguiente hasta cumplir el 
 | | |
 |---|---|
 | **Entrada** | Dataframes validados (Fase 4) |
-| **Tareas** | Construir en memoria las dimensiones (`MI_DIM_TIEMPO`, `MI_DIM_ADMINISTRADO`, `MI_DIM_ORGANO_UNIDAD`, `MI_DIM_MATERIA_SUBSECTOR`, `MI_DIM_ESTADO`, `MI_DIM_PARAMETRO_UIT`) y los hechos (`MI_FACT_MULTA_COERCITIVA`, `MI_FACT_INFORME_SUPERVISION`, `MI_DET_ETAPA_MC`) |
+| **Tareas** | Construir en memoria las dimensiones (`MI_DIM_TIEMPO`, `MI_DIM_ADMINISTRADO`, `MI_DIM_ORGANO_UNIDAD`, `MI_DIM_MATERIA_SUBSECTOR`, `MI_DIM_ESTADO`, `MI_DIM_PARAMETRO_UIT`) y los hechos (`MI_FACT_MULTA_COERCITIVA`, `MI_DET_ETAPA_MC`) |
 | **Salida** | Estructuras finales listas para cargar |
 | **Criterio de avance** | Ningún hecho queda sin dimensión (uso de un miembro "NO ESPECIFICADO") |
 
@@ -289,7 +287,7 @@ Fases con dependencia estricta — no se avanza a la siguiente hasta cumplir el 
 | H2 en memoria se queda sin espacio si el volumen crece | Bajo (volúmenes actuales son pequeños) | Monitorear tamaño de las tablas espejo; si crece, evaluar H2 en modo archivo en vez de memoria |
 | Falla de credenciales de Google Sheets (`client_secret.json` expirado/revocado) | Medio | Documentar el procedimiento de renovación de credenciales como parte de la Fase 1 |
 | Catálogos con `IMPORTRANGE` roto (H6) | Medio | Solicitar a CSEP la exportación con valores antes de la Fase 3; sembrar `MI_DIM_PARAMETRO_UIT` con valores oficiales del MEF como contingencia |
-| Falta de llave única entre multas e informes (H9) | Medio | Tabla de equivalencias + % de amarre reportado como métrica de calidad (K5), no bloqueante |
+| Falta de llave única entre fuentes de multa (H9) | Medio | Tabla de equivalencias + % de amarre reportado como métrica de calidad (K5), no bloqueante |
 | Doble versión del registro de multas (F1 vs F2, H7) | Bajo | Una sola tabla integrada con `FUENTE_ORIGEN` siempre visible |
 
 ---

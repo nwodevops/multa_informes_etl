@@ -71,7 +71,7 @@ Implementación: `aplicar_calidad()` devuelve dataframes **sin drop** + lista/`D
 ## Anti-patrones
 
 - Descartar filas no conformes antes del hecho (destruye evidencia).
-- INNER JOIN multas↔informes por expediente cuando el amarre es parcial.
+- INNER JOIN forzado entre fuentes de multa cuando el amarre H9 es parcial.
 - Append VARCHAR genérico a Oracle para tablas con DDL formal.
 - `aggregate()` en R/pandas que pierde grupos con NA en claves (usar groupby explícito).
 

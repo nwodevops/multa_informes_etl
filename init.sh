@@ -43,6 +43,7 @@ PY
 step "Prerrequisitos (java, venv, inputs)"
 command -v java >/dev/null 2>&1 || fail "java no está en PATH (requerido para H2)"
 [ -f inputs.yaml ] || fail "inputs.yaml no encontrado"
+[ ! -f pipelines/pl_stage_informes.hpl ] || fail "pl_stage_informes.hpl no debe existir (F3 fuera de alcance)"
 [ -f h2/lib/h2-2.4.240.jar ] || fail "jar H2 no encontrado en h2/lib/"
 if [ ! -x .venv/bin/python ]; then
   warn "venv ausente; crear con: python3 -m venv --without-pip .venv && pip install -r python/requirements.txt"
@@ -64,7 +65,6 @@ fi
 step "Staging Oracle / MySQL (Hop directo)"
 if [ -x "$HOP_RUN" ]; then
   "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_oracle.hpl" -r local
-  "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_informes.hpl" -r local
   "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_mysql.hpl" -r local
 else
   fail "hop-run no encontrado ($HOP_RUN); requerido para staging Oracle/MySQL"
@@ -80,8 +80,14 @@ set -e
 step "Comprobando salidas mínimas en log"
 grep -q "Salida PROF_" "$LOG" || fail "no hay salida PROF_* en el log"
 grep -q "Salida MI_DIM_" "$LOG" || fail "no hay salida MI_DIM_* en el log"
-grep -q "Salida MI_FACT_" "$LOG" || fail "no hay salida MI_FACT_* en el log"
+grep -q "Salida MI_FACT_MULTA_COERCITIVA" "$LOG" || fail "no hay salida MI_FACT_MULTA_COERCITIVA en el log"
 grep -q "Salida MI_INDICADOR_RESULTADO" "$LOG" || fail "no hay MI_INDICADOR_RESULTADO en el log"
+if grep -q "Salida DF_INFORMES" "$LOG"; then
+  fail "log contiene DF_INFORMES (F3 fuera de alcance)"
+fi
+if grep -q "Salida MI_FACT_INFORME" "$LOG"; then
+  fail "log contiene MI_FACT_INFORME (F3 fuera de alcance)"
+fi
 
 if grep -q "DW:" "$LOG"; then
   if grep "DW:.*REVISAR" "$LOG"; then
@@ -128,6 +134,27 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
         if missing:
             sys.exit(f"faltan indicadores en Oracle: {missing}")
         print("Indicadores K1–K5 presentes")
+        cur.execute(
+            """
+            SELECT COUNT(*) FROM all_tables
+            WHERE owner = 'APP' AND table_name = 'MI_FACT_INFORME_SUPERVISION'
+            """
+        )
+        n_inf, = cur.fetchone()
+        if n_inf:
+            sys.exit("APP.MI_FACT_INFORME_SUPERVISION aún existe (F3 debe estar droppeada)")
+        print("MI_FACT_INFORME_SUPERVISION: inexistente")
+        cur.execute(
+            """
+            SELECT COUNT(*) FROM all_tab_columns
+            WHERE owner = 'APP' AND table_name = 'MI_FACT_MULTA_COERCITIVA'
+              AND column_name = 'ID_INFORME'
+            """
+        )
+        n_col, = cur.fetchone()
+        if n_col:
+            sys.exit("MI_FACT_MULTA_COERCITIVA.ID_INFORME aún existe (F3 debe estar droppeada)")
+        print("ID_INFORME: inexistente en MI_FACT_MULTA_COERCITIVA")
 PY
 
 echo ""

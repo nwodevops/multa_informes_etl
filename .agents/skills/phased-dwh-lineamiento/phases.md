@@ -10,7 +10,7 @@ Referencia canónica: `docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`.
 
 ## Fase 3 — Homologación e integración
 
-**Salida:** `DF_MULTAS` (F1+F2+F4+F5 + `FUENTE_ORIGEN`), `DF_INFORMES` (F3), `DF_ETAPAS`.
+**Salida:** `DF_MULTAS` (F1+F2+F4+F5 + `FUENTE_ORIGEN`), `DF_ETAPAS`.
 
 **Avance:** cero errores de tipo; catálogo de estados acordado.
 
@@ -24,7 +24,7 @@ Referencia canónica: `docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`.
 
 ## Fase 5 — Modelo dimensional
 
-**Salida:** `DIM_*` (6), `MI_FACT_MULTA_COERCITIVA`, `MI_FACT_INFORME_SUPERVISION`, `MI_DET_ETAPA_MC`.
+**Salida:** `DIM_*` (6), `MI_FACT_MULTA_COERCITIVA`, `MI_DET_ETAPA_MC`.
 
 **Avance:** ningún hecho sin dimensión (`ID_* = -1` si falta lookup).
 
@@ -40,7 +40,7 @@ Referencia canónica: `docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`.
 
 | Código | Métrica |
 |---|---|
-| K1 | `N_MULTAS`, `N_INFORMES` por año×órgano |
+| K1 | `N_MULTAS` por año×órgano |
 | K2 | `PROM_DIAS_NOTIF_FIRMA` |
 | K3 | `RATIO_COBRANZA_SOLES`, `RATIO_COBRANZA_UIT` |
 | K4 | `TASA_VERIF_POST_MC` |

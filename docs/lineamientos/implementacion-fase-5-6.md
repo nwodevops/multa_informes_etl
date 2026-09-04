@@ -13,7 +13,6 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) secciones 3
 ## Fase 5 — criterio de avance
 
 - Ningún hecho sin dimensión resuelta (fallback `ID_* = -1`).
-- Amarre multas↔informes por `NUMERO_EXPEDIENTE` ↔ `TXCUC`/`TXNUMEXP` (H9).
 - `MI_DET_ETAPA_MC.ID_MC` por `COD_PROY_MC` cuando existe hecho padre.
 
 ## Fase 6 — criterio de avance
@@ -29,7 +28,7 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) secciones 3
 .venv/bin/python python/main.py
 ```
 
-Esperado (datos actuales F1–F5): ~571 multas, ~53288 informes, 55 etapas en hechos.
+Esperado (datos actuales F1/F2/F4/F5): ~571 multas, 55 etapas en hechos.
 
 ## Pendiente (Fase 7+)
 

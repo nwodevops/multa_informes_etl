@@ -104,12 +104,20 @@
       "doc": "python/LEEME.md"
     },
     {
+      "id": "dw-solo-multas",
+      "title": "DW netamente Multas: quitar F3 (informes) end-to-end",
+      "status": "done",
+      "criterio": "CHECKPOINTS.md; ./init.sh HARNESS OK sin pl_stage_informes ni MI_FACT_INFORME_SUPERVISION",
+      "doc": "docs/inputs/README.md",
+      "evidencia": "progress/impl_dw-solo-multas.md"
+    },
+    {
       "id": "fase-remote-deploy",
       "title": "Despliegue remoto Windows (REPOCSEP → 10.6.0.15:1532/dvoefacore)",
       "status": "in_progress",
       "criterio": "git pull + switch-env.ps1 remote + wf_main_win/init.bat → Success + DW (OK) K1–K5",
       "doc": "environments/remote.json",
-      "nota": "Lógica Win OK (~53k informes); pendiente re-corrida post fix-dw-schema-user"
+      "nota": "Tras merge dw-solo-multas: re-corrida WIN multa-only (sin informes) post fix-dw-schema-user"
     }
   ]
 }

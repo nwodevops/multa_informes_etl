@@ -1,6 +1,6 @@
 """ENTRADA post-staging: H2 STG_* ya cargadas -> pandas DataFrames.
 
-Contrato lineamientos F1–F5 + diccionario F2 (DIC_*).
+Contrato lineamientos F1/F2/F4/F5 (multas) + diccionario F2 (DIC_*).
 """
 
 from __future__ import annotations
@@ -17,7 +17,6 @@ LECTURAS: dict[str, str] = {
     "ETAPAS": "SELECT * FROM PUBLIC.STG_GS1_ETAPAS",
     "GS2": "SELECT * FROM PUBLIC.STG_GS2_MULTAS_COERCITIVAS",
     "ORA": "SELECT * FROM PUBLIC.STG_ORA_VW_MULTA_COERCITIVA",
-    "INFORMES": "SELECT * FROM PUBLIC.STG_ORA_CSEP_INFORMES",
     "MYSQL": "SELECT * FROM PUBLIC.STG_MYSQL_T_MVC_MULTACOERCITIVA",
     "DIC_TABLAS": "SELECT * FROM PUBLIC.STG_GS1_DIC_TABLAS",
     "DIC_VARIABLES": "SELECT * FROM PUBLIC.STG_GS1_DIC_VARIABLES",

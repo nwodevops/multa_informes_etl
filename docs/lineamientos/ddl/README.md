@@ -9,8 +9,8 @@ lógica (Python) mediante `TRUNCATE + INSERT` hacia Oracle BD_CURSOR.
 1. **`01_dimensiones.sql`** — 6 dimensiones (`MI_DIM_TIEMPO`, `MI_DIM_ADMINISTRADO`,
    `MI_DIM_ORGANO_UNIDAD`, `MI_DIM_MATERIA_SUBSECTOR`, `MI_DIM_ESTADO`, `MI_DIM_PARAMETRO_UIT`),
    cada una con su miembro `NO ESPECIFICADO` (clave `-1`) ya sembrado.
-2. **`02_hechos.sql`** — 2 tablas de hechos (`MI_FACT_MULTA_COERCITIVA`,
-   `MI_FACT_INFORME_SUPERVISION`) + 1 tabla de detalle (`MI_DET_ETAPA_MC`). Todas las FK
+2. **`02_hechos.sql`** — 1 tabla de hechos (`MI_FACT_MULTA_COERCITIVA`)
+   + 1 tabla de detalle (`MI_DET_ETAPA_MC`). Todas las FK
    hacia dimensiones tienen `DEFAULT -1`.
 3. **`03_bitacora.sql`** — tabla `MI_DQ_HALLAZGO`, bitácora de las 5 reglas de calidad
    (R01-R05). Sin FK hacia hechos/dimensiones a propósito: debe poder registrar

@@ -94,22 +94,9 @@ def _prep_multas(fact_mc: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def _prep_informes(fact_inf: pd.DataFrame) -> pd.DataFrame:
-    if fact_inf.empty:
-        return fact_inf.copy()
-    df = fact_inf.copy()
-    anios = []
-    for _, r in df.iterrows():
-        anios.append(_anio_fecha(r.get("F_INFORME")) or _anio_fecha(r.get("F_FIN")))
-    df["_ANIO"] = anios
-    df["_ORG"] = df["ID_ORGANO"].apply(lambda x: int(x) if not vacio(x) else ND)
-    return df
-
-
-def _k1_cobertura(fact_mc: pd.DataFrame, fact_inf: pd.DataFrame) -> list[dict]:
+def _k1_cobertura(fact_mc: pd.DataFrame) -> list[dict]:
     rows: list[dict] = []
     mc = _prep_multas(fact_mc)
-    inf = _prep_informes(fact_inf)
 
     if len(mc):
         g = mc.groupby(["_ANIO", "_ORG"], dropna=False).size()
@@ -136,35 +123,6 @@ def _k1_cobertura(fact_mc: pd.DataFrame, fact_inf: pd.DataFrame) -> list[dict]:
                 numerador=float(len(mc)),
                 denominador=float(len(mc)),
                 valor=float(len(mc)),
-                unidad="REGISTROS",
-            )
-        )
-
-    if len(inf):
-        g = inf.groupby(["_ANIO", "_ORG"], dropna=False).size()
-        for (anio, org), n in g.items():
-            rows.append(
-                _fila(
-                    "K1",
-                    "N_INFORMES",
-                    anio=int(anio) if not pd.isna(anio) else None,
-                    id_organo=int(org),
-                    numerador=float(n),
-                    denominador=float(n),
-                    valor=float(n),
-                    unidad="REGISTROS",
-                )
-            )
-        rows.append(
-            _fila(
-                "K1",
-                "N_INFORMES",
-                anio=None,
-                id_organo=ND,
-                subgrano="TOTAL",
-                numerador=float(len(inf)),
-                denominador=float(len(inf)),
-                valor=float(len(inf)),
                 unidad="REGISTROS",
             )
         )
@@ -331,27 +289,20 @@ def _k4_verificacion(fact_mc: pd.DataFrame) -> list[dict]:
 
 def _k5_calidad(
     df_multas: pd.DataFrame,
-    df_informes: pd.DataFrame,
     dq_hallazgo: pd.DataFrame,
     qa_amarre: pd.DataFrame,
 ) -> list[dict]:
     rows: list[dict] = []
-    tablas = {
-        "MULTAS": ("MI_FACT_MULTA_COERCITIVA", df_multas),
-        "INFORMES": ("MI_FACT_INFORME_SUPERVISION", df_informes),
-    }
-
-    for etiqueta, (tabla, df) in tablas.items():
-        total = len(df)
-        if total == 0:
-            continue
-        if "FG_CONFORME" in df.columns:
-            n_conf = int((df["FG_CONFORME"] == "S").sum())
+    tabla = "MI_FACT_MULTA_COERCITIVA"
+    total = len(df_multas)
+    if total:
+        if "FG_CONFORME" in df_multas.columns:
+            n_conf = int((df_multas["FG_CONFORME"] == "S").sum())
             rows.append(
                 _fila(
                     "K5",
                     "PCT_CONFORME",
-                    subgrano=f"GLOBAL_{etiqueta}",
+                    subgrano="GLOBAL_MULTAS",
                     numerador=float(n_conf),
                     denominador=float(total),
                     valor=round(100.0 * n_conf / total, 4),
@@ -368,7 +319,7 @@ def _k5_calidad(
                 _fila(
                     "K5",
                     "PCT_CONFORME",
-                    subgrano=f"{regla}_{etiqueta}",
+                    subgrano=f"{regla}_MULTAS",
                     numerador=float(n_ok),
                     denominador=float(total),
                     valor=round(100.0 * n_ok / total, 4),
@@ -397,30 +348,20 @@ def _k5_calidad(
     return rows
 
 
-def _verificar_invariantes(rows: list[dict], fact_mc: pd.DataFrame, fact_inf: pd.DataFrame) -> None:
+def _verificar_invariantes(rows: list[dict], fact_mc: pd.DataFrame) -> None:
     n_mc = len(fact_mc)
-    n_inf = len(fact_inf)
     sum_mc = sum(
         r["VALOR"] or 0
         for r in rows
         if r["COD_INDICADOR"] == "K1" and r["METRICA"] == "N_MULTAS" and r.get("SUBGRANO") != "TOTAL"
     )
-    sum_inf = sum(
-        r["VALOR"] or 0
-        for r in rows
-        if r["COD_INDICADOR"] == "K1" and r["METRICA"] == "N_INFORMES" and r.get("SUBGRANO") != "TOTAL"
-    )
     if n_mc and abs(sum_mc - n_mc) > 0.01:
         print(f"AVISO K1: sum(N_MULTAS)={sum_mc} vs fact={n_mc}")
-    if n_inf and abs(sum_inf - n_inf) > 0.01:
-        print(f"AVISO K1: sum(N_INFORMES)={sum_inf} vs fact={n_inf}")
 
 
 def calcular_indicadores(
     fact_mc: pd.DataFrame,
-    fact_inf: pd.DataFrame,
     df_multas: pd.DataFrame,
-    df_informes: pd.DataFrame,
     dq_hallazgo: pd.DataFrame,
     qa_amarre: pd.DataFrame,
     dim_org: pd.DataFrame | None = None,
@@ -428,19 +369,18 @@ def calcular_indicadores(
     """Calcula K1–K5 en memoria listos para MI_INDICADOR_RESULTADO."""
     _ = dim_org
     rows: list[dict] = []
-    rows.extend(_k1_cobertura(fact_mc, fact_inf))
+    rows.extend(_k1_cobertura(fact_mc))
     rows.extend(_k2_oportunidad(fact_mc))
     rows.extend(_k3_cobranza(fact_mc))
     rows.extend(_k4_verificacion(fact_mc))
     rows.extend(
         _k5_calidad(
             df_multas if df_multas is not None else pd.DataFrame(),
-            df_informes if df_informes is not None else pd.DataFrame(),
             dq_hallazgo if dq_hallazgo is not None else pd.DataFrame(),
             qa_amarre if qa_amarre is not None else pd.DataFrame(),
         )
     )
-    _verificar_invariantes(rows, fact_mc, fact_inf)
+    _verificar_invariantes(rows, fact_mc)
     if not rows:
         return pd.DataFrame(columns=COLS)
     return pd.DataFrame(rows, columns=COLS)

@@ -24,7 +24,6 @@ CAPA POST-STAGING (lineamientos Fases 2–7)
 | `ETAPAS` | `STG_GS1_ETAPAS` | F2-ET |
 | `ORA` | `STG_ORA_VW_MULTA_COERCITIVA` | F5 |
 | `MYSQL` | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | F4 |
-| `INFORMES` | `STG_ORA_CSEP_INFORMES` | F3 |
 | `DIC_TABLAS` | `STG_GS1_DIC_TABLAS` | F2 diccionario |
 | `DIC_VARIABLES` | `STG_GS1_DIC_VARIABLES` | F2 diccionario |
 
@@ -34,7 +33,7 @@ CAPA POST-STAGING (lineamientos Fases 2–7)
 |---|---|---|
 | `PROF_RESUMEN` / `PROF_HALLAZGO` | 2 | Perfilamiento |
 | `DICCIONARIO` | 2 | Campos documentados |
-| `DF_MULTAS` / `DF_INFORMES` / `DF_ETAPAS` | 3–4 | Integración + `FG_CONFORME` |
+| `DF_MULTAS` / `DF_ETAPAS` | 3–4 | Integración + `FG_CONFORME` |
 | `MI_DQ_HALLAZGO` / `QA_AMARRE` | 4 | Calidad + amarre H9 |
 | `DIM_*` / `MI_DIM_*` | 5 | Dimensiones con miembro `-1` |
 | `FACT_*` / `MI_FACT_*` / `MI_DET_ETAPA_MC` | 5 | Hechos y detalle |

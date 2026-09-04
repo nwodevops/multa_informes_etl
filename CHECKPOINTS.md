@@ -29,7 +29,7 @@ Referencia canónica: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/linea
 ## Fase 2 — Perfilamiento y diccionario {#fase-2}
 
 - [ ] Salidas `PROF_RESUMEN`, `PROF_HALLAZGO`, `DICCIONARIO` con filas > 0.
-- [ ] Campos de las 5 fuentes documentados; evidencia H1–H9 en hallazgos.
+- [ ] Campos de las fuentes de multa (F1, F2, F4, F5) documentados; evidencia H1–H9 en hallazgos.
 
 Módulo: `logica/dwh/perfilamiento.py`, `logica/dwh/diccionario.py`.
 
@@ -37,7 +37,7 @@ Módulo: `logica/dwh/perfilamiento.py`, `logica/dwh/diccionario.py`.
 
 ## Fase 3 — Homologación e integración {#fase-3}
 
-- [ ] `DF_MULTAS`, `DF_INFORMES`, `DF_ETAPAS` tipificados en memoria.
+- [ ] `DF_MULTAS`, `DF_ETAPAS` tipificados en memoria.
 - [ ] Columna `FUENTE_ORIGEN` en multas integradas.
 - [ ] Cero errores de coerción no capturados en log.
 
@@ -57,7 +57,7 @@ Módulo: `logica/dwh/calidad.py`. Skill: `.agents/skills/auditable-soft-quaranti
 
 ## Fase 5 — Modelo dimensional {#fase-5}
 
-- [ ] Seis `DIM_*`, `MI_FACT_MULTA_COERCITIVA`, `MI_FACT_INFORME_SUPERVISION`, `MI_DET_ETAPA_MC`.
+- [ ] Seis `DIM_*`, `MI_FACT_MULTA_COERCITIVA`, `MI_DET_ETAPA_MC`.
 - [ ] Miembro `-1` en dimensiones; ningún hecho con FK huérfana sin `-1`.
 
 Módulo: `logica/dwh/dimensional.py`.
@@ -80,7 +80,7 @@ Módulo: `python/io/cargar_dw.py`. Skill: `.agents/skills/oracle-cargar-dw/`.
 - [ ] Tabla `MI_INDICADOR_RESULTADO` con DDL `04_indicadores.sql`.
 - [ ] Presencia de códigos K1, K2, K3, K4, K5.
 - [ ] Segunda corrida con mismo staging → mismos `VALOR` / `NUMERADOR` / `DENOMINADOR`.
-- [ ] Conteo típico de referencia: ~585 filas (depende del entorno de datos).
+- [ ] Conteo típico de referencia: cientos de filas (depende del entorno; K1 solo `N_MULTAS`).
 
 Módulo: `logica/dwh/indicadores.py`. Doc: `docs/lineamientos/implementacion-fase-7.md`.
 

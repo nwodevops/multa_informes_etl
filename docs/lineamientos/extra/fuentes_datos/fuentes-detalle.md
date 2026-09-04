@@ -1,3 +1,5 @@
+> **Alcance vigente del ETL:** el DW carga **solo Multas** (F1, F2, F4, F5). F3 (informes) es inventario histórico del diagnóstico; **no se extrae ni se modela**.
+
 # 01 · Fuentes de Datos — Inventario Detallado
 
 > **Proyecto:** Data Warehouse OEFA — Estrategias de promoción del cumplimiento

@@ -68,6 +68,10 @@ if not exist "inputs.yaml" (
     call :fail "inputs.yaml no encontrado"
     exit /b 1
 )
+if exist "pipelines\pl_stage_informes.hpl" (
+    call :fail "pl_stage_informes.hpl no debe existir (F3 fuera de alcance)"
+    exit /b 1
+)
 if not exist "h2\lib\h2-2.4.240.jar" (
     call :fail "jar H2 no encontrado en h2\lib\"
     exit /b 1
@@ -120,11 +124,6 @@ if errorlevel 1 (
     call :fail "pl_stage_oracle.hpl failed"
     exit /b 1
 )
-call "%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_informes.hpl" -r local >> "%RUN_LOG%" 2>&1
-if errorlevel 1 (
-    call :fail "pl_stage_informes.hpl failed"
-    exit /b 1
-)
 call "%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_mysql.hpl" -r local >> "%RUN_LOG%" 2>&1
 if errorlevel 1 (
     call :fail "pl_stage_mysql.hpl failed"
@@ -151,14 +150,24 @@ if errorlevel 1 (
     call :fail "no hay salida MI_DIM_* en el log"
     exit /b 1
 )
-findstr /C:"Salida MI_FACT_" "%LOG%" >nul 2>&1
+findstr /C:"Salida MI_FACT_MULTA_COERCITIVA" "%LOG%" >nul 2>&1
 if errorlevel 1 (
-    call :fail "no hay salida MI_FACT_* en el log"
+    call :fail "no hay salida MI_FACT_MULTA_COERCITIVA en el log"
     exit /b 1
 )
 findstr /C:"Salida MI_INDICADOR_RESULTADO" "%LOG%" >nul 2>&1
 if errorlevel 1 (
     call :fail "no hay MI_INDICADOR_RESULTADO en el log"
+    exit /b 1
+)
+findstr /C:"Salida DF_INFORMES" "%LOG%" >nul 2>&1
+if not errorlevel 1 (
+    call :fail "log contiene DF_INFORMES (F3 fuera de alcance)"
+    exit /b 1
+)
+findstr /C:"Salida MI_FACT_INFORME" "%LOG%" >nul 2>&1
+if not errorlevel 1 (
+    call :fail "log contiene MI_FACT_INFORME (F3 fuera de alcance)"
     exit /b 1
 )
 
@@ -185,7 +194,7 @@ if errorlevel 1 (
 ) else (
     echo %GREEN%==>%NC% Oracle DW configurado, verificando indicadores...
     echo ==> Oracle DW configurado, verificando indicadores...>> "%RUN_LOG%"
-    "%PY%" -c "import sys; sys.path.insert(0,'python'); import oracledb; from config import require_live_conn, load_vars; from pathlib import Path; cv=require_live_conn('oracle_dw',load_vars(Path('.'))); dsn=oracledb.makedsn(cv['host'],int(cv['port'] or '1521'),service_name=cv['database']); conn=oracledb.connect(user=cv['username'],password=cv['password'],dsn=dsn); cur=conn.cursor(); cur.execute('SELECT COUNT(*) FROM APP.MI_INDICADOR_RESULTADO'); print(f'MI_INDICADOR_RESULTADO: {cur.fetchone()[0]} filas en Oracle'); cur.execute('SELECT DISTINCT COD_INDICADOR FROM APP.MI_INDICADOR_RESULTADO ORDER BY 1'); codes={r[0] for r in cur.fetchall()}; missing=sorted({'K1','K2','K3','K4','K5'}-codes); sys.exit(f'faltan indicadores en Oracle: {missing}') if missing else print('Indicadores K1-K5 presentes')" >> "%RUN_LOG%" 2>&1
+"%PY%" -c "import sys; sys.path.insert(0,'python'); import oracledb; from config import require_live_conn, load_vars; from pathlib import Path; cv=require_live_conn('oracle_dw',load_vars(Path('.'))); dsn=oracledb.makedsn(cv['host'],int(cv['port'] or '1521'),service_name=cv['database']); conn=oracledb.connect(user=cv['username'],password=cv['password'],dsn=dsn); cur=conn.cursor(); cur.execute('SELECT COUNT(*) FROM APP.MI_INDICADOR_RESULTADO'); print(f'MI_INDICADOR_RESULTADO: {cur.fetchone()[0]} filas en Oracle'); cur.execute('SELECT DISTINCT COD_INDICADOR FROM APP.MI_INDICADOR_RESULTADO ORDER BY 1'); codes={r[0] for r in cur.fetchall()}; missing=sorted({'K1','K2','K3','K4','K5'}-codes); raise SystemExit(f'faltan indicadores en Oracle: {missing}') if missing else None; print('Indicadores K1-K5 presentes'); cur.execute(\"SELECT COUNT(*) FROM all_tables WHERE owner='APP' AND table_name='MI_FACT_INFORME_SUPERVISION'\"); n=cur.fetchone()[0]; raise SystemExit('APP.MI_FACT_INFORME_SUPERVISION aun existe') if n else None; print('MI_FACT_INFORME_SUPERVISION: inexistente'); cur.execute(\"SELECT COUNT(*) FROM all_tab_columns WHERE owner='APP' AND table_name='MI_FACT_MULTA_COERCITIVA' AND column_name='ID_INFORME'\"); n=cur.fetchone()[0]; raise SystemExit('ID_INFORME aun existe') if n else None; print('ID_INFORME: inexistente en MI_FACT_MULTA_COERCITIVA')" >> "%RUN_LOG%" 2>&1
     if errorlevel 1 (
         call :fail "Verificacion Oracle K1-K5 fallo"
         exit /b 1

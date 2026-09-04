@@ -1,4 +1,4 @@
-"""Catálogos de referencia (semillas ddl/01 + inventario de campos F1–F5)."""
+"""Catálogos de referencia (semillas ddl/01 + inventario de campos F1/F2/F4/F5)."""
 
 from __future__ import annotations
 
@@ -16,9 +16,6 @@ MI_DIM_ESTADO: list[tuple[str, str, str, str]] = [
     ("ETAPA", "PENDIENTE", "Etapa pendiente", "PENDIENTE"),
     ("DESCARGOS", "PRESENTO", "Presentó descargos", "CUMPLIDO"),
     ("DESCARGOS", "NO_PRESENTO", "No presentó descargos", "INCUMPLIDO"),
-    ("INFORME", "EN_CUSTODIA", "En custodia", "VIGENTE"),
-    ("INFORME", "EN_REVISION", "En revisión", "VIGENTE"),
-    ("INFORME", "APROBADO", "Aprobado", "CERRADO"),
 ]
 
 # UIT oficial MEF (ddl/01_dimensiones.sql)
@@ -52,13 +49,6 @@ CATALOGO_CAMPOS: list[dict[str, str]] = [
     {"fuente": "F2", "dataset": "2) Etapas", "campo": "COD_PROY_MC", "tipo": "Texto", "descripcion": "Proyecto multa"},
     {"fuente": "F2", "dataset": "2) Etapas", "campo": "NRO_ETAPA_MC", "tipo": "Entero", "descripcion": "Número etapa"},
     {"fuente": "F2", "dataset": "2) Etapas", "campo": "EST_ETAPA_MC", "tipo": "Texto", "descripcion": "Estado etapa"},
-    # F3
-    {"fuente": "F3", "dataset": "CSEP_INFORMES_VIEW", "campo": "IDACTIVIDAD", "tipo": "Número", "descripcion": "Id actividad supervisión"},
-    {"fuente": "F3", "dataset": "CSEP_INFORMES_VIEW", "campo": "TXCUC", "tipo": "Texto", "descripcion": "Código único caso"},
-    {"fuente": "F3", "dataset": "CSEP_INFORMES_VIEW", "campo": "TXNUMEXP", "tipo": "Texto", "descripcion": "Número expediente"},
-    {"fuente": "F3", "dataset": "CSEP_INFORMES_VIEW", "campo": "TXESTADO", "tipo": "Texto", "descripcion": "Estado actividad"},
-    {"fuente": "F3", "dataset": "CSEP_INFORMES_VIEW", "campo": "FEINICIO", "tipo": "Fecha", "descripcion": "Inicio supervisión"},
-    {"fuente": "F3", "dataset": "CSEP_INFORMES_VIEW", "campo": "FEINFORME", "tipo": "Fecha", "descripcion": "Fecha informe"},
     # F4
     {"fuente": "F4", "dataset": "T_MVC_MULTACOERCITIVA_MC", "campo": "NU_IDINFORMACIONMC", "tipo": "Número", "descripcion": "Id información MC"},
     {"fuente": "F4", "dataset": "T_MVC_MULTACOERCITIVA_MC", "campo": "TX_IDCUM", "tipo": "Texto", "descripcion": "CUM"},
@@ -82,9 +72,6 @@ MAPEO_ESTADO: dict[str, tuple[str, str]] = {
     "INACTIVO": ("MULTA", "INACTIVO"),
     "TERMINADO": ("ETAPA", "TERMINADO"),
     "PENDIENTE": ("ETAPA", "PENDIENTE"),
-    "EN CUSTODIA": ("INFORME", "EN_CUSTODIA"),
-    "EN REVISION": ("INFORME", "EN_REVISION"),
-    "APROBADO": ("INFORME", "APROBADO"),
     "SI": ("DESCARGOS", "PRESENTO"),
     "NO": ("DESCARGOS", "NO_PRESENTO"),
 }

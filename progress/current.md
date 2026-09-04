@@ -8,6 +8,8 @@
 | Status | `in_progress` |
 | Criterio | `init.bat` o `wf_main_win.hwf` → Success + DW (OK) K1–K5 |
 
+> Merge `linux` → `windows` reciente: rama `windows` hereda `dw-solo-multas` (done), `docs-reorg`, `fix-dw-schema-user`, `python-io-cleanup`, Docker/Superset.
+
 ## Plan
 
 1. Working tree limpio: cleanup `python/io`, AGENTS Win-only, docs.

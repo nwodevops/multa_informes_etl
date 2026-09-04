@@ -2,7 +2,7 @@
 <workflow>
   <name>wf_main</name>
   <name_sync_with_filename>Y</name_sync_with_filename>
-  <description>Corrida: Reset H2 → Python STG DDL → Stage Excel → Oracle/Informes/MySQL → demo → Run Python. Diseño STG: wf_create_stg.hwf</description>
+  <description>Corrida: Reset H2 → Python STG DDL → Stage Excel → Oracle VW/MySQL → demo → Run Python. Diseño STG: wf_create_stg.hwf</description>
   <extended_description/>
   <created_user>-</created_user>
   <modified_user>-</modified_user>
@@ -142,34 +142,6 @@ cd "${PROJECT_HOME}"
       <attributes_hac/>
     </action>
     <action>
-      <filename>${PROJECT_HOME}/pipelines/pl_stage_informes.hpl</filename>
-      <params_from_previous>N</params_from_previous>
-      <exec_per_row>N</exec_per_row>
-      <clear_rows>N</clear_rows>
-      <clear_files>N</clear_files>
-      <create_parent_folder>N</create_parent_folder>
-      <set_logfile>N</set_logfile>
-      <set_append_logfile>N</set_append_logfile>
-      <logfile/>
-      <logext/>
-      <add_date>N</add_date>
-      <add_time>N</add_time>
-      <loglevel>Basic</loglevel>
-      <wait_until_finished>Y</wait_until_finished>
-      <parameters>
-        <pass_all_parameters>Y</pass_all_parameters>
-      </parameters>
-      <run_configuration>local</run_configuration>
-      <name>Stage Informes</name>
-      <description>SISUD.CSEP_INFORMES_VIEW → H2 STG_ORA_CSEP_INFORMES (pl_stage_informes.hpl)</description>
-      <type>PIPELINE</type>
-      <attributes/>
-      <xloc>672</xloc>
-      <yloc>192</yloc>
-      <parallel>N</parallel>
-      <attributes_hac/>
-    </action>
-    <action>
       <filename>${PROJECT_HOME}/pipelines/pl_stage_mysql.hpl</filename>
       <params_from_previous>N</params_from_previous>
       <exec_per_row>N</exec_per_row>
@@ -297,13 +269,6 @@ PY=python3
     </hop>
     <hop>
       <from>Stage Oracle VW</from>
-      <to>Stage Informes</to>
-      <evaluation>Y</evaluation>
-      <unconditional>N</unconditional>
-      <enabled>Y</enabled>
-    </hop>
-    <hop>
-      <from>Stage Informes</from>
       <to>Stage MySQL</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
@@ -337,7 +302,7 @@ PY=python3
 Diseño: Play workflows/wf_create_stg.hwf (deja H2 vivo) y luego pinta pl_stage_*.hpl.
 H2 se resetea en cada corrida: stop + start + DDL (h2/scripts/reset_and_create.sh).
 Python create STG: lee inputs.yaml, CREATE TABLE STG_* (excel + oracle + mysql).
-Stage Excel: pl_stage_excel.hpl. Stage Oracle/Informes/MySQL: TableInput truncate a H2.
+Stage Excel: pl_stage_excel.hpl. Stage Oracle VW/MySQL: TableInput truncate a H2.
 Pipeline demo: lee DEMO_TABLA_EJEMPLO.
 Run Python: python/main.py. Conexiones: h2 / oracle_sisud / oracle_BD_CURSOR / mysql.</note>
       <markdown>N</markdown>

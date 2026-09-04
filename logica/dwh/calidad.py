@@ -168,46 +168,7 @@ def _validar_multas(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
     return conforme, hallazgos
 
 
-def _validar_informes(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
-    conforme = pd.Series([True] * len(df), index=df.index)
-    hallazgos: list[dict] = []
-    for i, row in df.iterrows():
-        if vacio(row.get("IDACTIVIDAD")):
-            conforme.at[i] = False
-            if len(hallazgos) < MAX_HALLAZGOS:
-                hallazgos.append(
-                    _hallazgo(
-                        "R01",
-                        str(row.get("FUENTE_ORIGEN", "SISUD_INF")),
-                        "MI_FACT_INFORME_SUPERVISION",
-                        _registro_id(row),
-                        "IDACTIVIDAD",
-                        row.get("IDACTIVIDAD"),
-                    )
-                )
-        fin, ini = row.get("F_FIN"), row.get("F_INICIO")
-        if not vacio(fin) and not vacio(ini):
-            try:
-                if pd.Timestamp(fin) < pd.Timestamp(ini):
-                    conforme.at[i] = False
-                    if len(hallazgos) < MAX_HALLAZGOS:
-                        hallazgos.append(
-                            _hallazgo(
-                                "R03",
-                                str(row.get("FUENTE_ORIGEN", "SISUD_INF")),
-                                "MI_FACT_INFORME_SUPERVISION",
-                                _registro_id(row),
-                                "F_FIN",
-                                fin,
-                                obs="F_FIN < F_INICIO",
-                            )
-                        )
-            except Exception:
-                pass
-    return conforme, hallazgos
-
-
-def _amarre(df_multas: pd.DataFrame, df_informes: pd.DataFrame) -> pd.DataFrame:
+def _amarre(df_multas: pd.DataFrame) -> pd.DataFrame:
     puentes: list[tuple[str, pd.Series, pd.Series]] = []
     if not df_multas.empty:
         excel = df_multas[df_multas["FUENTE_ORIGEN"].isin(["LAM_OD", "CAGR"])]
@@ -237,15 +198,6 @@ def _amarre(df_multas: pd.DataFrame, df_informes: pd.DataFrame) -> pd.DataFrame:
                     gapp["CUM"].dropna().astype(str).str.strip(),
                 )
             )
-    if not df_informes.empty and not df_multas.empty:
-        if "TXCUC" in df_informes.columns and "NUMERO_EXPEDIENTE" in df_multas.columns:
-            puentes.append(
-                (
-                    "TXCUC_informe_vs_EXPEDIENTE_multas",
-                    df_informes["TXCUC"].dropna().astype(str).str.strip(),
-                    df_multas["NUMERO_EXPEDIENTE"].dropna().astype(str).str.strip(),
-                )
-            )
 
     rows = []
     for puente, izq, der in puentes:
@@ -270,11 +222,9 @@ def _amarre(df_multas: pd.DataFrame, df_informes: pd.DataFrame) -> pd.DataFrame:
 
 def aplicar_calidad(
     df_multas: pd.DataFrame,
-    df_informes: pd.DataFrame,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Marca conformidad, arma MI_DQ_HALLAZGO y QA_AMARRE. No elimina filas."""
     multas = df_multas.copy()
-    informes = df_informes.copy()
     hallazgos: list[dict] = []
 
     if len(multas):
@@ -283,13 +233,6 @@ def aplicar_calidad(
         hallazgos.extend(h_m)
     else:
         multas["FG_CONFORME"] = pd.Series(dtype=str)
-
-    if len(informes):
-        ok_i, h_i = _validar_informes(informes)
-        informes["FG_CONFORME"] = ok_i.map(lambda x: "S" if x else "N")
-        hallazgos.extend(h_i)
-    else:
-        informes["FG_CONFORME"] = pd.Series(dtype=str)
 
     dq_cols = [
         "ID_CARGA",
@@ -308,5 +251,5 @@ def aplicar_calidad(
         "RESUELTO_POR",
     ]
     dq = pd.DataFrame(hallazgos) if hallazgos else pd.DataFrame(columns=dq_cols)
-    amarre = _amarre(multas, informes)
-    return multas, informes, dq, amarre
+    amarre = _amarre(multas)
+    return multas, dq, amarre

@@ -13,9 +13,9 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) secciones 4
 
 | Regla | Descripción |
 |---|---|
-| R01 | Completitud: `COD_MA` (Excel), `CUM`/`CAM` (GAPPS/SISUD), `IDACTIVIDAD` (informes) |
+| R01 | Completitud: `COD_MA` (Excel), `CUM`/`CAM` (GAPPS/SISUD) |
 | R02 | Formato CUM (11 dígitos) y CAM (11 o 13) |
-| R03 | Coherencia temporal: vencimiento ≥ notificación; `F_FIN` ≥ `F_INICIO` |
+| R03 | Coherencia temporal: vencimiento ≥ notificación |
 | R04 | `MONTO_UIT` ≥ 0 |
 | R05 | `MONTO_S` vs `MONTO_UIT × UIT(año)` con tolerancia 1% |
 

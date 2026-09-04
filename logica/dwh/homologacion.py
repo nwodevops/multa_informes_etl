@@ -165,7 +165,7 @@ def aplicar_homologacion(df: pd.DataFrame, fuente: str) -> pd.DataFrame:
 
     estado_cols = [c for c in out.columns if "ESTADO" in str(c).upper() or c == "TXESTADO"]
     for c in estado_cols:
-        tipo = "INFORME" if fuente == "INFORMES" else "MULTA"
+        tipo = "MULTA"
         mapped = out[c].map(lambda v: homologar_estado(v, tipo))
         out[f"{c}_TIPO_ESTADO"] = mapped.map(lambda x: x[0])
         out[f"{c}_CODIGO_ESTADO"] = mapped.map(lambda x: x[1])

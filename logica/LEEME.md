@@ -5,7 +5,7 @@
   - `perfilamiento.py` — Fase 2: PROF_RESUMEN, PROF_HALLAZGO (H1–H9)
   - `diccionario.py` — Fase 2: DICCIONARIO
   - `homologacion.py` — Fase 3: CUM/CAM, fechas, texto, estados
-  - `integracion.py` — Fase 3: DF_MULTAS, DF_INFORMES, DF_ETAPAS
+  - `integracion.py` — Fase 3: DF_MULTAS, DF_ETAPAS
   - `calidad.py` — Fase 4: R01–R05, MI_DQ_HALLAZGO, QA_AMARRE (H9)
   - `dimensional.py` — Fase 5: DIM_*, FACT_*, MI_DET_ETAPA_MC
   - `indicadores.py` — Fase 7: MI_INDICADOR_RESULTADO (K1–K5)

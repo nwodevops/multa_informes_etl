@@ -30,7 +30,6 @@ TABLAS_DIM = (
     "MI_DIM_PARAMETRO_UIT",
 )
 TABLAS_HECHOS = (
-    "MI_FACT_INFORME_SUPERVISION",
     "MI_FACT_MULTA_COERCITIVA",
     "MI_DET_ETAPA_MC",
 )
@@ -54,13 +53,11 @@ TRUNCATE_ORDEN = (
     "MI_INDICADOR_RESULTADO",
     "MI_DET_ETAPA_MC",
     "MI_FACT_MULTA_COERCITIVA",
-    "MI_FACT_INFORME_SUPERVISION",
     *TABLAS_DIM,
     "MI_DQ_HALLAZGO",
 )
 INSERT_ORDEN = (
     *TABLAS_DIM,
-    "MI_FACT_INFORME_SUPERVISION",
     "MI_FACT_MULTA_COERCITIVA",
     "MI_DET_ETAPA_MC",
     "MI_DQ_HALLAZGO",
@@ -237,6 +234,38 @@ def _column_exists(cur, tabla: str, columna: str) -> bool:
     return int(cur.fetchone()[0]) > 0
 
 
+def _constraint_exists(cur, tabla: str, constraint: str) -> bool:
+    cur.execute(
+        "SELECT COUNT(*) FROM user_constraints WHERE table_name = :1 AND constraint_name = :2",
+        [tabla.upper(), constraint.upper()],
+    )
+    return int(cur.fetchone()[0]) > 0
+
+
+def _index_exists(cur, index: str) -> bool:
+    cur.execute(
+        "SELECT COUNT(*) FROM user_indexes WHERE index_name = :1",
+        [index.upper()],
+    )
+    return int(cur.fetchone()[0]) > 0
+
+
+def _strip_informe_residuo(cur) -> None:
+    """Quita rastro F3 (informes) del DW: tabla, FK, índice y columna ID_INFORME."""
+    if _constraint_exists(cur, "MI_FACT_MULTA_COERCITIVA", "FK_MI_FMC_INFORME"):
+        cur.execute(f"ALTER TABLE {ESQUEMA}.MI_FACT_MULTA_COERCITIVA DROP CONSTRAINT FK_MI_FMC_INFORME")
+        print("DW: DROP CONSTRAINT FK_MI_FMC_INFORME")
+    _drop_table(cur, "MI_FACT_INFORME_SUPERVISION")
+    if _table_exists(cur, "MI_FACT_MULTA_COERCITIVA") and _column_exists(
+        cur, "MI_FACT_MULTA_COERCITIVA", "ID_INFORME"
+    ):
+        if _index_exists(cur, "IX_FMC_INFORME"):
+            cur.execute(f"DROP INDEX {ESQUEMA}.IX_FMC_INFORME")
+            print("DW: DROP INDEX IX_FMC_INFORME")
+        cur.execute(f"ALTER TABLE {ESQUEMA}.MI_FACT_MULTA_COERCITIVA DROP COLUMN ID_INFORME")
+        print("DW: DROP COLUMN MI_FACT_MULTA_COERCITIVA.ID_INFORME")
+
+
 def _prepare_schema(cur, root: Path) -> None:
     for v in VISTAS_LEGACY:
         try:
@@ -245,6 +274,8 @@ def _prepare_schema(cur, root: Path) -> None:
         except Exception as exc:
             if "ORA-00942" not in str(exc):
                 print(f"AVISO: DROP VIEW {v}: {exc}")
+
+    _strip_informe_residuo(cur)
 
     ddl_root = root / DDL_DIR
     ts = _user_tablespace(cur)

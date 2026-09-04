@@ -16,7 +16,7 @@ Debe terminar con **`HARNESS OK`**. El script:
 2. Resetea H2 y aplica DDL (`reset_and_create.sh`).
 3. Crea tablas STG (`python/create_stg.py`).
 4. Carga Excel vía Hop (`pl_stage_excel.hpl`) si `hop-run` está disponible.
-5. Carga Oracle/MySQL vía Hop directo (`pl_stage_oracle.hpl`, `pl_stage_informes.hpl`, `pl_stage_mysql.hpl`).
+5. Carga Oracle/MySQL vía Hop directo (`pl_stage_oracle.hpl`, `pl_stage_mysql.hpl`).
 6. Ejecuta `python/main.py` y comprueba salidas PROF/DIM/FACT/INDICADOR.
 7. Si Oracle DW está configurado: cuenta filas y presencia K1–K5.
 
@@ -43,7 +43,7 @@ SELECT tabla, num_rows
 FROM all_tables
 WHERE owner = 'APP'
   AND table_name IN (
-    'MI_FACT_MULTA_COERCITIVA', 'MI_FACT_INFORME_SUPERVISION',
+    'MI_FACT_MULTA_COERCITIVA',
     'MI_INDICADOR_RESULTADO', 'MI_DQ_HALLAZGO'
   );
 

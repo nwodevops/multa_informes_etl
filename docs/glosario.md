@@ -40,7 +40,7 @@ flowchart LR
 |---|---|
 | **H2** | Workbench de la corrida (puerto 9092): solo `STG_*`. No es el entregable. |
 | **BD_CURSOR** | Oracle destino (puerto 1524, `APP`): `INT_*` + `QA_*`. Ahí está la fase 1. |
-| **LECTURAS** | Nombres de los DataFrames que lee Python desde H2 (`GS1`, `ORA`, `INFORMES`…). |
+| **LECTURAS** | Nombres de los DataFrames que lee Python desde H2 (`GS1`, `ORA`, `MYSQL`…). |
 | **RESULTADO** | Portada del Excel: copia de `QA_CORRIDA`. |
 
 ## Fuentes (nombres cortos)
@@ -48,6 +48,6 @@ flowchart LR
 | Término | Qué es, en una frase |
 |---|---|
 | **GS1 / GS2** | Hojas Excel CAGR y Lambayeque (multas). |
-| **SISUD** | Oracle fuente de informes y vista de multas. |
+| **SISUD** | Oracle fuente de la vista de multas (`VW_MULTA_COERCITIVA`). |
 | **GAPP** | MySQL de multas coercitivas. |
 | **MC** | Multa coercitiva (en nombres tipo `INT_MC_EXCEL`). |

@@ -13,6 +13,8 @@ Requerimiento: [`docs/TDR REQ 3629-2026.pdf`](docs/TDR%20REQ%203629-2026.pdf).
 | [`docs/fases/status.md`](docs/fases/status.md) | Semáforo fases 1–7 |
 | [`docs/verification.md`](docs/verification.md) | Cómo demostrar que funciona |
 
+> **Arquetipo base:** plantilla mínima `archetype/` (no versionado; regenerar con `./scripts/sync_archetype.sh`). Este repo es la implementación de referencia consultoría.
+
 > Linux / harness genérico: rama `main`. Aquí no mezclar flujos `init.sh` / `wf_main.hwf` como camino primario.
 
 **Verificación Win:** `.\switch-env.ps1 remote` + `init.bat` **o** Hop `wf_main_win.hwf` → Success / **HARNESS OK**. Criterios: [`CHECKPOINTS.md`](CHECKPOINTS.md).
@@ -34,7 +36,7 @@ Requerimiento: [`docs/TDR REQ 3629-2026.pdf`](docs/TDR%20REQ%203629-2026.pdf).
 - [`.agents/skills/auditable-soft-quarantine/SKILL.md`](.agents/skills/auditable-soft-quarantine/SKILL.md)
 - [`.agents/skills/oracle-cargar-dw/SKILL.md`](.agents/skills/oracle-cargar-dw/SKILL.md)
 
-Lineamiento: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md).
+Lineamiento canónico: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md). Status: [`docs/fases/status.md`](docs/fases/status.md). DDL DW: [`docs/lineamientos/ddl/`](docs/lineamientos/ddl/).
 
 ## Inicio rápido (Windows)
 
@@ -60,7 +62,7 @@ Prerrequisitos Win:
 - Hop: `D:\Eder\hop\hop-run.bat` (o `set HOP_RUN=...`)
 - Red/VPN a Oracle SISUD, MySQL GAPP, Oracle DW (`REPOCSEP` @ `10.6.0.15`)
 
-Flujo: `inputs.yaml` → Hop `STG_*` → `python/main.py` → `logica/` → `cargar_dw.py` (esquema = **USER** Oracle, p.ej. `REPOCSEP`).
+Flujo: `inputs.yaml` → Hop `STG_*` → `python/main.py` → `logica/ejecutar.py` (auto-descubierto) → `logica/dwh/pipeline.py` (fases 2–7) → `cargar_dw.py` (TRUNCATE+INSERT, esquema = **USER** Oracle, p.ej. `REPOCSEP`).
 
 ## Python (esta rama)
 
@@ -77,10 +79,10 @@ Sin escritores legacy (`escribir_*`). Contrato: [`python/CONTRATO.md`](python/CO
 
 ## Reglas críticas
 
-1. **Un solo `.py`** en `logica/` (raíz; `ejecutar.py` + paquete `dwh/`).
-2. **Sin secretos** en git. Ref: [`docs/credenciales/`](docs/credenciales/).
-3. **Sin `${VAR}` literal** en logs Hop = variable mal definida.
-4. Esta rama = **solo Windows**; no portar aquí como default el flujo Linux.
-5. CodeGraph: `~/.agents/skills/codegraph/SKILL.md`.
+1. **Un solo `.py`** en `logica/` (auto-descubierto por `main.py`); subpaquete `logica/dwh/` es el pipeline real.
+2. **Credenciales:** `project-config.json` es generado y gitignored — nunca se commitea. `environments/*.json` son versionados pero SOLO con credenciales dev locales; jamás credenciales de producción/remoto reales (usar placeholder `<...>`).
+3. **Sin `${VAR}` literal** en logs = variable Hop mal definida.
+4. **Rama por fase de servicio** (`fase-1`, `fase-2`, …); esta rama = **solo Windows**; no portar aquí como default el flujo Linux.
+5. **CodeGraph** para entender/locar código: `.codegraph/` es índice local por máquina (gitignored); indexar con `codegraph init` y consultar vía MCP `codegraph_explore` (config global opencode) o CLI `codegraph explore "…"`.
 
 Plataforma / H2: [`docs/harness/platform.md`](docs/harness/platform.md).
