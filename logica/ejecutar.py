@@ -18,7 +18,6 @@ _out = ejecutar(
     MYSQL,
     dic_tablas=DIC_TABLAS,
     dic_variables=DIC_VARIABLES,
-    gs2_ods={"GS2_ICA": GS2_ICA, "GS2_PUNO": GS2_PUNO},
     root=_root,
 )
 

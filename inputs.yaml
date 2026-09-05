@@ -4,6 +4,7 @@
 # type: oracle | mysql | sheets | excel
 # Contrato: .agents/skills/hop-python-etl/inputs.example.yaml
 # Excel local: path relativo a la raíz, header_row = fila de códigos (1-based).
+# F1 ODs: catálogo docs/inputs/f1_ods_sheets.json (Google Sheets; no Excel local).
 
 sources:
   - stg_table: STG_GS1_MULTAS_COERCITIVAS
@@ -20,31 +21,10 @@ sources:
     header_row: 2
     types: varchar
 
-  - stg_table: STG_GS2_MULTAS_COERCITIVAS
-    type: excel
+  - stg_table: STG_GS2_OD_MULTAS
+    type: sheets
     familia: f1_od
-    od: LAMBAYEQUE
-    path: input_excel/medidas_administrativas/MEDIDAS ADMINISTRATIVAS OD LAMBAYEQUE.xlsx
-    worksheet: "5) Multas Coercitivas"
-    header_row: 3
-    types: varchar
-
-  - stg_table: STG_GS2_ICA_MULTAS_COERCITIVAS
-    type: excel
-    familia: f1_od
-    od: ICA
-    path: input_excel/medidas_administrativas/MEDIDAS ADMINISTRATIVAS OD ICA.xlsx
-    worksheet: "5) Multas Coercitivas"
-    header_row: 3
-    types: varchar
-
-  - stg_table: STG_GS2_PUNO_MULTAS_COERCITIVAS
-    type: excel
-    familia: f1_od
-    od: PUNO
-    path: input_excel/medidas_administrativas/MEDIDAS ADMINISTRATIVAS OD PUNO.xlsx
-    worksheet: "5) Multas Coercitivas"
-    header_row: 3
+    catalog: docs/inputs/f1_ods_sheets.json
     types: varchar
 
   - stg_table: STG_GS1_DIC_TABLAS

@@ -80,7 +80,7 @@ def _a_canonico(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     return out[cols]
 
 
-def _integrar_gs2(gs2: pd.DataFrame, cod_od: str = "LAMBAYEQUE") -> pd.DataFrame:
+def _integrar_gs2(gs2: pd.DataFrame, cod_od: str | None = None) -> pd.DataFrame:
     h = aplicar_homologacion(gs2, FUENTE_REGISTRO["GS2"])
     m = {
         "FN_MC": "F_NOTIF_DCG",
@@ -92,7 +92,12 @@ def _integrar_gs2(gs2: pd.DataFrame, cod_od: str = "LAMBAYEQUE") -> pd.DataFrame
         "EXP_INF_INCUMP": "NUMERO_EXPEDIENTE",
     }
     h = _renombrar(h, m)
-    h["COD_OD"] = cod_od
+    if cod_od:
+        h["COD_OD"] = cod_od
+    elif "COD_OD" in gs2.columns:
+        h["COD_OD"] = gs2["COD_OD"].values
+    elif "COD_OD" not in h.columns:
+        h["COD_OD"] = pd.NA
     h["FUENTE_ORIGEN"] = FUENTE_REGISTRO["GS2"]
     return _a_canonico(h, COLS_MULTAS)
 
@@ -170,15 +175,21 @@ def integrar(
     mysql: pd.DataFrame,
     gs2_ods: dict[str, pd.DataFrame] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    # GS2 unificado trae COD_OD por fila (STG_GS2_OD_MULTAS).
     partes = [
-        _integrar_gs2(gs2, F1_OD_LECTURAS.get("GS2", "LAMBAYEQUE")),
+        _integrar_gs2(gs2, None),
         _integrar_gs1(gs1),
         _integrar_mysql(mysql),
         _integrar_ora(ora),
     ]
     extra = gs2_ods or {}
     for clave, df in extra.items():
-        partes.append(_integrar_gs2(df, F1_OD_LECTURAS.get(clave, clave)))
+        if df is None or df.empty:
+            continue
+        cod = F1_OD_LECTURAS.get(clave)
+        if cod == "*":
+            cod = None
+        partes.append(_integrar_gs2(df, cod))
     df_multas = pd.concat(partes, ignore_index=True, sort=False)
     df_etapas = _integrar_etapas(etapas)
     return df_multas, df_etapas

@@ -55,11 +55,18 @@ step "Reset H2 + DDL STG"
 step "Python create STG (inputs.yaml -> tablas STG_*)"
 "$PY" python/create_stg.py
 
-step "Staging Excel local (Hop pl_stage_excel)"
+step "Staging Excel local CAGR/DIC (Hop pl_stage_excel)"
 if [ -x "$HOP_RUN" ]; then
   "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_excel.hpl" -r local
 else
   warn "hop-run no encontrado ($HOP_RUN); STG Excel puede quedar vacío"
+fi
+
+step "Staging F1 ODs Google Sheets (31 oficinas)"
+if [ -x "$HOP_RUN" ]; then
+  ./scripts/stage_ods_sheets.sh
+else
+  warn "hop-run no encontrado ($HOP_RUN); STG ODs Sheets puede quedar vacío"
 fi
 
 step "Staging Oracle / MySQL (Hop directo)"

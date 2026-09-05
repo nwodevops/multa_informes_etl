@@ -298,8 +298,8 @@ def _ensure_fact_id_od(cur) -> None:
         print("DW: CREATE INDEX IX_FMC_OD")
 
 
-def _ensure_fuente_ck_od_excel(cur) -> None:
-    """Reemplaza CK que aún lista LAM_OD por OD_EXCEL."""
+def _ensure_fuente_ck_od_sheets(cur) -> None:
+    """Alinea CK de FUENTE_REGISTRO a OD_SHEETS (migra OD_EXCEL/LAM_OD)."""
     if not _table_exists(cur, "MI_FACT_MULTA_COERCITIVA"):
         return
     if _constraint_exists(cur, "MI_FACT_MULTA_COERCITIVA", "CK_MI_FMC_FUENTE"):
@@ -308,17 +308,17 @@ def _ensure_fuente_ck_od_excel(cur) -> None:
         )
     cur.execute(
         f"UPDATE {ESQUEMA}.MI_FACT_MULTA_COERCITIVA "
-        "SET FUENTE_REGISTRO = 'OD_EXCEL' WHERE FUENTE_REGISTRO = 'LAM_OD'"
+        "SET FUENTE_REGISTRO = 'OD_SHEETS' "
+        "WHERE FUENTE_REGISTRO IN ('LAM_OD','OD_EXCEL')"
     )
     cur.execute(
         f"""
         ALTER TABLE {ESQUEMA}.MI_FACT_MULTA_COERCITIVA
         ADD CONSTRAINT CK_MI_FMC_FUENTE
-        CHECK (FUENTE_REGISTRO IN ('OD_EXCEL','CAGR','GAPPS','SISUD_VW'))
+        CHECK (FUENTE_REGISTRO IN ('OD_SHEETS','OD_EXCEL','CAGR','GAPPS','SISUD_VW'))
         """
     )
-    print("DW: CK_MI_FMC_FUENTE -> OD_EXCEL")
-
+    print("DW: CK_MI_FMC_FUENTE -> OD_SHEETS")
 
 def _prepare_schema(cur, root: Path) -> None:
     for v in VISTAS_LEGACY:
@@ -335,7 +335,7 @@ def _prepare_schema(cur, root: Path) -> None:
     ts = _user_tablespace(cur)
     _ensure_dim_od(cur, ts)
     _ensure_fact_id_od(cur)
-    _ensure_fuente_ck_od_excel(cur)
+    _ensure_fuente_ck_od_sheets(cur)
 
     if not _model_complete(cur):
         _drop_legacy_tables(cur)

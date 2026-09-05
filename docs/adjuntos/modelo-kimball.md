@@ -55,14 +55,14 @@ flowchart TB
 
 | ID | Origen | Tabla STG | Uso en el DW |
 |---|---|---|---|
-| **F1** | Excel familia OD (Lam / Ica / Puno; 31 en `MI_DIM_OD`) | `STG_GS2_*` | Hecho multa + `ID_OD` |
+| **F1** | Google Sheets familia OD (31 en catálogo; `MI_DIM_OD`) | `STG_GS2_OD_MULTAS` | Hecho multa + `ID_OD` |
 | **F2** | Excel CAGR | `STG_GS1_MULTAS_COERCITIVAS` | Hecho multa |
 | **F2-ET** | Excel CAGR etapas | `STG_GS1_ETAPAS` | Detalle etapas |
 | **F2-DIC** | Diccionario | `STG_GS1_DIC_*` | Perfilamiento |
 | **F4** | MySQL GAPP | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | Conciliación CUM/CAM |
 | **F5** | Oracle SISUD | `STG_ORA_VW_MULTA_COERCITIVA` | Expediente, resolución, CUM/CAM |
 
-**Integración:** F1+F2+F4+F5 en `DF_MULTAS` con `FUENTE_ORIGEN` (`OD_EXCEL` / `CAGR` / `GAPPS` / `SISUD_VW`). Territorio F1: `ID_OD` → `MI_DIM_OD`. **H9:** amarre entre fuentes de multa (COD_MA, CUM F4↔F5), medido en `QA_AMARRE` / K5. No hay hecho informe ni `ID_INFORME`.
+**Integración:** F1+F2+F4+F5 en `DF_MULTAS` con `FUENTE_ORIGEN` (`OD_SHEETS` / `CAGR` / `GAPPS` / `SISUD_VW`). Territorio F1: `ID_OD` → `MI_DIM_OD`. **H9:** amarre entre fuentes de multa (COD_MA, CUM F4↔F5), medido en `QA_AMARRE` / K5. No hay hecho informe ni `ID_INFORME`.
 
 ---
 

@@ -394,9 +394,9 @@ def _build_fact_multas(
                 pass
 
         fuente = str(r.get("FUENTE_ORIGEN", "CAGR"))
-        if fuente == "LAM_OD":
-            fuente = "OD_EXCEL"
-        if fuente not in ("OD_EXCEL", "CAGR", "GAPPS", "SISUD_VW"):
+        if fuente in ("LAM_OD", "OD_EXCEL"):
+            fuente = "OD_SHEETS"
+        if fuente not in ("OD_SHEETS", "CAGR", "GAPPS", "SISUD_VW"):
             fuente = "CAGR"
 
         id_od = ND

@@ -33,8 +33,9 @@ MI_DIM_PARAMETRO_UIT: dict[int, float] = {
     2025: 5350.0,
 }
 
-# Oficinas desconcentradas F1 (Excel medidas administrativas). COD_OD = slug filename.
+# Oficinas desconcentradas F1 (Google Sheets medidas administrativas). COD_OD = slug catálogo.
 # ORDEN replica la lista fuente; CODE comparte 9 con HUANUCO (ID_OD surrogate evita choque).
+# Sheets: docs/inputs/f1_ods_sheets.json (31 ODs; CODE y consolidados fuera).
 ODS_OEFA: list[dict[str, str | int]] = [
     {"ORDEN": 1, "COD_OD": "AMAZONAS", "NOMBRE": "Amazonas", "TIPO": "OD"},
     {"ORDEN": 2, "COD_OD": "ANCASH", "NOMBRE": "Ancash", "TIPO": "OD"},

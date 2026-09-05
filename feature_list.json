@@ -101,6 +101,14 @@
       "status": "done",
       "criterio": "3 Excel en STG; FACT con ID_OD resuelto para LAM/ICA; dim sembrada 31+ND; FUENTE_REGISTRO=OD_EXCEL en esas filas; ./init.sh HARNESS OK; docs/inputs describe convención para el resto",
       "doc": "docs/inputs/README.md"
+    },
+    {
+      "id": "f1-ods-google-sheets",
+      "title": "F1: 31 ODs desde Google Sheets (catálogo JSON + Hop)",
+      "status": "done",
+      "passes": true,
+      "criterio": "Catálogo docs/inputs/f1_ods_sheets.json (31 ODs, sin consolidados); Excel OD fuera de inputs; Hop descarga con client_secret.json a STG_GS2_OD_MULTAS; FUENTE_REGISTRO=OD_SHEETS + ID_OD; ./init.sh HARNESS OK",
+      "doc": "docs/inputs/README.md"
     }
   ]
 }

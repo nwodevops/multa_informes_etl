@@ -1,6 +1,6 @@
 
 project-config.json
-
+client_secret.json
 
 .~*
 h2/sql/02_stg.sql

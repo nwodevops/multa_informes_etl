@@ -1,4 +1,7 @@
-"""Introspección Google Sheets: fila de headers. Todo VARCHAR. No extrae filas."""
+"""Introspección Google Sheets: fila de headers. Todo VARCHAR. No extrae filas.
+
+Si la fuente declara `catalog` (F1 ODs), el DDL sale del JSON (sin llamar a la API).
+"""
 
 from __future__ import annotations
 
@@ -7,16 +10,41 @@ from pathlib import Path
 from .h2_ddl import Column, map_h2_type, sanitize_ident
 
 
+def _columns_from_names(names: list[str]) -> list[Column]:
+    used: set[str] = set()
+    cols: list[Column] = []
+    for header in names:
+        if header is None or str(header).strip() == "":
+            continue
+        cols.append(
+            Column(
+                name=sanitize_ident(str(header), used),
+                h2_type=map_h2_type("VARCHAR", sheets=True),
+            )
+        )
+    return cols
+
+
 def introspect(source: dict, variables: dict[str, str], root: Path | None = None) -> list[Column]:
+    if root is None:
+        raise ValueError("sheets: falta root del proyecto")
+
+    catalog_rel = (source.get("catalog") or "").strip()
+    if catalog_rel:
+        from f1_ods_catalog import load_catalog, stg_columns
+
+        catalog = load_catalog(root, catalog_rel)
+        cols = _columns_from_names(stg_columns(catalog))
+        if not cols:
+            raise ValueError(f"{source.get('stg_table')}: catálogo sin columns")
+        return cols
+
     try:
         import gspread
     except ImportError as exc:
         raise SystemExit(
             "Falta gspread. Instala: pip install -r python/requirements.txt"
         ) from exc
-
-    if root is None:
-        raise ValueError("sheets: falta root del proyecto")
 
     secret = root / "client_secret.json"
     if not secret.is_file():
@@ -36,24 +64,24 @@ def introspect(source: dict, variables: dict[str, str], root: Path | None = None
             "Define la variable en project-config.json"
         )
 
+    header_raw = source.get("header_row", 1)
+    try:
+        header_row = int(header_raw)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(
+            f"{source.get('stg_table')}: header_row debe ser entero, recibido {header_raw!r}"
+        ) from exc
+    if header_row < 1:
+        raise ValueError(f"{source.get('stg_table')}: header_row debe ser >= 1")
+
     gc = gspread.service_account(filename=str(secret))
     book = gc.open_by_key(key)
     sheet = book.worksheet(str(worksheet))
-    headers = sheet.row_values(1)
+    headers = sheet.row_values(header_row)
     if not headers:
-        raise ValueError(f"Sheets '{worksheet}': fila 1 vacía")
+        raise ValueError(f"Sheets '{worksheet}': fila {header_row} vacía")
 
-    used: set[str] = set()
-    cols: list[Column] = []
-    for header in headers:
-        if header is None or str(header).strip() == "":
-            continue
-        cols.append(
-            Column(
-                name=sanitize_ident(str(header), used),
-                h2_type=map_h2_type("VARCHAR", sheets=True),
-            )
-        )
+    cols = _columns_from_names([str(h) for h in headers])
     if not cols:
-        raise ValueError(f"Sheets '{worksheet}': sin headers usables")
+        raise ValueError(f"Sheets '{worksheet}': fila {header_row} sin headers usables")
     return cols
