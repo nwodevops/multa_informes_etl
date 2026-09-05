@@ -23,8 +23,10 @@ def ejecutar(
     mysql: pd.DataFrame,
     dic_tablas: pd.DataFrame | None = None,
     dic_variables: pd.DataFrame | None = None,
+    gs2_ods: dict[str, pd.DataFrame] | None = None,
     root: Path | None = None,
 ) -> dict[str, pd.DataFrame]:
+    extra_ods = gs2_ods or {}
     tablas = {
         "GS1": gs1,
         "GS2": gs2,
@@ -34,11 +36,12 @@ def ejecutar(
         "DIC_TABLAS": dic_tablas if dic_tablas is not None else pd.DataFrame(),
         "DIC_VARIABLES": dic_variables if dic_variables is not None else pd.DataFrame(),
     }
+    tablas.update(extra_ods)
 
     prof_resumen, prof_hallazgo = perfilar_todas(tablas)
     diccionario = armar_diccionario(tablas, root=root)
 
-    df_multas, df_etapas = integrar(gs1, gs2, etapas, ora, mysql)
+    df_multas, df_etapas = integrar(gs1, gs2, etapas, ora, mysql, gs2_ods=extra_ods)
     df_multas, dq_hallazgo, qa_amarre = aplicar_calidad(df_multas)
     modelo = construir_modelo(df_multas, df_etapas)
     indicadores = calcular_indicadores(

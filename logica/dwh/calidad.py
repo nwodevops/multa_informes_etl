@@ -105,7 +105,7 @@ def _validar_multas(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
         fuente = str(row.get("FUENTE_ORIGEN", ""))
         rid = _registro_id(row)
 
-        if fuente in ("LAM_OD", "CAGR"):
+        if fuente in ("OD_EXCEL", "LAM_OD", "CAGR"):
             if vacio(row.get("COD_MA")):
                 add("R01", i, row, "COD_MA", row.get("COD_MA"))
         elif fuente in ("GAPPS", "SISUD_VW"):
@@ -171,7 +171,7 @@ def _validar_multas(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
 def _amarre(df_multas: pd.DataFrame) -> pd.DataFrame:
     puentes: list[tuple[str, pd.Series, pd.Series]] = []
     if not df_multas.empty:
-        excel = df_multas[df_multas["FUENTE_ORIGEN"].isin(["LAM_OD", "CAGR"])]
+        excel = df_multas[df_multas["FUENTE_ORIGEN"].isin(["OD_EXCEL", "LAM_OD", "CAGR"])]
         sisud = df_multas[df_multas["FUENTE_ORIGEN"] == "SISUD_VW"]
         gapp = df_multas[df_multas["FUENTE_ORIGEN"] == "GAPPS"]
         if "COD_MA" in excel.columns and "NUMERO_EXPEDIENTE" in excel.columns:

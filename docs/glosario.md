@@ -47,7 +47,7 @@ flowchart LR
 
 | Término | Qué es, en una frase |
 |---|---|
-| **GS1 / GS2** | Hojas Excel CAGR y Lambayeque (multas). |
+| **GS1 / GS2** | Hojas Excel CAGR y familia OD F1 (Lambayeque / Ica / Puno). |
 | **SISUD** | Oracle fuente de la vista de multas (`VW_MULTA_COERCITIVA`). |
 | **GAPP** | MySQL de multas coercitivas. |
 | **MC** | Multa coercitiva (en nombres tipo `INT_MC_EXCEL`). |

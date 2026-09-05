@@ -22,7 +22,27 @@ sources:
 
   - stg_table: STG_GS2_MULTAS_COERCITIVAS
     type: excel
-    path: input_excel/MEDIDAS ADMINISTRATIVAS OD LAMBAYEQUE.xlsx
+    familia: f1_od
+    od: LAMBAYEQUE
+    path: input_excel/medidas_administrativas/MEDIDAS ADMINISTRATIVAS OD LAMBAYEQUE.xlsx
+    worksheet: "5) Multas Coercitivas"
+    header_row: 3
+    types: varchar
+
+  - stg_table: STG_GS2_ICA_MULTAS_COERCITIVAS
+    type: excel
+    familia: f1_od
+    od: ICA
+    path: input_excel/medidas_administrativas/MEDIDAS ADMINISTRATIVAS OD ICA.xlsx
+    worksheet: "5) Multas Coercitivas"
+    header_row: 3
+    types: varchar
+
+  - stg_table: STG_GS2_PUNO_MULTAS_COERCITIVAS
+    type: excel
+    familia: f1_od
+    od: PUNO
+    path: input_excel/medidas_administrativas/MEDIDAS ADMINISTRATIVAS OD PUNO.xlsx
     worksheet: "5) Multas Coercitivas"
     header_row: 3
     types: varchar

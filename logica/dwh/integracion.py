@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import pandas as pd
 
-from .constantes import FUENTE_REGISTRO, ID_CARGA
+from .constantes import F1_OD_LECTURAS, FUENTE_REGISTRO, ID_CARGA
 from .homologacion import aplicar_homologacion
 
 # Columnas canónicas pre-FACT_MULTA (ANEXO_MAPEO_CAMPOS.md)
 COLS_MULTAS = [
     "ID_CARGA",
     "FUENTE_ORIGEN",
+    "COD_OD",
     "COD_MA",
     "COD_PROY_MC",
     "NUMERO_EXPEDIENTE",
@@ -79,7 +80,7 @@ def _a_canonico(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     return out[cols]
 
 
-def _integrar_gs2(gs2: pd.DataFrame) -> pd.DataFrame:
+def _integrar_gs2(gs2: pd.DataFrame, cod_od: str = "LAMBAYEQUE") -> pd.DataFrame:
     h = aplicar_homologacion(gs2, FUENTE_REGISTRO["GS2"])
     m = {
         "FN_MC": "F_NOTIF_DCG",
@@ -91,6 +92,8 @@ def _integrar_gs2(gs2: pd.DataFrame) -> pd.DataFrame:
         "EXP_INF_INCUMP": "NUMERO_EXPEDIENTE",
     }
     h = _renombrar(h, m)
+    h["COD_OD"] = cod_od
+    h["FUENTE_ORIGEN"] = FUENTE_REGISTRO["GS2"]
     return _a_canonico(h, COLS_MULTAS)
 
 
@@ -165,13 +168,17 @@ def integrar(
     etapas: pd.DataFrame,
     ora: pd.DataFrame,
     mysql: pd.DataFrame,
+    gs2_ods: dict[str, pd.DataFrame] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     partes = [
-        _integrar_gs2(gs2),
+        _integrar_gs2(gs2, F1_OD_LECTURAS.get("GS2", "LAMBAYEQUE")),
         _integrar_gs1(gs1),
         _integrar_mysql(mysql),
         _integrar_ora(ora),
     ]
+    extra = gs2_ods or {}
+    for clave, df in extra.items():
+        partes.append(_integrar_gs2(df, F1_OD_LECTURAS.get(clave, clave)))
     df_multas = pd.concat(partes, ignore_index=True, sort=False)
     df_etapas = _integrar_etapas(etapas)
     return df_multas, df_etapas

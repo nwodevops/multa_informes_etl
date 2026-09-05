@@ -6,8 +6,8 @@ lógica (Python) mediante `TRUNCATE + INSERT` hacia Oracle BD_CURSOR.
 
 ## Orden de ejecución (obligatorio, por dependencia de FK)
 
-1. **`01_dimensiones.sql`** — 6 dimensiones (`MI_DIM_TIEMPO`, `MI_DIM_ADMINISTRADO`,
-   `MI_DIM_ORGANO_UNIDAD`, `MI_DIM_MATERIA_SUBSECTOR`, `MI_DIM_ESTADO`, `MI_DIM_PARAMETRO_UIT`),
+1. **`01_dimensiones.sql`** — 7 dimensiones (`MI_DIM_TIEMPO`, `MI_DIM_ADMINISTRADO`,
+   `MI_DIM_ORGANO_UNIDAD`, `MI_DIM_OD`, `MI_DIM_MATERIA_SUBSECTOR`, `MI_DIM_ESTADO`, `MI_DIM_PARAMETRO_UIT`),
    cada una con su miembro `NO ESPECIFICADO` (clave `-1`) ya sembrado.
 2. **`02_hechos.sql`** — 1 tabla de hechos (`MI_FACT_MULTA_COERCITIVA`)
    + 1 tabla de detalle (`MI_DET_ETAPA_MC`). Todas las FK

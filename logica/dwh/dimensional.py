@@ -8,7 +8,7 @@ from datetime import date, datetime
 
 import pandas as pd
 
-from .catalogos import MI_DIM_ESTADO as SEMILLAS_ESTADO, MI_DIM_PARAMETRO_UIT as UIT_MEF
+from .catalogos import MI_DIM_ESTADO as SEMILLAS_ESTADO, MI_DIM_PARAMETRO_UIT as UIT_MEF, ODS_OEFA
 from .constantes import ID_CARGA
 from .homologacion import homologar_estado, vacio
 
@@ -249,6 +249,29 @@ def _build_dim_organo(df_multas: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _build_dim_od() -> pd.DataFrame:
+    rows = [
+        {
+            "ID_OD": ND,
+            "COD_OD": "ND",
+            "NOMBRE": "NO ESPECIFICADO",
+            "TIPO": "NO ESPECIFICADO",
+            "ORDEN": None,
+        }
+    ]
+    for i, od in enumerate(ODS_OEFA, start=1):
+        rows.append(
+            {
+                "ID_OD": i,
+                "COD_OD": str(od["COD_OD"]),
+                "NOMBRE": str(od["NOMBRE"]),
+                "TIPO": str(od["TIPO"]),
+                "ORDEN": int(od["ORDEN"]),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def _build_dim_administrado(df_multas: pd.DataFrame) -> pd.DataFrame:
     rows = [
         {
@@ -301,6 +324,8 @@ def _lk_simple(dim: pd.DataFrame, col_key: str, col_id: str = None) -> dict[str,
         col_id = "ID_ADMINISTRADO"
     if col_key == "ANIO":
         col_id = "ID_UIT"
+    if col_key == "COD_OD":
+        col_id = "ID_OD"
     out = {}
     for r in dim.itertuples(index=False):
         k = getattr(r, col_key)
@@ -325,12 +350,14 @@ def _build_fact_multas(
     dim_mat: pd.DataFrame,
     dim_est: pd.DataFrame,
     dim_uit: pd.DataFrame,
+    dim_od: pd.DataFrame,
 ) -> pd.DataFrame:
     lk_a = _lk_simple(dim_admin, "COD_ADMINISTRADO")
     lk_o = _lk_simple(dim_org, "SIGLA")
     lk_e = _lk_estado(dim_est)
     id_pagado = lk_e.get(("PAGO", "PAGADO"), ND)
     lk_u = _lk_simple(dim_uit, "ANIO")
+    lk_od = _lk_simple(dim_od, "COD_OD")
     _ = dim_mat
 
     rows = []
@@ -367,8 +394,14 @@ def _build_fact_multas(
                 pass
 
         fuente = str(r.get("FUENTE_ORIGEN", "CAGR"))
-        if fuente not in ("LAM_OD", "CAGR", "GAPPS", "SISUD_VW"):
+        if fuente == "LAM_OD":
+            fuente = "OD_EXCEL"
+        if fuente not in ("OD_EXCEL", "CAGR", "GAPPS", "SISUD_VW"):
             fuente = "CAGR"
+
+        id_od = ND
+        if not vacio(r.get("COD_OD")):
+            id_od = lk_od.get(str(r.get("COD_OD")).strip().upper(), ND)
 
         rows.append(
             {
@@ -384,6 +417,7 @@ def _build_fact_multas(
                 "ID_ADMINISTRADO": id_admin,
                 "ID_ORGANO": id_org,
                 "ID_MATERIA": id_mat,
+                "ID_OD": id_od,
                 "ID_ESTADO_RESOLUCION": id_est_res,
                 "ID_ESTADO_MULTA": id_est_mul,
                 "ID_ESTADO_PAGO": id_est_pago,
@@ -470,10 +504,11 @@ def construir_modelo(
     dim_uit = _build_dim_uit()
     dim_materia = _build_dim_materia()
     dim_organo = _build_dim_organo(df_multas)
+    dim_od = _build_dim_od()
     dim_admin = _build_dim_administrado(df_multas)
 
     fact_multas = _build_fact_multas(
-        df_multas, dim_admin, dim_organo, dim_materia, dim_estado, dim_uit
+        df_multas, dim_admin, dim_organo, dim_materia, dim_estado, dim_uit, dim_od
     )
     det_etapas = _build_det_etapas(df_etapas, fact_multas)
 
@@ -481,6 +516,7 @@ def construir_modelo(
         "MI_DIM_TIEMPO": dim_tiempo,
         "MI_DIM_ADMINISTRADO": dim_admin,
         "MI_DIM_ORGANO_UNIDAD": dim_organo,
+        "MI_DIM_OD": dim_od,
         "MI_DIM_MATERIA_SUBSECTOR": dim_materia,
         "MI_DIM_ESTADO": dim_estado,
         "MI_DIM_PARAMETRO_UIT": dim_uit,

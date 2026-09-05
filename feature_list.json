@@ -1,5 +1,5 @@
 {
-  "project": "multa_informes_etl",
+  "project": "datawarehouse_multa_etl",
   "lineamiento": "docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md",
   "branch_trabajo": "fase-1-lineamiento",
   "reglas": {
@@ -94,6 +94,13 @@
       "criterio": "CHECKPOINTS.md; ./init.sh HARNESS OK sin pl_stage_informes ni MI_FACT_INFORME_SUPERVISION",
       "doc": "docs/inputs/README.md",
       "evidencia": "progress/impl_dw-solo-multas.md"
+    },
+    {
+      "id": "f1-ods-ica-puno",
+      "title": "F1 familia OD (Ica, Lambayeque, Puno) + MI_DIM_OD 31 oficinas",
+      "status": "done",
+      "criterio": "3 Excel en STG; FACT con ID_OD resuelto para LAM/ICA; dim sembrada 31+ND; FUENTE_REGISTRO=OD_EXCEL en esas filas; ./init.sh HARNESS OK; docs/inputs describe convención para el resto",
+      "doc": "docs/inputs/README.md"
     }
   ]
 }

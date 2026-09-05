@@ -15,8 +15,8 @@ Cuatro fuentes de multa (**F1, F2, F4, F5**) declaradas en `inputs.yaml`. Hop ex
 
 ```mermaid
 flowchart TB
-  subgraph F1 [F1 — Excel OD Lambayeque]
-    X1["MEDIDAS ADMINISTRATIVAS OD LAMBAYEQUE.xlsx"]
+  subgraph F1 [F1 — familia Excel OD]
+    X1["medidas_administrativas/ OD *.xlsx"]
   end
   subgraph F2 [F2 — Excel CAGR]
     X2M["hoja 1) Multas coercitivas"]
@@ -30,7 +30,7 @@ flowchart TB
     O5["VW_MULTA_COERCITIVA"]
   end
   subgraph hop [Apache Hop → H2]
-    S2["STG_GS2_MULTAS_COERCITIVAS"]
+    S2["STG_GS2_* familia OD"]
     S1["STG_GS1_MULTAS_COERCITIVAS"]
     SE["STG_GS1_ETAPAS"]
     SM["STG_MYSQL_T_MVC_MULTACOERCITIVA"]
@@ -55,14 +55,14 @@ flowchart TB
 
 | ID | Origen | Tabla STG | Uso en el DW |
 |---|---|---|---|
-| **F1** | Excel Lambayeque | `STG_GS2_MULTAS_COERCITIVAS` | Hecho multa |
+| **F1** | Excel familia OD (Lam / Ica / Puno; 31 en `MI_DIM_OD`) | `STG_GS2_*` | Hecho multa + `ID_OD` |
 | **F2** | Excel CAGR | `STG_GS1_MULTAS_COERCITIVAS` | Hecho multa |
 | **F2-ET** | Excel CAGR etapas | `STG_GS1_ETAPAS` | Detalle etapas |
 | **F2-DIC** | Diccionario | `STG_GS1_DIC_*` | Perfilamiento |
 | **F4** | MySQL GAPP | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | Conciliación CUM/CAM |
 | **F5** | Oracle SISUD | `STG_ORA_VW_MULTA_COERCITIVA` | Expediente, resolución, CUM/CAM |
 
-**Integración:** F1+F2+F4+F5 en `DF_MULTAS` con `FUENTE_ORIGEN`. **H9:** amarre entre fuentes de multa (COD_MA, CUM F4↔F5), medido en `QA_AMARRE` / K5. No hay hecho informe ni `ID_INFORME`.
+**Integración:** F1+F2+F4+F5 en `DF_MULTAS` con `FUENTE_ORIGEN` (`OD_EXCEL` / `CAGR` / `GAPPS` / `SISUD_VW`). Territorio F1: `ID_OD` → `MI_DIM_OD`. **H9:** amarre entre fuentes de multa (COD_MA, CUM F4↔F5), medido en `QA_AMARRE` / K5. No hay hecho informe ni `ID_INFORME`.
 
 ---
 
@@ -70,7 +70,7 @@ flowchart TB
 
 | Capa | Tablas | Rol |
 |---|---|---|
-| **Dimensiones** | 6 × `MI_DIM_*` | Quién, dónde, cuándo, estado, UIT |
+| **Dimensiones** | 7 × `MI_DIM_*` | Quién, dónde (órgano + OD), cuándo, estado, UIT |
 | **Hechos** | 1 × `MI_FACT_MULTA_COERCITIVA` | Evento medible: multa coercitiva |
 | **Detalle** | `MI_DET_ETAPA_MC` | Etapas del flujo interno (1:N con multa) |
 | **Calidad** | `MI_DQ_HALLAZGO` | Hallazgos R01–R05 |
@@ -86,6 +86,7 @@ Un hecho. `MI_DIM_TIEMPO` agrupa por calendario; las fechas del ciclo van como c
 erDiagram
   MI_DIM_ADMINISTRADO ||--o{ MI_FACT_MULTA_COERCITIVA : ID_ADMINISTRADO
   MI_DIM_ORGANO_UNIDAD ||--o{ MI_FACT_MULTA_COERCITIVA : ID_ORGANO
+  MI_DIM_OD ||--o{ MI_FACT_MULTA_COERCITIVA : ID_OD
   MI_DIM_MATERIA_SUBSECTOR ||--o{ MI_FACT_MULTA_COERCITIVA : ID_MATERIA
   MI_DIM_ESTADO ||--o{ MI_FACT_MULTA_COERCITIVA : ID_ESTADO_RESOLUCION
   MI_DIM_ESTADO ||--o{ MI_FACT_MULTA_COERCITIVA : ID_ESTADO_MULTA
@@ -111,6 +112,7 @@ Clave **-1** = miembro *NO ESPECIFICADO*.
 | **MI_DIM_TIEMPO** | 1 día | Periodo; días hábiles |
 | **MI_DIM_ADMINISTRADO** | 1 administrado | Sujeto fiscalizado (desde nombre F5/Excel) |
 | **MI_DIM_ORGANO_UNIDAD** | 1 órgano | COORD / expediente |
+| **MI_DIM_OD** | 1 oficina F1 | Territorio Excel OD (32 semillas + ND) |
 | **MI_DIM_MATERIA_SUBSECTOR** | 1 materia | Catálogo semilla (`-1` si no hay dato en multa) |
 | **MI_DIM_ESTADO** | 1 estado | Resolución, multa, pago, etapa, descargos |
 | **MI_DIM_PARAMETRO_UIT** | 1 año | Conversión UIT ↔ soles |
@@ -129,6 +131,7 @@ Degeneradas: `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE`.
 flowchart TB
   ADM[MI_DIM_ADMINISTRADO]
   ORG[MI_DIM_ORGANO_UNIDAD]
+  OD[MI_DIM_OD]
   MAT[MI_DIM_MATERIA_SUBSECTOR]
   EST_R[MI_DIM_ESTADO resolucion]
   EST_M[MI_DIM_ESTADO multa]
@@ -137,6 +140,7 @@ flowchart TB
   FMC(("MI_FACT_MULTA_COERCITIVA"))
   ADM --> FMC
   ORG --> FMC
+  OD --> FMC
   MAT --> FMC
   EST_R --> FMC
   EST_M --> FMC
@@ -172,7 +176,8 @@ DDL: [`01_dimensiones.sql`](../lineamientos/ddl/01_dimensiones.sql) → [`02_hec
 
 | Objeto | Orden de magnitud |
 |---|---|
-| `MI_FACT_MULTA_COERCITIVA` | ~570 |
+| `MI_DIM_OD` | 33 (32 oficinas + ND) |
+| `MI_FACT_MULTA_COERCITIVA` | ~600 (F5 dominante + Excel OD) |
 | `MI_DET_ETAPA_MC` | ~55 |
 | `MI_DQ_HALLAZGO` | decenas |
 | `MI_INDICADOR_RESULTADO` | cientos (K1–K5, grano año×órgano) |

@@ -33,6 +33,43 @@ MI_DIM_PARAMETRO_UIT: dict[int, float] = {
     2025: 5350.0,
 }
 
+# Oficinas desconcentradas F1 (Excel medidas administrativas). COD_OD = slug filename.
+# ORDEN replica la lista fuente; CODE comparte 9 con HUANUCO (ID_OD surrogate evita choque).
+ODS_OEFA: list[dict[str, str | int]] = [
+    {"ORDEN": 1, "COD_OD": "AMAZONAS", "NOMBRE": "Amazonas", "TIPO": "OD"},
+    {"ORDEN": 2, "COD_OD": "ANCASH", "NOMBRE": "Ancash", "TIPO": "OD"},
+    {"ORDEN": 3, "COD_OD": "APURIMAC", "NOMBRE": "Apurimac", "TIPO": "OD"},
+    {"ORDEN": 4, "COD_OD": "AREQUIPA", "NOMBRE": "Arequipa", "TIPO": "OD"},
+    {"ORDEN": 5, "COD_OD": "AYACUCHO", "NOMBRE": "Ayacucho", "TIPO": "OD"},
+    {"ORDEN": 6, "COD_OD": "CAJAMARCA", "NOMBRE": "Cajamarca", "TIPO": "OD"},
+    {"ORDEN": 7, "COD_OD": "CUSCO", "NOMBRE": "Cusco", "TIPO": "OD"},
+    {"ORDEN": 8, "COD_OD": "HUANCAVELICA", "NOMBRE": "Huancavelica", "TIPO": "OD"},
+    {"ORDEN": 9, "COD_OD": "HUANUCO", "NOMBRE": "Huánuco", "TIPO": "OD"},
+    {"ORDEN": 9, "COD_OD": "CODE", "NOMBRE": "CODE", "TIPO": "UNIDAD"},
+    {"ORDEN": 10, "COD_OD": "ICA", "NOMBRE": "Ica", "TIPO": "OD"},
+    {"ORDEN": 11, "COD_OD": "JUNIN", "NOMBRE": "Junin", "TIPO": "OD"},
+    {"ORDEN": 12, "COD_OD": "LA_LIBERTAD", "NOMBRE": "La Libertad", "TIPO": "OD"},
+    {"ORDEN": 13, "COD_OD": "LAMBAYEQUE", "NOMBRE": "Lambayeque", "TIPO": "OD"},
+    {"ORDEN": 14, "COD_OD": "LORETO", "NOMBRE": "Loreto", "TIPO": "OD"},
+    {"ORDEN": 15, "COD_OD": "MADRE_DE_DIOS", "NOMBRE": "Madre de Dios", "TIPO": "OD"},
+    {"ORDEN": 16, "COD_OD": "MOQUEGUA", "NOMBRE": "Moquegua", "TIPO": "OD"},
+    {"ORDEN": 17, "COD_OD": "PASCO", "NOMBRE": "Pasco", "TIPO": "OD"},
+    {"ORDEN": 18, "COD_OD": "PIURA", "NOMBRE": "Piura", "TIPO": "OD"},
+    {"ORDEN": 19, "COD_OD": "PUNO", "NOMBRE": "Puno", "TIPO": "OD"},
+    {"ORDEN": 20, "COD_OD": "SAN_MARTIN", "NOMBRE": "San Martín", "TIPO": "OD"},
+    {"ORDEN": 21, "COD_OD": "TACNA", "NOMBRE": "Tacna", "TIPO": "OD"},
+    {"ORDEN": 22, "COD_OD": "TUMBES", "NOMBRE": "Tumbes", "TIPO": "OD"},
+    {"ORDEN": 23, "COD_OD": "UCAYALI", "NOMBRE": "Ucayali", "TIPO": "OD"},
+    {"ORDEN": 24, "COD_OD": "VRAEM", "NOMBRE": "Vraem", "TIPO": "ODES"},
+    {"ORDEN": 25, "COD_OD": "CHIMBOTE", "NOMBRE": "Chimbote", "TIPO": "ODES"},
+    {"ORDEN": 26, "COD_OD": "CORACORA", "NOMBRE": "Coracora", "TIPO": "ODES"},
+    {"ORDEN": 27, "COD_OD": "COTABAMBAS", "NOMBRE": "Cotabambas", "TIPO": "ODES"},
+    {"ORDEN": 28, "COD_OD": "TALARA", "NOMBRE": "Talara", "TIPO": "ODES"},
+    {"ORDEN": 29, "COD_OD": "ESPINAR", "NOMBRE": "Espinar", "TIPO": "ODES"},
+    {"ORDEN": 30, "COD_OD": "LA_CONVENCION", "NOMBRE": "La convención", "TIPO": "ODES"},
+    {"ORDEN": 31, "COD_OD": "PICHANAKI", "NOMBRE": "Pichanaki", "TIPO": "ODES"},
+]
+
 # Inventario mínimo por fuente (fallback H6 — docs/lineamientos/extra/fuentes_datos/)
 CATALOGO_CAMPOS: list[dict[str, str]] = [
     # F1 GS2

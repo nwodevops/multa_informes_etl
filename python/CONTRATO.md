@@ -20,7 +20,9 @@ CAPA POST-STAGING (lineamientos Fases 2–7)
 | Nombre | STG H2 | Fuente lineamiento |
 |---|---|---|
 | `GS1` | `STG_GS1_MULTAS_COERCITIVAS` | F2 CAGR multas |
-| `GS2` | `STG_GS2_MULTAS_COERCITIVAS` | F1 Lambayeque |
+| `GS2` | `STG_GS2_MULTAS_COERCITIVAS` | F1 OD Lambayeque |
+| `GS2_ICA` | `STG_GS2_ICA_MULTAS_COERCITIVAS` | F1 OD Ica |
+| `GS2_PUNO` | `STG_GS2_PUNO_MULTAS_COERCITIVAS` | F1 OD Puno |
 | `ETAPAS` | `STG_GS1_ETAPAS` | F2-ET |
 | `ORA` | `STG_ORA_VW_MULTA_COERCITIVA` | F5 |
 | `MYSQL` | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | F4 |
