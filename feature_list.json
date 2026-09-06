@@ -109,6 +109,22 @@
       "passes": true,
       "criterio": "Catálogo docs/inputs/f1_ods_sheets.json (31 ODs, sin consolidados); Excel OD fuera de inputs; Hop descarga con client_secret.json a STG_GS2_OD_MULTAS; FUENTE_REGISTRO=OD_SHEETS + ID_OD; ./init.sh HARNESS OK",
       "doc": "docs/inputs/README.md"
+    },
+    {
+      "id": "f2-csep-google-sheets",
+      "title": "F2: 10 unidades CSEP desde Google Sheets (reemplaza Excel CAGR)",
+      "status": "done",
+      "passes": true,
+      "criterio": "Catálogo docs/inputs/f2_csep_sheets.json (10 unidades); Excel CAGR en legacy; Hop descarga a STG_GS1_CSEP_MULTAS; FUENTE_REGISTRO=CAGR; ./init.sh HARNESS OK",
+      "doc": "docs/inputs/README.md"
+    },
+    {
+      "id": "dim-organo-descripcion-csep",
+      "title": "MI_DIM_ORGANO_UNIDAD.DESCRIPCION (nombre largo CSEP desde catálogo)",
+      "status": "done",
+      "passes": true,
+      "criterio": "Columna DESCRIPCION en MI_DIM_ORGANO_UNIDAD; CMIN→Minería etc. desde f2_csep_sheets.json; 10 unidades sembradas; carga Oracle OK",
+      "doc": "docs/lineamientos/ANEXO_MAPEO_CAMPOS.md"
     }
   ]
 }

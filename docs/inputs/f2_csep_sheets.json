@@ -1,0 +1,149 @@
+{
+  "worksheet_multas": "1) Multas coercitivas",
+  "header_row": 3,
+  "range_a1": "'1) Multas coercitivas'!A3:AV",
+  "stg_table": "STG_GS1_CSEP_MULTAS",
+  "inject_column": "COD_UNIDAD",
+  "worksheet_etapas": "2) Etapas",
+  "etapas_header_row": 2,
+  "etapas_range_a1": "'2) Etapas'!A2:L",
+  "etapas_stg_table": "STG_GS1_ETAPAS",
+  "etapas_columns": [
+    "COD_PROY_MC",
+    "NRO_ETAPA_MC",
+    "PERF_ENCARG_MC",
+    "ACCION_MC",
+    "ENCARGADO_MC",
+    "F_ASIG_MC",
+    "EST_ETAPA_MC",
+    "CONFORMIDAD_MC",
+    "F_ENT_DEV_MC",
+    "T_ELAB_MC",
+    "COD_ETAPA_MC",
+    "AUX_FIN_MC"
+  ],
+  "columns": [
+    "COD_MA",
+    "COD_PROY_MC",
+    "JEFE",
+    "ETA_REG_PROY_MC",
+    "N_PROY_MC",
+    "COORD",
+    "ADM",
+    "UF",
+    "EXP_INF_INCUMP",
+    "N_CARTA_DCG",
+    "FN_MC",
+    "F_VENC_DCG",
+    "PRESENT_DCG_ADM",
+    "F_RPTA_ADM",
+    "DOC_SIGED",
+    "EST_DCG",
+    "F_INIC_ANALISIS",
+    "REQ_VERIF_CAMPO",
+    "F_VERIF_CAMPO",
+    "F_FIN_ANALISIS",
+    "AMERIT_MC",
+    "N_DOC_NO_AMERIT",
+    "F_DOC_NO_AMERIT",
+    "MOTIVO_NO_AMERIT",
+    "RESULT_PROY_MC",
+    "ETA_REG_MC",
+    "EXP_RES_MC",
+    "N_RES_MC",
+    "F_FIRMA_RES_MC",
+    "FN_RES_MC",
+    "F_VENC_MC",
+    "MULTA_UIT",
+    "MULTA_S",
+    "RECORD_SEG",
+    "F_VERIF_POST_MC",
+    "DOC_VERIF_MC",
+    "EXP_SIGED_DOC",
+    "ESTADO_MC",
+    "F_PAGO",
+    "MEMO_EF",
+    "F_REMIS",
+    "SIGED",
+    "ESTADO_PAGO_MC",
+    "AUX_FIN_MC",
+    "AUX_COD_MA",
+    "AUX_EST_MC",
+    "URESOL_MC",
+    "FN_URESOL_MC"
+  ],
+  "unidades": [
+    {
+      "orden": 1,
+      "cod_unidad": "CMIN",
+      "nombre": "Minería",
+      "spreadsheet_key": "1N3CJ4bocpUUHROPQARXgoUw8wXWxhmcVGz47kEfyXMA",
+      "activo": true
+    },
+    {
+      "orden": 2,
+      "cod_unidad": "CHID",
+      "nombre": "Hidrocarburos",
+      "spreadsheet_key": "1iLq2g6p3wnzmlLmENuFZSRLrSwgDwf2H9BNcRyzhVys",
+      "activo": true
+    },
+    {
+      "orden": 3,
+      "cod_unidad": "CELE",
+      "nombre": "Electricidad",
+      "spreadsheet_key": "1vw5t1GOhtX0aGRAxXdqfvMiYX0bFCanSQa2w8dVQw5I",
+      "activo": true
+    },
+    {
+      "orden": 4,
+      "cod_unidad": "CIND",
+      "nombre": "Industria",
+      "spreadsheet_key": "14lOtiwQO-pha5iUO1zHSfLU3H3Di1qQpn8mizX9NH8M",
+      "activo": true
+    },
+    {
+      "orden": 5,
+      "cod_unidad": "CPES",
+      "nombre": "Pesca",
+      "spreadsheet_key": "1wQLkciOc1aqWPT6Hv-hgt4R8ilaUzJnHWkemaLuaeic",
+      "activo": true
+    },
+    {
+      "orden": 6,
+      "cod_unidad": "CAGR",
+      "nombre": "Agricultura",
+      "spreadsheet_key": "1R5HXj4zyEtn362sgus3XjoQdz4gDYZ1G0VpXtqgaVvk",
+      "activo": true
+    },
+    {
+      "orden": 7,
+      "cod_unidad": "CRES",
+      "nombre": "Residuos Sólidos",
+      "spreadsheet_key": "1c2oAhdxtjcySM-I43yHF6vvnO8SOK2Ubh9tuKYgD5qQ",
+      "activo": true
+    },
+    {
+      "orden": 8,
+      "cod_unidad": "CCAM",
+      "nombre": "Consultoras Ambientales",
+      "spreadsheet_key": "1_Nzd-cGOkVG-qwTPXp0MDd9p11ImnDquyOfJUQ-2G5A",
+      "activo": true,
+      "nota": "Sin filas de multas; cod_unidad desde título sheet (Modificado CCAM)"
+    },
+    {
+      "orden": 9,
+      "cod_unidad": "UFED",
+      "nombre": "UF educación",
+      "spreadsheet_key": "1-mWS2tTgpYPwem53FJOYVo3ZLNEOYzZsIGSVQtKCUWw",
+      "activo": true
+    },
+    {
+      "orden": 10,
+      "cod_unidad": "UFSAVC",
+      "nombre": "UF vivienda",
+      "spreadsheet_key": "1yLW70PeW2kj-O7XasCMZ0rpPPUOtyYBsyJDO0v9QpxI",
+      "activo": true,
+      "nota": "Sin filas de multas; cod_unidad desde título sheet (Modificado UFSAVC)"
+    }
+  ]
+}

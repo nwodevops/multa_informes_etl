@@ -55,11 +55,18 @@ step "Reset H2 + DDL STG"
 step "Python create STG (inputs.yaml -> tablas STG_*)"
 "$PY" python/create_stg.py
 
-step "Staging Excel local CAGR/DIC (Hop pl_stage_excel)"
+step "Staging Excel local DIC (Hop pl_stage_excel, legacy CAGR)"
 if [ -x "$HOP_RUN" ]; then
   "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_excel.hpl" -r local
 else
-  warn "hop-run no encontrado ($HOP_RUN); STG Excel puede quedar vacío"
+  warn "hop-run no encontrado ($HOP_RUN); STG Excel DIC puede quedar vacío"
+fi
+
+step "Staging F2 CSEP Google Sheets (unidades activas)"
+if [ -x "$HOP_RUN" ]; then
+  ./scripts/stage_csep_sheets.sh
+else
+  warn "hop-run no encontrado ($HOP_RUN); STG CSEP Sheets puede quedar vacío"
 fi
 
 step "Staging F1 ODs Google Sheets (31 oficinas)"

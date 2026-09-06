@@ -19,9 +19,9 @@ CAPA POST-STAGING (lineamientos Fases 2–7)
 
 | Nombre | STG H2 | Fuente lineamiento |
 |---|---|---|
-| `GS1` | `STG_GS1_MULTAS_COERCITIVAS` | F2 CAGR multas |
+| `GS1` | `STG_GS1_CSEP_MULTAS` | F2 CSEP Google Sheets multas (`COD_UNIDAD`) |
 | `GS2` | `STG_GS2_OD_MULTAS` | F1 31 ODs Google Sheets (`COD_OD` por fila) |
-| `ETAPAS` | `STG_GS1_ETAPAS` | F2-ET |
+| `ETAPAS` | `STG_GS1_ETAPAS` | F2-ET (Sheets CSEP) |
 | `ORA` | `STG_ORA_VW_MULTA_COERCITIVA` | F5 |
 | `MYSQL` | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | F4 |
 | `DIC_TABLAS` | `STG_GS1_DIC_TABLAS` | F2 diccionario |

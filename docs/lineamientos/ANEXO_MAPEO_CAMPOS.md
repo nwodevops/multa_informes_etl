@@ -4,25 +4,34 @@
 > entre "qué tablas construir" y "de dónde sale exactamente cada columna", para que la capa
 > lógica (Python) se pueda escribir sin ambigüedad.
 >
-> Basado en el inventario campo por campo verificado con datos reales de las fuentes de multa
-> (`propuesta_5/docs/dwh/01-fuentes-de-datos.md`), adaptado a los nombres de columna
-> definidos en `ddl/01_dimensiones.sql` y `ddl/02_hechos.sql`. F3 (informes) está **fuera de alcance**.
+> Inventario de fuentes: [`extra/fuentes_datos/01-fuentes-de-datos.md`](extra/fuentes_datos/01-fuentes-de-datos.md).
+> Inputs runtime: [`docs/inputs/README.md`](../inputs/README.md) · catálogos F1/F2 JSON · `inputs.yaml`.
+> F3 (informes) está **fuera de alcance**.
 
 ---
 
 ## 0. Fuentes y su identificador corto
 
-| ID | Fuente | Objeto | Columnas |
+| ID | Fuente (vigente) | Objeto / STG | Columnas |
 |---|---|---|---|
-| F1 | Excel OD Lambayeque | hoja `5) Multas Coercitivas` | 32 |
-| F2 | Excel CAGR | hoja `1) Multas coercitivas` | 48 (incluye las 32 de F1 + 16 propias) |
-| F2-ET | Excel CAGR | hoja `2) Etapas` | 12 |
-| F4 | MySQL gapps | `T_MVC_MULTACOERCITIVA_MC` | 17 |
-| F5 | Oracle SISUD | `VW_MULTA_COERCITIVA` | 13 |
+| F1 | **31 Google Sheets** OD (`f1_ods_sheets.json`) | hoja `5) Multas Coercitivas` → `STG_GS2_OD_MULTAS` (+ `COD_OD`) | 32 |
+| F2 | **10 Google Sheets** CSEP (`f2_csep_sheets.json`) | hoja `1) Multas coercitivas` → `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | 48 (32 comunes F1 + 16 propias) |
+| F2-ET | Mismos sheets F2 | hoja `2) Etapas` → `STG_GS1_ETAPAS` | 12 |
+| F4 | MySQL gapps | `T_MVC_MULTACOERCITIVA_MC` → `STG_MYSQL_*` | 17 |
+| F5 | Oracle SISUD | `VW_MULTA_COERCITIVA` → `STG_ORA_*` | 13 |
+
+| `FUENTE_REGISTRO` | Significado |
+|---|---|
+| `OD_SHEETS` | Fila procedente de F1 (Sheets OD) |
+| `CAGR` | Fila procedente de F2 (Sheets CSEP; unidad en `COORD` / `COD_UNIDAD`) |
+| `GAPPS` | F4 MySQL |
+| `SISUD_VW` | F5 Oracle |
+
+> Excel OD / CAGR históricos viven en `input_excel/.../legacy/`. Solo el DIC (`DIC_TABLAS` / `DIC_VARIABLES`) se stagea aún desde el Excel CAGR legacy (`pl_stage_excel.hpl`).
 
 **Regla general de prioridad cuando dos fuentes traen el mismo dato:** se prioriza la fuente
 más confiable/reciente y se conserva el resto como respaldo con su `FUENTE_REGISTRO` visible;
-nunca se descarta el dato divergente, se registra como hallazgo de calidad (R... según regla
+nunca se descarta el dato divergente, se registra como hallazgo de calidad (R… según regla
 aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 
 ---
@@ -39,8 +48,9 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | `CUM` | F5 `CUM` | F4 `TX_IDCUM` (conciliar, regla R04) | solo dígitos, relleno a 11 posiciones (H2) |
 | `CAM` | F5 `CAM` | F4 `TX_IDCAM` (conciliar, regla R04) | patrón `AAAA`(4)+segmento(2)+correlativo(7)=13 (H2) |
 | `NUMERO_REGISTRO_SIGED` | F5 `NUMERO_REGISTRO` | F1/F2 `SIGED`; F4 `TX_EXP_SIGED_DOC` | ninguna |
-| `ID_ADMINISTRADO` | F5 `ADMINISTRADO` | F1/F2 nombre si existe | lookup en `MI_DIM_ADMINISTRADO` (`NOM-…`); `-1` si no resuelve |
-| `ID_ORGANO` | F2 `COORD` | sigla final de `NUMERO_EXPEDIENTE` (ej. `...-DSIS-CRES`) | lookup en `MI_DIM_ORGANO_UNIDAD`; `-1` si no resuelve |
+| `ID_ADMINISTRADO` | F5 `ADMINISTRADO` | F2 `ADM` / nombre si existe | lookup en `MI_DIM_ADMINISTRADO` (`NOM-…`); `-1` si no resuelve |
+| `ID_ORGANO` | F2 `COORD` (o `COD_UNIDAD` inyectado) | sigla final de `NUMERO_EXPEDIENTE` | lookup `MI_DIM_ORGANO_UNIDAD.SIGLA`; `-1` si no resuelve |
+| `ID_OD` | F1 `COD_OD` (inyectado desde catálogo OD) | — | lookup `MI_DIM_OD`; `-1` si no aplica (filas F2/F4/F5) |
 | `ID_MATERIA` | catálogo semilla | — | lookup en `MI_DIM_MATERIA_SUBSECTOR`; `-1` si no resuelve |
 | `ID_ESTADO_RESOLUCION` | F5 `ESTADO_RESOLUCION` | — | homologar contra `MI_DIM_ESTADO` (`TIPO_ESTADO='RESOLUCION'`) |
 | `ID_ESTADO_MULTA` | F1/F2 `ESTADO_MC` | F5 `ESTADO_MULTA`; F4 `FG_ESTADOMULTA` (conciliar) | homologar contra `MI_DIM_ESTADO` (`TIPO_ESTADO='MULTA'`) |
@@ -65,8 +75,8 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | `SIGED` | F1/F2 `SIGED` | — | ninguna |
 | `DOC_VERIF_MC` | F1/F2 `DOC_VERIF_MC` | F4 `TX_DOC_VERIF_MC` | ninguna |
 | `MONTO_UIT` | F1/F2 `MULTA_UIT` | F4 `NU_MONTOMCUIT`; F5 `MONTO_MULTA` (conciliar, regla R05) | ninguna |
-| `VALOR_UIT_APLICADO` | `MI_DIM_PARAMETRO_UIT.VALOR_UIT` del año resuelto en `ID_UIT` | — | lookup |
-| `MONTO_S` | F1/F2 `MULTA_S` (puede venir `#N/A` en F2, H5) | F4 `NU_MONTOMCS` | tokens de error → `NULL` |
+| `VALOR_UIT_APLICADO` | `MI_DIM_PARAMETRO_UIT.VALOR_UIT` del año resuelto en `ID_UIT` | — | lookup (catálogo MEF en Python) |
+| `MONTO_S` | F1/F2 `MULTA_S` (puede venir `#N/A` / token de error) | F4 `NU_MONTOMCS` | tokens de error → `NULL` |
 | `MONTO_S_CALC` | calculado | `MONTO_UIT × VALOR_UIT_APLICADO` | fuente de verdad cuando `MONTO_S` es `NULL` o difiere (regla R05) |
 | `MONTO_MULTA_REC` | F5 `MONTO_MULTA_REC` | — | ninguna |
 | `MONTO_MULTA_TFA` | F5 `MONTO_MULTA_TFA` | — | ninguna |
@@ -78,11 +88,11 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | `DIAS_RESOL_A_VERIF` | calculado | `F_VERIF_POST_MC − F_FIRMA_RES_MC` | — |
 | `FLAG_PRESENTO_DCG` | calculado | `1` si `PRESENTO_DESCARGOS='S'` | — |
 | `FLAG_AMERITA_MC` | calculado | `1` si `AMERITA_MC='S'` | — |
-| `FLAG_PAGADA` | calculado | `1` si `ID_ESTADO_PAGO` homologa a grupo `CUMPLIDO` | — |
+| `FLAG_PAGADA` | calculado | `1` si `ID_ESTADO_PAGO` homologa a grupo `CUMPLIDO` / `PAGADO` | — |
 | `FLAG_EJECUCION_FORZOSA` | calculado | `1` si `MEMO_EF` no es nulo | — |
-| `FLAG_CUMPLIO_VERIF` | calculado | `1` si `F_VERIF_POST_MC` no es nulo y resultado registrado como conforme | — |
-| `FUENTE_REGISTRO` | asignado por el proceso | `'LAM_OD'` (fila viene solo de F1), `'CAGR'` (viene de F2), complementado con `'GAPPS'`/`'SISUD_VW'` si F4/F5 aportaron datos de conciliación | — |
-| `FECHA_CARGA` | asignado por el proceso | `SYSDATE` al insertar | — |
+| `FLAG_CUMPLIO_VERIF` | calculado | `1` si `F_VERIF_POST_MC` no es nulo | — |
+| `FUENTE_REGISTRO` | asignado por el proceso | `'OD_SHEETS'` (F1), `'CAGR'` (F2), `'GAPPS'` / `'SISUD_VW'` (F4/F5). Alias legacy `LAM_OD`/`OD_EXCEL` → `OD_SHEETS` | — |
+| `FECHA_CARGA` | asignado por el proceso | timestamp al construir el hecho | — |
 
 ---
 
@@ -94,7 +104,7 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 
 ## 3. `MI_DET_ETAPA_MC`
 
-| Columna destino | Origen (F2-ET `2) Etapas`) | Transformación |
+| Columna destino | Origen (F2-ET `2) Etapas` en sheets CSEP) | Transformación |
 |---|---|---|
 | `ID_MC` | resuelto por amarre `COD_PROY_MC` | lookup contra `MI_FACT_MULTA_COERCITIVA.COD_PROY_MC`; `NULL` si aún no existe el hecho padre |
 | `COD_PROY_MC` | `COD_PROY_MC` | ninguna |
@@ -108,7 +118,7 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | `CONFORMIDAD` | `CONFORMIDAD_MC` | ninguna |
 | `DIAS_ELABORACION` | `T_ELAB_MC` | validar/recalcular con `MI_DIM_TIEMPO.ES_DIA_HABIL` si se requiere precisión |
 | `FUENTE_REGISTRO` | asignado | `'CAGR'` constante |
-| `FECHA_CARGA` | asignado | `SYSDATE` al insertar |
+| `FECHA_CARGA` | asignado | timestamp al insertar |
 
 ---
 
@@ -126,9 +136,16 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 
 | Columna | Origen | Transformación |
 |---|---|---|
-| `SIGLA` | F2 `COORD` | si no viene explícita, extraer de la sigla final de `NUMERO_EXPEDIENTE` (ej. `0209-2023-DSIS-CRES` → `DSIS-CRES`) |
-| `NOMBRE` | igual a `SIGLA` si no hay nombre largo disponible | catálogo institucional a completar con CSEP |
-| `TIPO` | inferido de la sigla | `DIRECCION`/`COORDINACION`/`ODES`/`OD` según catálogo (Fase 3) |
+| `SIGLA` | F2 `COORD` / `COD_UNIDAD` / catálogo `f2_csep_sheets.json` | se siembran las 10 unidades CSEP activas; también siglas vistas en expedientes |
+| `NOMBRE` | igual a `SIGLA` | código corto (compat) |
+| `DESCRIPCION` | `f2_csep_sheets.json` → `nombre` | nombre largo (ej. `CMIN` → `Minería`); si no hay match → `SIGLA` |
+| `TIPO` | inferido de la sigla | `DIRECCION`/`COORDINACION`/`ODES`/`OD` / `NO ESPECIFICADO` |
+
+### `MI_DIM_OD`
+
+| Columna | Origen |
+|---|---|
+| `COD_OD` / `NOMBRE` / `TIPO` / `ORDEN` | catálogo F1 (`f1_ods_sheets.json` / semilla `ODS_OEFA`); `ID_OD` en el hecho desde `COD_OD` de STG F1 |
 
 ### `MI_DIM_MATERIA_SUBSECTOR`
 
@@ -146,32 +163,30 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | `ETAPA` | F2-ET `EST_ETAPA_MC` |
 | `DESCARGOS` | F1/F2 `PRESENT_DCG_ADM`, F2 `EST_DCG` |
 
-Las semillas ya cargadas en `ddl/01_dimensiones.sql` cubren los valores observados en el
-diagnóstico; deben confirmarse/ampliarse con CSEP en la Fase 3 del plan de implementación.
+Las semillas en `ddl/01_dimensiones.sql` / código Python cubren valores observados; ampliar con CSEP si aparecen nuevos códigos.
 
 ### `MI_DIM_PARAMETRO_UIT`
 
 | Columna | Origen |
 |---|---|
-| `ANIO` / `VALOR_UIT` | catálogo `M_PARAMETROS` (F1, actualmente roto por `IMPORTRANGE`, H6) + siembra oficial MEF ya incluida en el DDL como contingencia |
+| `ANIO` / `VALOR_UIT` | catálogo oficial MEF sembrado en Python (`UIT_MEF`); no se stagea `M_PARAMETROS` desde Sheets |
 
 ### `MI_DIM_TIEMPO`
 
-Generada por script de calendario (no proviene de ninguna fuente); el flag `ES_FERIADO` se
-alimenta del catálogo `M_FERIADO` (F1) una vez materializado (resuelve H6).
+Generada por script de calendario (no proviene de ninguna fuente). `ES_FERIADO` queda en `0` salvo materialización futura de feriados (históricamente `M_FERIADO` en plantillas Excel, no cargado por el ETL F1 vigente).
 
 ---
 
 ## 5. Tabla `MI_DQ_HALLAZGO` — qué la alimenta
 
-Cada regla (R01-R05, ver `PROPUESTA_ADAPTADA_ETL.md` sección 4) genera una fila por cada
+Cada regla (R01–R05, ver `PROPUESTA_ADAPTADA_ETL.md` sección 4) genera una fila por cada
 registro no conforme, con `REGISTRO_ID` igual a la clave natural del registro afectado
 (`COD_MA`, `CUM+CAM`, o `NUMERO_EXPEDIENTE` según el caso) para poder rastrearlo hasta la
 fuente original sin necesidad de una FK dura.
 
 ---
 
-**Nota de mantenimiento:** si CSEP entrega una versión corregida de los catálogos rotos
-(`M_FERIADO`, `M_UBIGEO`, `M_PARAMETROS`, `DIC_VARIABLES` — hallazgo H6), este anexo no
-cambia de estructura; solo cambia el origen de `MI_DIM_TIEMPO.ES_FERIADO`, `MI_DIM_ORGANO_UNIDAD`/
-`MI_DIM_MATERIA_SUBSECTOR` (si trae UBIGEO) y `MI_DIM_PARAMETRO_UIT` (si trae la UIT oficial vigente).
+**Nota de mantenimiento:** el origen operativo de F1/F2 es Google Sheets (catálogos JSON + SA).
+Si CSEP entrega catálogos auxiliares materializados (feriados, UIT, DIC), este anexo no cambia
+de estructura; solo cambia el origen de `MI_DIM_TIEMPO.ES_FERIADO`, dims de territorio/materia
+(si aplica UBIGEO) y, opcionalmente, `MI_DIM_PARAMETRO_UIT` frente al MEF.

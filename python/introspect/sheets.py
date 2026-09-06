@@ -31,7 +31,11 @@ def introspect(source: dict, variables: dict[str, str], root: Path | None = None
 
     catalog_rel = (source.get("catalog") or "").strip()
     if catalog_rel:
-        from f1_ods_catalog import load_catalog, stg_columns
+        familia = (source.get("familia") or "").strip().lower()
+        if familia == "f2_csep" or "f2_csep" in catalog_rel:
+            from f2_csep_catalog import load_catalog, stg_columns
+        else:
+            from f1_ods_catalog import load_catalog, stg_columns
 
         catalog = load_catalog(root, catalog_rel)
         cols = _columns_from_names(stg_columns(catalog))

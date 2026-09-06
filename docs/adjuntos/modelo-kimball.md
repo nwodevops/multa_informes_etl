@@ -15,13 +15,13 @@ Cuatro fuentes de multa (**F1, F2, F4, F5**) declaradas en `inputs.yaml`. Hop ex
 
 ```mermaid
 flowchart TB
-  subgraph F1 [F1 — familia Excel OD]
-    X1["medidas_administrativas/ OD *.xlsx"]
+  subgraph F1 [F1 — Google Sheets OD]
+    X1["f1_ods_sheets.json 31 ODs"]
   end
-  subgraph F2 [F2 — Excel CAGR]
-    X2M["hoja 1) Multas coercitivas"]
-    X2E["hoja 2) Etapas"]
-    X2D["DIC_TABLAS · DIC_VARIABLES"]
+  subgraph F2 [F2 — Google Sheets CSEP]
+    X2M["f2_csep_sheets.json multas"]
+    X2E["mismas sheets etapas"]
+    X2D["Excel legacy DIC"]
   end
   subgraph F4 [F4 — MySQL GAPP]
     M4["T_MVC_MULTACOERCITIVA_MC"]
@@ -30,8 +30,8 @@ flowchart TB
     O5["VW_MULTA_COERCITIVA"]
   end
   subgraph hop [Apache Hop → H2]
-    S2["STG_GS2_* familia OD"]
-    S1["STG_GS1_MULTAS_COERCITIVAS"]
+    S2["STG_GS2_OD_MULTAS"]
+    S1["STG_GS1_CSEP_MULTAS"]
     SE["STG_GS1_ETAPAS"]
     SM["STG_MYSQL_T_MVC_MULTACOERCITIVA"]
     SV["STG_ORA_VW_MULTA_COERCITIVA"]
@@ -56,9 +56,9 @@ flowchart TB
 | ID | Origen | Tabla STG | Uso en el DW |
 |---|---|---|---|
 | **F1** | Google Sheets familia OD (31 en catálogo; `MI_DIM_OD`) | `STG_GS2_OD_MULTAS` | Hecho multa + `ID_OD` |
-| **F2** | Excel CAGR | `STG_GS1_MULTAS_COERCITIVAS` | Hecho multa |
-| **F2-ET** | Excel CAGR etapas | `STG_GS1_ETAPAS` | Detalle etapas |
-| **F2-DIC** | Diccionario | `STG_GS1_DIC_*` | Perfilamiento |
+| **F2** | Sheets CSEP (10 unidades) | `STG_GS1_CSEP_MULTAS` | Hecho multa |
+| **F2-ET** | Sheets CSEP etapas | `STG_GS1_ETAPAS` | Detalle etapas |
+| **F2-DIC** | Diccionario (Excel legacy) | `STG_GS1_DIC_*` | Perfilamiento |
 | **F4** | MySQL GAPP | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | Conciliación CUM/CAM |
 | **F5** | Oracle SISUD | `STG_ORA_VW_MULTA_COERCITIVA` | Expediente, resolución, CUM/CAM |
 

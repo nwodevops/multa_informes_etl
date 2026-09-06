@@ -112,10 +112,16 @@ def _integrar_gs1(gs1: pd.DataFrame) -> pd.DataFrame:
         "AMERIT_MC": "AMERITA_MC",
         "REQ_VERIF_CAMPO": "REQUIERE_VERIF_CAMPO",
         "EXP_INF_INCUMP": "NUMERO_EXPEDIENTE",
+        "ADM": "ADMINISTRADO",
     }
     h = _renombrar(h, m)
-    if "COORD" not in h.columns and "COORD" in gs1.columns:
+    if "COORD" in gs1.columns:
         h["COORD"] = gs1["COORD"].values
+    # Si COORD vacío, rellenar con COD_UNIDAD del catálogo F2 (inyectado en STG).
+    if "COD_UNIDAD" in gs1.columns:
+        coord = h["COORD"] if "COORD" in h.columns else pd.Series(pd.NA, index=h.index)
+        empty = coord.isna() | (coord.astype("string").str.strip() == "")
+        h["COORD"] = coord.where(~empty, gs1["COD_UNIDAD"].astype("string").values)
     return _a_canonico(h, COLS_MULTAS)
 
 

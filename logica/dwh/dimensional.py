@@ -216,7 +216,32 @@ def _build_dim_materia() -> pd.DataFrame:
 
 
 def _build_dim_organo(df_multas: pd.DataFrame) -> pd.DataFrame:
-    siglas: set[str] = set()
+    from pathlib import Path
+
+    desc_map: dict[str, str] = {}
+    try:
+        from f2_csep_catalog import active_unidades, descripcion_por_sigla, load_catalog
+    except ImportError:
+        import sys
+
+        here = Path(__file__).resolve().parents[2] / "python"
+        if str(here) not in sys.path:
+            sys.path.insert(0, str(here))
+        from f2_csep_catalog import active_unidades, descripcion_por_sigla, load_catalog
+
+    try:
+        root = Path(__file__).resolve().parents[2]
+        cat = load_catalog(root)
+        desc_map = descripcion_por_sigla(cat)
+        csep_siglas = {
+            str(o["cod_unidad"]).strip().upper()[:30]
+            for o in active_unidades(cat)
+            if o.get("cod_unidad")
+        }
+    except (FileNotFoundError, ValueError, KeyError, TypeError):
+        csep_siglas = set()
+
+    siglas: set[str] = set(csep_siglas)
     if "COORD" in df_multas.columns:
         for v in df_multas["COORD"].dropna():
             s = str(v).strip().upper()
@@ -232,6 +257,7 @@ def _build_dim_organo(df_multas: pd.DataFrame) -> pd.DataFrame:
             "ID_ORGANO": ND,
             "SIGLA": "ND",
             "NOMBRE": "NO ESPECIFICADO",
+            "DESCRIPCION": "NO ESPECIFICADO",
             "TIPO": "NO ESPECIFICADO",
             "ORGANO_SUPERIOR": None,
         }
@@ -242,6 +268,7 @@ def _build_dim_organo(df_multas: pd.DataFrame) -> pd.DataFrame:
                 "ID_ORGANO": len(rows),
                 "SIGLA": sigla,
                 "NOMBRE": sigla,
+                "DESCRIPCION": desc_map.get(sigla, sigla)[:200],
                 "TIPO": _infer_tipo_organo(sigla),
                 "ORGANO_SUPERIOR": None,
             }

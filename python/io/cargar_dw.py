@@ -320,6 +320,19 @@ def _ensure_fuente_ck_od_sheets(cur) -> None:
     )
     print("DW: CK_MI_FMC_FUENTE -> OD_SHEETS")
 
+
+def _ensure_dim_organo_descripcion(cur) -> None:
+    """Añade DESCRIPCION a MI_DIM_ORGANO_UNIDAD si el esquema es anterior a F2 CSEP."""
+    if not _table_exists(cur, "MI_DIM_ORGANO_UNIDAD"):
+        return
+    if not _column_exists(cur, "MI_DIM_ORGANO_UNIDAD", "DESCRIPCION"):
+        cur.execute(
+            f"ALTER TABLE {ESQUEMA}.MI_DIM_ORGANO_UNIDAD "
+            "ADD DESCRIPCION VARCHAR2(200)"
+        )
+        print("DW: ADD COLUMN MI_DIM_ORGANO_UNIDAD.DESCRIPCION")
+
+
 def _prepare_schema(cur, root: Path) -> None:
     for v in VISTAS_LEGACY:
         try:
@@ -336,6 +349,7 @@ def _prepare_schema(cur, root: Path) -> None:
     _ensure_dim_od(cur, ts)
     _ensure_fact_id_od(cur)
     _ensure_fuente_ck_od_sheets(cur)
+    _ensure_dim_organo_descripcion(cur)
 
     if not _model_complete(cur):
         _drop_legacy_tables(cur)

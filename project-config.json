@@ -38,8 +38,8 @@
       },
       {
         "name": "DB_ORA_SISUD_URL",
-        "value": "jdbc:oracle:thin:@//localhost:1523/XEPDB1",
-        "description": "JDBC URL Oracle SISUD (fuente) LOCAL"
+        "value": "jdbc:oracle:thin:@//localhost:1525/CSEP",
+        "description": "JDBC URL Oracle SISUD (fuente) LOCAL — csep_oracle_xe PDB CSEP"
       },
       {
         "name": "DB_ORA_SISUD_HOST",
@@ -48,13 +48,13 @@
       },
       {
         "name": "DB_ORA_SISUD_PORT",
-        "value": "1523",
-        "description": "Puerto Oracle SISUD (fuente) LOCAL"
+        "value": "1525",
+        "description": "Puerto Oracle SISUD (fuente) LOCAL — csep_oracle_xe"
       },
       {
         "name": "DB_ORA_SISUD_DATABASE",
-        "value": "XEPDB1",
-        "description": "Service Oracle SISUD (fuente) LOCAL"
+        "value": "CSEP",
+        "description": "Service Oracle SISUD (fuente) LOCAL — PDB CSEP"
       },
       {
         "name": "DB_ORA_SISUD_USERNAME",

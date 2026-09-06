@@ -1,6 +1,8 @@
 # 01 - Fuentes de Datos
 
 > **Alcance vigente:** el DW carga solo Multas (F1, F2, F4, F5). La vista `CSEP_INFORMES_VIEW` (F3) no se extrae ni se modela.
+>
+> **Inputs runtime:** [`docs/inputs/README.md`](../../../inputs/README.md) · catálogos F1/F2 JSON · `inputs.yaml`.
 
 ## Inventario de Sistemas Origen
 
@@ -8,7 +10,7 @@
 
 #### Tabla: `SISUD.CSEP_INFORMES_VIEW`
 
-Contiene los informes de supervisión y actividades de fiscalización.
+Contiene los informes de supervisión y actividades de fiscalización. **Fuera de alcance del ETL.**
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -39,9 +41,9 @@ Contiene los informes de supervisión y actividades de fiscalización.
 
 ---
 
-#### Tabla: `SISUD.VW_MULTA_COERCITIVA`
+#### Tabla: `SISUD.VW_MULTA_COERCITIVA` (F5)
 
-Vista consolidada de multas coercitivas con información de expedientes y estados.
+Vista consolidada de multas coercitivas. Staging: `STG_ORA_VW_MULTA_COERCITIVA` · Hop `pl_stage_oracle.hpl`.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -59,15 +61,15 @@ Vista consolidada de multas coercitivas con información de expedientes y estado
 | MONTO_MULTA_TFA | NUMBER | Monto de multa TFA |
 | ESTADO_MULTA | VARCHAR2 | Estado de la multa (ACTIVO, INACTIVO) |
 
-**Volumen estimado**: ~10,000+ registros
+**Volumen estimado**: ~10,000+ registros · `FUENTE_REGISTRO=SISUD_VW`
 
 ---
 
-### 2. Oracle GApps - Gestión Operativa
+### 2. MySQL GAPP - Gestión operativa (F4)
 
 #### Tabla: `gappsdb.T_MVC_MULTACOERCITIVA_MC`
 
-Detalle operativo de multas coercitivas - sistema de gestión.
+Staging: `STG_MYSQL_T_MVC_MULTACOERCITIVA` · Hop `pl_stage_mysql.hpl` · `FUENTE_REGISTRO=GAPPS`.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -93,124 +95,110 @@ Detalle operativo de multas coercitivas - sistema de gestión.
 
 ---
 
-### 3. Archivos Excel - Datos Manuales
+### 3. Google Sheets — F1 familia OD (31 oficinas)
 
-#### Excel: Medidas Administrativas OD Lambayeque
+Catálogo: [`docs/inputs/f1_ods_sheets.json`](../../../inputs/f1_ods_sheets.json).  
+Staging: `STG_GS2_OD_MULTAS` (+ `COD_OD`) · `scripts/stage_ods_sheets.sh` · `FUENTE_REGISTRO=OD_SHEETS`.
 
-| Hoja | Contenido |
-|------|-----------|
-| M_FERIADO | Calendario de feriados nacionales y locales |
-| M_UBIGEO | Departamento, Provincia, Distrito |
-| M_PARAMETROS | Parámetros generales: UIT, tipos de solicitud, resoluciones |
-| 5) Multas Coercitivas | Tracking manual de multas coercitivas por OD |
+| Elemento | Valor |
+|----------|--------|
+| Hoja | `5) Multas Coercitivas` |
+| Header | Fila 3 (códigos) |
+| Rango Hop | `'5) Multas Coercitivas'!A3:AF` (32 columnas) |
+| Dimensión territorio | `MI_DIM_OD` vía `COD_OD` |
 
-**Campos clave del tracking de multas:**
+Excel OD histórico: `input_excel/medidas_administrativas/legacy/` (ya no es input).
 
-| Campo | Código | Descripción |
-|-------|--------|-------------|
-| COD_MA | COD_MA | Código de la medida administrativa |
-| EXP_INF_INCUMP | EXP_INF_INCUMP | Expediente informe de incumplimiento |
-| N_CARTA_DCG | N_CARTA_DCG | N° de carta que requiere descargos |
-| FN_MC | FN_MC | Fecha de notificación |
-| F_VENC_DCG | F_VENC_DCG | Fecha de vencimiento de descargos |
-| PRESENT_DCG_ADM | PRESENT_DCG_ADM | ¿Presentó descargos? (SI/NO) |
-| F_RPTA_ADM | F_RPTA_ADM | Fecha respuesta del administrado |
-| F_INIC_ANALISIS | F_INIC_ANALISIS | Fecha inicio de análisis |
-| REQ_VERIF_CAMPO | REQ_VERIF_CAMPO | ¿Requiere verificación en campo? |
-| F_VERIF_CAMPO | F_VERIF_CAMPO | Fecha verificación en campo |
-| F_FIN_ANALISIS | F_FIN_ANALISIS | Fecha fin de análisis |
-| AMERIT_MC | AMERIT_MC | ¿Amerita multa? (SI/NO) |
-| EXP_RES_MC | EXP_RES_MC | Expediente con resolución de MC |
-| N_RES_MC | N_RES_MC | N° de resolución de MC |
-| F_FIRMA_RES_MC | F_FIRMA_RES_MC | Fecha firma de resolución |
-| FN_RES_MC | FN_RES_MC | Fecha notificación de resolución |
-| F_VENC_MC | F_VENC_MC | Fecha vencimiento de multa |
-| MULTA_UIT | MULTA_UIT | Multa en UIT |
-| MULTA_S | MULTA_S | Multa en soles |
-| RECORD_SEG | RECORD_SEG | Recordatorio nuevo seguimiento |
-| F_VERIF_POST_MC | F_VERIF_POST_MC | Fecha verificación post multa |
-| ESTADO_MC | ESTADO_MC | Estado de la multa (INCUMPLIDO, PAGADO) |
-| MEMO_EF | MEMO_EF | Memorándum de traslado a ejecución forzosa |
-| F_REMIS | F_REMIS | Fecha remisión del memorándum |
+**Campos clave (hoja multas):**
 
----
+| Campo | Descripción |
+|-------|-------------|
+| COD_MA | Código de la medida administrativa |
+| EXP_INF_INCUMP | Expediente informe de incumplimiento |
+| N_CARTA_DCG | N° de carta que requiere descargos |
+| FN_MC | Fecha de notificación |
+| F_VENC_DCG | Fecha de vencimiento de descargos |
+| PRESENT_DCG_ADM | ¿Presentó descargos? (SI/NO) |
+| F_RPTA_ADM | Fecha respuesta del administrado |
+| F_INIC_ANALISIS | Fecha inicio de análisis |
+| REQ_VERIF_CAMPO | ¿Requiere verificación en campo? |
+| F_VERIF_CAMPO | Fecha verificación en campo |
+| F_FIN_ANALISIS | Fecha fin de análisis |
+| AMERIT_MC | ¿Amerita multa? (SI/NO) |
+| EXP_RES_MC | Expediente con resolución de MC |
+| N_RES_MC | N° de resolución de MC |
+| F_FIRMA_RES_MC | Fecha firma de resolución |
+| FN_RES_MC | Fecha notificación de resolución |
+| F_VENC_MC | Fecha vencimiento de multa |
+| MULTA_UIT | Multa en UIT |
+| MULTA_S | Multa en soles |
+| RECORD_SEG | Recordatorio nuevo seguimiento |
+| F_VERIF_POST_MC | Fecha verificación post multa |
+| ESTADO_MC | Estado de la multa (INCUMPLIDO, PAGADO) |
+| MEMO_EF | Memorándum de traslado a ejecución forzosa |
+| F_REMIS | Fecha remisión del memorándum |
+| SIGED | N° SIGED |
 
-#### Excel: CAGR Multas Coercitivas
-
-| Hoja | Contenido |
-|------|-----------|
-| DIC_TABLAS | Diccionario de datasets |
-| DIC_VARIABLES | Diccionario de variables con código, descripción y tipo |
-| 1) Multas coercitivas | Tracking completo de lifecycle de multas por CAGR |
-| 2) Etapas | Detalle de etapas de elaboración de cada proyecto MC |
-| PARAMETROS | Parámetros de configuración |
-| MA_INDIVIDUALES | Lista de medidas administrativas individuales |
-| Equipo | Equipo de trabajo (nombre, estado) |
-
-**Campos adicionales del tracking CAGR:**
-
-| Campo | Código | Descripción |
-|-------|--------|-------------|
-| COD_PROY_MC | COD_PROY_MC | Código proyecto de multa coercitiva |
-| JEFE | JEFE | Jefe de equipo responsable |
-| ETA_REG_PROY_MC | ETA_REG_PROY_MC | Etapa de registro del proyecto |
-| N_PROY_MC | N_PROY_MC | Número de proyecto |
-| COORD | COORD | Coordinación |
-| ADM | ADM | Administrado |
-| UF | UF | Unidad fiscalizable |
-| EST_DCG | EST_DCG | Estado de descargos |
-| AMERIT_MC | AMERIT_MC | ¿Amerita multa? |
-| RESULT_PROY_MC | RESULT_PROY_MC | Resultado del proyecto |
-| ESTADO_MC | ESTADO_MC | Estado de la multa |
-| ESTADO_PAGO_MC | ESTADO_PAGO_MC | Estado del pago de la multa |
-| URESOL_MC | URESOL_MC | Última resolución de MC |
-| FN_URESOL_MC | FN_URESOL_MC | Fecha notificación última resolución |
+Detalle columna a columna: [`01-fuentes-de-datos.md`](01-fuentes-de-datos.md) §2.
 
 ---
 
-**Hoja: 2) Etapas**
+### 4. Google Sheets — F2 unidades CSEP (10)
 
-| Campo | Código | Descripción |
-|-------|--------|-------------|
-| COD_PROY_MC | COD_PROY_MC | Código proyecto MC |
-| NRO_ETAPA_MC | NRO_ETAPA_MC | Número de etapa |
-| PERF_ENCARG_MC | PERF_ENCARG_MC | Perfil del encargado |
-| ACCION_MC | ACCION_MC | Acción (ELABORACIÓN, REVISIÓN, CÁLCULO, FIRMA) |
-| ENCARGADO_MC | ENCARGADO_MC | Nombre del encargado |
-| F_ASIG_MC | F_ASIG_MC | Fecha de asignación |
-| EST_ETAPA_MC | EST_ETAPA_MC | Estado de la etapa (TERMINADO, PENDIENTE) |
-| CONFORMIDAD_MC | CONFORMIDAD_MC | Conformidad (CONFORME, NO APLICA) |
-| F_ENT_DEV_MC | F_ENT_DEV_MC | Fecha entrega/devolución |
-| T_ELAB_MC | T_ELAB_MC | Tiempo de elaboración (días) |
+Catálogo: [`docs/inputs/f2_csep_sheets.json`](../../../inputs/f2_csep_sheets.json).  
+Staging: `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) + `STG_GS1_ETAPAS` · `scripts/stage_csep_sheets.sh` · `FUENTE_REGISTRO=CAGR`.
+
+| # | `cod_unidad` | Descripción (dim órgano) |
+|---|---|---|
+| 1 | CMIN | Minería |
+| 2 | CHID | Hidrocarburos |
+| 3 | CELE | Electricidad |
+| 4 | CIND | Industria |
+| 5 | CPES | Pesca |
+| 6 | CAGR | Agricultura |
+| 7 | CRES | Residuos Sólidos |
+| 8 | CCAM | Consultoras Ambientales |
+| 9 | UFED | UF educación |
+| 10 | UFSAVC | UF vivienda |
+
+| Elemento | Multas | Etapas |
+|----------|--------|--------|
+| Hoja | `1) Multas coercitivas` | `2) Etapas` |
+| Header | Fila 3 (48 cols) | Fila 2 (12 cols) |
+| Rango Hop | `'1) Multas coercitivas'!A3:AV` | `'2) Etapas'!A2:L` |
+
+**Campos adicionales vs F1 (multas):** `COD_PROY_MC`, `JEFE`, `ETA_REG_PROY_MC`, `N_PROY_MC`, `COORD`, `ADM`, `UF`, `EST_DCG`, `RESULT_PROY_MC`, `ETA_REG_MC`, `ESTADO_PAGO_MC`, auxiliares (`AUX_*`, `URESOL_MC`, `FN_URESOL_MC`).
+
+**Etapas:** `COD_PROY_MC`, `NRO_ETAPA_MC`, `PERF_ENCARG_MC`, `ACCION_MC`, `ENCARGADO_MC`, `F_ASIG_MC`, `EST_ETAPA_MC`, `CONFORMIDAD_MC`, `F_ENT_DEV_MC`, `T_ELAB_MC`, `COD_ETAPA_MC`, `AUX_FIN_MC`.
+
+**DIC (Excel legacy):** `DIC_TABLAS` / `DIC_VARIABLES` desde `input_excel/legacy/CAGR_…xlsx` → `STG_GS1_DIC_*` (`pl_stage_excel.hpl`).
 
 ---
 
-### 4. Mapeo de Relaciones entre Fuentes
+### 5. Mapeo de Relaciones entre Fuentes
 
 ```
-SISUD.CSEP_INFORMES_VIEW
-    └── TXCUC ──────────┐
-                         │
-SISUD.VW_MULTA_COERCITIVA│
-    └── CUM ─────────────┼──► Relación por código CUM/CUC
-                         │
-gappsdb.T_MVC_MULTACOERCITIVA_MC
-    └── TX_IDCUM ────────┘
+SISUD.VW_MULTA_COERCITIVA (F5)
+    └── CUM / CAM ──────────┐
+                             ├──► amarre H9 / K5 (QA_AMARRE)
+gappsdb.T_MVC_MULTACOERCITIVA_MC (F4)
+    └── TX_IDCUM / TX_IDCAM ─┘
 
-Excel Tracking Multas
-    └── COD_MA ──────────► Códigos de medida administrativa
-                         │
-Excel 2) Etapas
-    └── COD_PROY_MC ─────┘──► Relación proyecto ↔ etapas
+F1 Sheets OD (31)
+    └── COD_MA + COD_OD ───► MI_DIM_OD · FUENTE=OD_SHEETS
+
+F2 Sheets CSEP (10)
+    └── COD_MA + COORD ────► MI_DIM_ORGANO_UNIDAD (DESCRIPCION) · FUENTE=CAGR
+    └── COD_PROY_MC ───────► MI_DET_ETAPA_MC
 ```
 
-### 5. Calidad de Datos Observada
+### 6. Calidad de Datos Observada
 
 | Problema | Fuente | Impacto |
 |----------|--------|---------|
-| Códigos de expediente inconsistentes | GApps vs SISUD | Dificulta cruce de datos |
-| Campos con `#REF!`, `#N/A`, `#VALUE!` | Excel CAGR | Errores en transformación |
-| Fechas en formato mixto | Todos | Requiere normalización |
-| Nulos en campos obligatorios | SISUD | Impacta KPIs de completitud |
-| Datos duplicados | Excel | Requiere deduplicación |
-| Caracteres especiales (tildes) | Excel | Problemas de encoding |
+| Códigos de expediente inconsistentes | GAPP vs SISUD | Dificulta cruce (H9) |
+| Tokens `#REF!` / `#N/A` residuales | Sheets / legacy Excel | Homologación / cuarentena blanda |
+| Fechas heterogéneas | Todos | Parseo unificado en Python |
+| Nulos en campos obligatorios | SISUD / Sheets | Completitud / DQ |
+| Sheets vacíos (p. ej. CPES, CCAM) | F2 CSEP | Unidad sembrada en dim con n_fact=0 |
+| Rate limit Google (429/503) | F1/F2 Sheets | Reintentos en `stage_*_sheets.sh` |

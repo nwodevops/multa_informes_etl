@@ -3,61 +3,63 @@
   <info>
     <name>pl_stage_excel</name>
     <name_sync_with_filename>Y</name_sync_with_filename>
-    <description>Excel local input_excel CAGR/DIC -&gt; H2 STG_GS1_* (todo String, gotcha #N/A). F1 Sheets aparte.</description>
+    <description>Excel local legacy CAGR DIC_* -&gt; H2. Multas/Etapas F2 van por Google Sheets (stage_csep_sheets.sh).</description>
     <extended_description/>
     <pipeline_version/>
     <pipeline_type>Normal</pipeline_type>
-    <parameters/>
+    <parameters>
+    </parameters>
     <capture_transform_performance>N</capture_transform_performance>
     <transform_performance_capturing_delay>1000</transform_performance_capturing_delay>
     <transform_performance_capturing_size_limit>100</transform_performance_capturing_size_limit>
     <created_user>-</created_user>
-    <created_date>2026/08/18 18:35:00.000</created_date>
+    <created_date>2026/09/05 19:10:00.000</created_date>
     <modified_user>-</modified_user>
-    <modified_date>2026/08/18 18:35:00.000</modified_date>
+    <modified_date>2026/09/05 19:10:00.000</modified_date>
     <key_for_session_key>H4sIAAAAAAAAAAMAAAAAAAAAAAA=</key_for_session_key>
     <is_key_private>N</is_key_private>
   </info>
   <notepads>
     <notepad>
-      <backgroundcolorblue>251</backgroundcolorblue>
-      <backgroundcolorgreen>232</backgroundcolorgreen>
-      <backgroundcolorred>201</backgroundcolorred>
-      <bordercolorblue>90</bordercolorblue>
-      <bordercolorgreen>58</bordercolorgreen>
-      <bordercolorred>14</bordercolorred>
-      <fontbold>N</fontbold>
-      <fontcolorblue>90</fontcolorblue>
-      <fontcolorgreen>58</fontcolorgreen>
-      <fontcolorred>14</fontcolorred>
-      <fontitalic>N</fontitalic>
-      <fontname>Segoe UI</fontname>
-      <fontsize>11</fontsize>
-      <height>90</height>
+      <note>Solo DIC_TABLAS / DIC_VARIABLES desde input_excel/legacy (Excel CAGR).
+F2 multas+etapas: scripts/stage_csep_sheets.sh + f2_csep_sheets.json.
+</note>
       <xloc>32</xloc>
-      <yloc>16</yloc>
-      <note>Extract Excel local (sin logica). Header = fila de codigos.
-GS1 Multas: fila 3 (startrow 2). GS1 Etapas: fila 2 (startrow 1). F1 ODs ya no van por Excel (ver pl_stage_od_sheet + f1_ods_sheets.json).
-Todos los campos String: MULTA_S y otros traen #N/A.</note>
-      <width>640</width>
+      <yloc>32</yloc>
+      <width>400</width>
+      <heigth>80</heigth>
+      <fontname>Arial</fontname>
+      <fontsize>10</fontsize>
+      <fontbold>N</fontbold>
+      <fontitalic>N</fontitalic>
+      <fontcolorred>0</fontcolorred>
+      <fontcolorgreen>0</fontcolorgreen>
+      <fontcolorblue>0</fontcolorblue>
+      <backgroundcolorred>255</backgroundcolorred>
+      <backgroundcolorgreen>255</backgroundcolorgreen>
+      <backgroundcolorblue>255</backgroundcolorblue>
+      <bordercolorred>100</bordercolorred>
+      <bordercolorgreen>100</bordercolorgreen>
+      <bordercolorblue>100</bordercolorblue>
+      <drawshadow>Y</drawshadow>
     </notepad>
   </notepads>
   <order>
     <hop>
-      <from>Excel GS1 Multas</from>
-      <to>H2 STG_GS1_MULTAS_COERCITIVAS</to>
+      <from>Excel GS1 DIC_TABLAS</from>
+      <to>H2 STG_GS1_DIC_TABLAS</to>
       <enabled>Y</enabled>
     </hop>
     <hop>
-      <from>Excel GS1 Etapas</from>
-      <to>H2 STG_GS1_ETAPAS</to>
+      <from>Excel GS1 DIC_VARIABLES</from>
+      <to>H2 STG_GS1_DIC_VARIABLES</to>
       <enabled>Y</enabled>
     </hop>
   </order>
   <transform>
-    <name>Excel GS1 Multas</name>
+    <name>Excel GS1 DIC_TABLAS</name>
     <type>ExcelInput</type>
-    <description>Hoja '1) Multas coercitivas' -&gt; STG_GS1_MULTAS_COERCITIVAS (header fila 3)</description>
+    <description>Hoja DIC_TABLAS -&gt; STG_GS1_DIC_TABLAS</description>
     <distribute>Y</distribute>
     <custom_distribution/>
     <copies>1</copies>
@@ -78,7 +80,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
     <sheetfield/>
     <fields>
     <field>
-      <name>COD_MA</name>
+      <name>DATASET</name>
       <type>String</type>
       <length>-1</length>
       <precision>-1</precision>
@@ -90,559 +92,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
       <repeat>N</repeat>
     </field>
     <field>
-      <name>COD_PROY_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>JEFE</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>ETA_REG_PROY_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>N_PROY_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>COORD</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>ADM</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>UF</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>EXP_INF_INCUMP</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>N_CARTA_DCG</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>FN_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>F_VENC_DCG</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>PRESENT_DCG_ADM</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>F_RPTA_ADM</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>DOC_SIGED</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>EST_DCG</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>F_INIC_ANALISIS</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>REQ_VERIF_CAMPO</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>F_VERIF_CAMPO</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>F_FIN_ANALISIS</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>AMERIT_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>N_DOC_NO_AMERIT</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>F_DOC_NO_AMERIT</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>MOTIVO_NO_AMERIT</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>RESULT_PROY_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>ETA_REG_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>EXP_RES_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>N_RES_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>F_FIRMA_RES_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>FN_RES_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>F_VENC_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>MULTA_UIT</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>MULTA_S</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>RECORD_SEG</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>F_VERIF_POST_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>DOC_VERIF_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>EXP_SIGED_DOC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>ESTADO_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>F_PAGO</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>MEMO_EF</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>F_REMIS</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>SIGED</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>ESTADO_PAGO_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>AUX_FIN_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>AUX_COD_MA</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>AUX_EST_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>URESOL_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>FN_URESOL_MC</name>
+      <name>DESCRIPCION_INSTRUCCIONES</name>
       <type>String</type>
       <length>-1</length>
       <precision>-1</precision>
@@ -655,7 +105,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
     </field>
     </fields>
     <file>
-      <name>${PROJECT_HOME}/input_excel/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx</name>
+      <name>${PROJECT_HOME}/input_excel/legacy/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx</name>
       <filemask/>
       <exclude_filemask/>
       <file_required>Y</file_required>
@@ -663,8 +113,8 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
     </file>
     <sheets>
       <sheet>
-        <name>1) Multas coercitivas</name>
-        <startrow>2</startrow>
+        <name>DIC_TABLAS</name>
+        <startrow>0</startrow>
         <startcol>0</startcol>
       </sheet>
     </sheets>
@@ -675,9 +125,9 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
     </GUI>
   </transform>
   <transform>
-    <name>H2 STG_GS1_MULTAS_COERCITIVAS</name>
+    <name>H2 STG_GS1_DIC_TABLAS</name>
     <type>TableOutput</type>
-    <description>Staging: carga a STG_GS1_MULTAS_COERCITIVAS (H2 truncate)</description>
+    <description>Staging: carga a STG_GS1_DIC_TABLAS (H2 truncate)</description>
     <distribute>Y</distribute>
     <custom_distribution/>
     <copies>1</copies>
@@ -687,7 +137,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
     </partitioning>
     <connection>h2</connection>
     <schema>PUBLIC</schema>
-    <table>STG_GS1_MULTAS_COERCITIVAS</table>
+    <table>STG_GS1_DIC_TABLAS</table>
     <commit>1000</commit>
     <truncate>Y</truncate>
     <only_when_have_rows>N</only_when_have_rows>
@@ -715,9 +165,9 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
     </GUI>
   </transform>
   <transform>
-    <name>Excel GS1 Etapas</name>
+    <name>Excel GS1 DIC_VARIABLES</name>
     <type>ExcelInput</type>
-    <description>Hoja '2) Etapas' -&gt; STG_GS1_ETAPAS (header fila 2)</description>
+    <description>Hoja DIC_VARIABLES -&gt; STG_GS1_DIC_VARIABLES</description>
     <distribute>Y</distribute>
     <custom_distribution/>
     <copies>1</copies>
@@ -738,7 +188,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
     <sheetfield/>
     <fields>
     <field>
-      <name>COD_PROY_MC</name>
+      <name>DATASET</name>
       <type>String</type>
       <length>-1</length>
       <precision>-1</precision>
@@ -750,7 +200,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
       <repeat>N</repeat>
     </field>
     <field>
-      <name>NRO_ETAPA_MC</name>
+      <name>SECCION</name>
       <type>String</type>
       <length>-1</length>
       <precision>-1</precision>
@@ -762,7 +212,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
       <repeat>N</repeat>
     </field>
     <field>
-      <name>PERF_ENCARG_MC</name>
+      <name>CAMPO_EN_BD</name>
       <type>String</type>
       <length>-1</length>
       <precision>-1</precision>
@@ -774,7 +224,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
       <repeat>N</repeat>
     </field>
     <field>
-      <name>ACCION_MC</name>
+      <name>CODIGO_CAMPO</name>
       <type>String</type>
       <length>-1</length>
       <precision>-1</precision>
@@ -786,7 +236,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
       <repeat>N</repeat>
     </field>
     <field>
-      <name>ENCARGADO_MC</name>
+      <name>CAMPO_NO_PUBLICABLE</name>
       <type>String</type>
       <length>-1</length>
       <precision>-1</precision>
@@ -798,7 +248,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
       <repeat>N</repeat>
     </field>
     <field>
-      <name>F_ASIG_MC</name>
+      <name>NO_PUBLICABLE_PERO_NECESARIO_CSEP</name>
       <type>String</type>
       <length>-1</length>
       <precision>-1</precision>
@@ -810,7 +260,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
       <repeat>N</repeat>
     </field>
     <field>
-      <name>EST_ETAPA_MC</name>
+      <name>VARIABLES_DE_LLENADO_MINIMO</name>
       <type>String</type>
       <length>-1</length>
       <precision>-1</precision>
@@ -822,7 +272,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
       <repeat>N</repeat>
     </field>
     <field>
-      <name>CONFORMIDAD_MC</name>
+      <name>DESCRIPCION</name>
       <type>String</type>
       <length>-1</length>
       <precision>-1</precision>
@@ -834,43 +284,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
       <repeat>N</repeat>
     </field>
     <field>
-      <name>F_ENT_DEV_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>T_ELAB_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>COD_ETAPA_MC</name>
-      <type>String</type>
-      <length>-1</length>
-      <precision>-1</precision>
-      <trim_type>none</trim_type>
-      <format></format>
-      <currency/>
-      <decimal/>
-      <group/>
-      <repeat>N</repeat>
-    </field>
-    <field>
-      <name>AUX_FIN_MC</name>
+      <name>TIPO_DE_VARIABLE</name>
       <type>String</type>
       <length>-1</length>
       <precision>-1</precision>
@@ -883,7 +297,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
     </field>
     </fields>
     <file>
-      <name>${PROJECT_HOME}/input_excel/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx</name>
+      <name>${PROJECT_HOME}/input_excel/legacy/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx</name>
       <filemask/>
       <exclude_filemask/>
       <file_required>Y</file_required>
@@ -891,21 +305,21 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
     </file>
     <sheets>
       <sheet>
-        <name>2) Etapas</name>
-        <startrow>1</startrow>
+        <name>DIC_VARIABLES</name>
+        <startrow>0</startrow>
         <startcol>0</startcol>
       </sheet>
     </sheets>
     <attributes/>
     <GUI>
       <xloc>128</xloc>
-      <yloc>256</yloc>
+      <yloc>288</yloc>
     </GUI>
   </transform>
   <transform>
-    <name>H2 STG_GS1_ETAPAS</name>
+    <name>H2 STG_GS1_DIC_VARIABLES</name>
     <type>TableOutput</type>
-    <description>Staging: carga a STG_GS1_ETAPAS (H2 truncate)</description>
+    <description>Staging: carga a STG_GS1_DIC_VARIABLES (H2 truncate)</description>
     <distribute>Y</distribute>
     <custom_distribution/>
     <copies>1</copies>
@@ -915,7 +329,7 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
     </partitioning>
     <connection>h2</connection>
     <schema>PUBLIC</schema>
-    <table>STG_GS1_ETAPAS</table>
+    <table>STG_GS1_DIC_VARIABLES</table>
     <commit>1000</commit>
     <truncate>Y</truncate>
     <only_when_have_rows>N</only_when_have_rows>
@@ -939,16 +353,9 @@ Todos los campos String: MULTA_S y otros traen #N/A.</note>
     <attributes/>
     <GUI>
       <xloc>400</xloc>
-      <yloc>256</yloc>
+      <yloc>288</yloc>
     </GUI>
   </transform>
-  
-  
-  
-  
-  
-  
   <transform_error_handling>
   </transform_error_handling>
-  <attributes/>
 </pipeline>

@@ -10,7 +10,7 @@ FECHA_CARGA = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 VACIOS = {"", "#N/A", "#NA", "N/A", "NA", "NULL", "NONE", "-", "—", "#REF!", "#VALUE!"}
 
-# F1=familia Sheets OD (GS2), F2=GS1 CAGR, F4=MYSQL, F5=ORA
+# F1=familia Sheets OD (GS2), F2=GS1 CSEP Sheets (FUENTE_REGISTRO CAGR), F4=MYSQL, F5=ORA
 FUENTE_REGISTRO = {
     "GS2": "OD_SHEETS",
     "GS1": "CAGR",
@@ -23,9 +23,9 @@ FUENTE_REGISTRO = {
 F1_OD_LECTURAS: dict[str, str] = {"GS2": "*"}
 
 STG_FUENTE = {
-    "GS1": ("F2", "STG_GS1_MULTAS_COERCITIVAS", "CAGR multas"),
+    "GS1": ("F2", "STG_GS1_CSEP_MULTAS", "CSEP Google Sheets multas"),
     "GS2": ("F1", "STG_GS2_OD_MULTAS", "ODs Google Sheets multas"),
-    "ETAPAS": ("F2-ET", "STG_GS1_ETAPAS", "CAGR etapas"),
+    "ETAPAS": ("F2-ET", "STG_GS1_ETAPAS", "CSEP etapas (Sheets)"),
     "ORA": ("F5", "STG_ORA_VW_MULTA_COERCITIVA", "SISUD vista multas"),
     "MYSQL": ("F4", "STG_MYSQL_T_MVC_MULTACOERCITIVA", "GAPP multas"),
     "DIC_TABLAS": ("F2", "STG_GS1_DIC_TABLAS", "DIC_TABLAS"),
@@ -44,8 +44,9 @@ HALLAZGOS = {
     "H9": "Claves de cruce sin correspondencia total entre fuentes",
 }
 
-EXCEL_CAGR = "input_excel/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx"
+EXCEL_CAGR = "input_excel/legacy/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx"
 F1_OD_CATALOG = "docs/inputs/f1_ods_sheets.json"
+F2_CSEP_CATALOG = "docs/inputs/f2_csep_sheets.json"
 
 
 def load_f1_od_codigos(root: Path | None = None) -> list[str]:

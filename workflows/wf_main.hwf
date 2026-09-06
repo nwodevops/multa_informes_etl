@@ -105,10 +105,37 @@ cd "${PROJECT_HOME}"
       </parameters>
       <run_configuration>local</run_configuration>
       <name>Stage Excel</name>
-      <description>Excel local CAGR/DIC → H2 STG_GS1_* (pl_stage_excel.hpl)</description>
+      <description>Excel legacy CAGR DIC_* → H2 (pl_stage_excel.hpl)</description>
       <type>PIPELINE</type>
       <attributes/>
       <xloc>512</xloc>
+      <yloc>192</yloc>
+      <parallel>N</parallel>
+      <attributes_hac/>
+    </action>
+    <action>
+      <filename/>
+      <work_directory>${PROJECT_HOME}</work_directory>
+      <arguments/>
+      <arg_from_previous>N</arg_from_previous>
+      <set_logfile>N</set_logfile>
+      <logfile/>
+      <logext/>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <loglevel>Basic</loglevel>
+      <exec_per_row>N</exec_per_row>
+      <set_append_logfile>N</set_append_logfile>
+      <insertScript>Y</insertScript>
+      <script>set -e
+cd "${PROJECT_HOME}"
+./scripts/stage_csep_sheets.sh
+</script>
+      <name>Stage CSEP Sheets</name>
+      <description>F2 CSEP Google Sheets → H2 STG_GS1_CSEP_MULTAS + STG_GS1_ETAPAS</description>
+      <type>SHELL</type>
+      <attributes/>
+      <xloc>552</xloc>
       <yloc>192</yloc>
       <parallel>N</parallel>
       <attributes_hac/>
@@ -289,6 +316,13 @@ PY=python3
     </hop>
     <hop>
       <from>Stage Excel</from>
+      <to>Stage CSEP Sheets</to>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Stage CSEP Sheets</from>
       <to>Stage ODs Sheets</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
@@ -336,7 +370,7 @@ PY=python3
 Diseño: Play workflows/wf_create_stg.hwf (deja H2 vivo) y luego pinta pl_stage_*.hpl.
 H2 se resetea en cada corrida: stop + start + DDL (h2/scripts/reset_and_create.sh).
 Python create STG: lee inputs.yaml, CREATE TABLE STG_* (excel + oracle + mysql).
-Stage Excel: pl_stage_excel.hpl (CAGR). Stage ODs Sheets: scripts/stage_ods_sheets.sh. Stage Oracle VW/MySQL: TableInput truncate a H2.
+Stage Excel: pl_stage_excel.hpl (DIC legacy). Stage CSEP Sheets: scripts/stage_csep_sheets.sh. Stage ODs Sheets: scripts/stage_ods_sheets.sh. Stage Oracle VW/MySQL: TableInput truncate a H2.
 Pipeline demo: lee DEMO_TABLA_EJEMPLO.
 Run Python: python/main.py. Conexiones: h2 / oracle_sisud / oracle_BD_CURSOR / mysql.</note>
       <markdown>N</markdown>

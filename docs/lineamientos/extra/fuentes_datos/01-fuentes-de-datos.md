@@ -1,35 +1,38 @@
 > **Alcance vigente del ETL:** el DW carga **solo Multas** (F1, F2, F4, F5). F3 (informes) es inventario histórico del diagnóstico; **no se extrae ni se modela**.
+>
+> **Inputs vigentes (runtime):** [`docs/inputs/README.md`](../../../inputs/README.md) · catálogos [`f1_ods_sheets.json`](../../../inputs/f1_ods_sheets.json) / [`f2_csep_sheets.json`](../../../inputs/f2_csep_sheets.json) · manifiesto [`inputs.yaml`](../../../../inputs.yaml).
 
 # 01 · Fuentes de Datos — Inventario Detallado
 
 > **Proyecto:** Data Warehouse OEFA — Estrategias de promoción del cumplimiento
 > **Referencia:** TDR REQ N.° 3629-2026 · Área usuaria: CSEP — DPEF
 > **Contenido:** inventario campo por campo de las 5 fuentes, con tipos, descripciones,
-> dominios observados y hallazgos de calidad **verificados sobre los archivos reales**.
+> dominios observados y hallazgos de calidad **verificados sobre los archivos / sheets reales**.
 
 ---
 
 ## 1. Resumen de fuentes
 
-| ID | Fuente | Tipo / Motor origen | Contenido | Estructura real verificada |
+| ID | Fuente (vigente) | Tipo / Motor | Contenido | STG Hop / notas |
 |---|---|---|---|---|
-| **F1** | `Copia de MEDIDAS ADMINISTRATIVAS OD LAMBAYEQUE.xlsx` | Excel (migrado de Google Sheets) | Registro operativo de MC — OD Lambayeque + catálogos | 4 hojas: `5) Multas Coercitivas` (32 col, **21 filas con datos**), `M_FERIADO`, `M_UBIGEO`, `M_PARAMETROS` |
-| **F2** | `Copia de Modificado CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx` | Excel (migrado de Google Sheets) | Registro evolucionado de MC — CAGR + workflow de etapas + gobierno de datos | 7 hojas: `1) Multas coercitivas` (48 col, **7 filas**), `2) Etapas` (12 col, **7 filas**), `Equipo` (**20 filas**), `DIC_TABLAS`, `DIC_VARIABLES` (594 filas de estructura), `PARAMETROS`, `MA_INDIVIDUALES` |
-| **F3** | `CSEP_INFORMES_VIEW_202608130925.sql` | Respaldo SQL — **Oracle** (esquema `SISUD`) | Informes de supervisión ambiental | `CSEP_INFORMES_VIEW`: **56 columnas**, 10 filas de muestra |
-| **F4** | `T_MVC_MULTACOERCITIVA_MC_202608111806.sql` | Respaldo SQL — **SQL Server** (base `gappsdb`) | Tabla transaccional de la aplicación de MC | `T_MVC_MULTACOERCITIVA_MC`: **17 columnas**, 4 filas de muestra |
-| **F5** | `VW_MULTA_COERCITIVA_202608111808.sql` | Respaldo SQL — **Oracle** (esquema `SISUD`) | Vista institucional consolidada de MC | `VW_MULTA_COERCITIVA`: **13 columnas**, 10 filas de muestra |
+| **F1** | **31 Google Sheets** OD (catálogo `f1_ods_sheets.json`) | Google Sheets + SA | Multas coercitivas por oficina desconcentrada | `STG_GS2_OD_MULTAS` (+ `COD_OD`); hoja `5) Multas Coercitivas` (32 cols, header fila 3). Excel OD → `input_excel/medidas_administrativas/legacy/` |
+| **F2** | **10 Google Sheets** CSEP (catálogo `f2_csep_sheets.json`) | Google Sheets + SA | Multas + etapas por unidad/coordinación (CMIN…UFSAVC) | `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`); hoja `1) Multas coercitivas` (48 cols). Etapas → `STG_GS1_ETAPAS`. DIC → Excel legacy `input_excel/legacy/CAGR_…xlsx` |
+| **F3** | `CSEP_INFORMES_VIEW` | Oracle `SISUD` | Informes de supervisión | **Fuera de alcance** del ETL |
+| **F4** | `gappsdb.T_MVC_MULTACOERCITIVA_MC` | MySQL GAPP | Tabla transaccional MC | `STG_MYSQL_T_MVC_MULTACOERCITIVA` |
+| **F5** | `SISUD.VW_MULTA_COERCITIVA` | Oracle SISUD | Vista institucional MC | `STG_ORA_VW_MULTA_COERCITIVA` |
 
-> **Nota de volumen:** los conteos corresponden a los respaldos/muestras entregados con el
-> TDR. El diseño es independiente del volumen (rangos esperados: miles a decenas de miles
-> de filas por año).
+> **`FUENTE_REGISTRO`:** F1 → `OD_SHEETS`; F2 → `CAGR` (unidad en `COORD` / `MI_DIM_ORGANO_UNIDAD.SIGLA` + `DESCRIPCION` desde catálogo).  
+> **Auth Google:** `client_secret.json` (gitignored); cada spreadsheet compartido con el service account.
+
+> **Nota de volumen:** los conteos de muestra del TDR son históricos. En producción el volumen depende de los sheets vivos (p. ej. CMIN/CHID/CRES concentran la mayor parte de F2).
 
 ---
 
-## 2. F1 — Excel Medidas Administrativas OD Lambayeque
+## 2. F1 — Familia OD (Google Sheets)
 
-Libro operativo migrado desde Google Sheets. Convención: fila 1 = sección (etapa del ciclo
-de vida), fila 2 = descripción larga, **fila 3 = códigos de campo** (nombres técnicos);
-los datos inician en la fila 4.
+Antes: un Excel por OD (p. ej. Lambayeque). **Hoy:** 31 spreadsheets catalogados; Hop `pl_stage_od_sheet.hpl` + `scripts/stage_ods_sheets.sh`.
+
+Convención de hoja: fila 1 = sección, fila 2 = descripción, **fila 3 = códigos** (`COD_MA`…); datos desde fila 4. Rango Hop: `'5) Multas Coercitivas'!A3:AF`.
 
 ### 2.1 Hoja `5) Multas Coercitivas` (32 columnas)
 
@@ -68,25 +71,32 @@ los datos inician en la fila 4.
 | 31 | `F_REMIS` | COBRANZA | Fecha | Fecha de remisión del memorando | |
 | 32 | `SIGED` | COBRANZA | Texto | N.° SIGED del memorando | `2022-I01-028773` |
 
-### 2.2 Catálogos de F1 (⚠ con IMPORTRANGE rotos en la copia entregada)
+### 2.2 Catálogos auxiliares en la plantilla OD (histórico / no stageados)
 
-| Hoja | Columnas | Contenido esperado | Estado en la copia |
-|---|---|---|---|
-| `M_FERIADO` | `Feriados` | Calendario de feriados (base del cómputo de días hábiles) | ❌ `#REF!` — 0 filas válidas |
-| `M_UBIGEO` | `DEPARTAMENTO`, `PROVINCIA`, `DISTRITO` | Catálogo geográfico (~1 893 distritos) | ❌ `#REF!` — 0 filas válidas |
-| `M_PARAMETROS` | `SOLICITUD_CATEGORIA`, `PLAZO`, `CLAVE_CONSECUENCIA`, `CONSECUENCIA_RESPUESTA`, `AÑO`, `UIT`, `TIPO_SOLICITUD`, `SOLICITUD`, `RESPUESTA`, `Resolución`, `firmeza`, `OD` | UIT por año, plazos, tipos de solicitud, resoluciones y firmeza | ❌ `#REF!` en col. A; solo datos residuales en columnas J–L |
-
-> **Acción requerida (semana 1):** solicitar a la CSEP la exportación **con valores** o el
-> acceso a la fuente viva. Mientras tanto, la UIT se siembra con los valores oficiales del
-> MEF (ver `07-consideraciones-especiales.md`).
+Las hojas `M_FERIADO`, `M_UBIGEO`, `M_PARAMETROS` existían en el Excel de diagnóstico (a menudo con `IMPORTRANGE` roto). **El ETL F1 vigente no las carga**; la UIT se siembra desde catálogo MEF en Python (`MI_DIM_PARAMETRO_UIT`). Territorio OD se resuelve con `MI_DIM_OD` + `COD_OD` del catálogo JSON.
 
 ---
 
-## 3. F2 — Excel CAGR Multas Coercitivas
+## 3. F2 — Unidades CSEP (Google Sheets)
 
-Versión evolucionada del registro de F1: agrega gestión de proyectos (workflow de etapas),
-estado de pago, campos auxiliares y diccionario de datos. Misma convención de F1
-(fila 3 = códigos de campo).
+Antes: un Excel CAGR (Agricultura). **Hoy:** 10 spreadsheets sectoriales (`f2_csep_sheets.json`); Hop `pl_stage_csep_sheet.hpl` / `pl_stage_csep_etapa.hpl` + `scripts/stage_csep_sheets.sh`.
+
+| # | `cod_unidad` | Nombre (`DESCRIPCION` en dim) |
+|---|---|---|
+| 1 | CMIN | Minería |
+| 2 | CHID | Hidrocarburos |
+| 3 | CELE | Electricidad |
+| 4 | CIND | Industria |
+| 5 | CPES | Pesca |
+| 6 | CAGR | Agricultura |
+| 7 | CRES | Residuos Sólidos |
+| 8 | CCAM | Consultoras Ambientales |
+| 9 | UFED | UF educación |
+| 10 | UFSAVC | UF vivienda |
+
+Misma convención de encabezados que F1 (fila 3 = códigos). Rango Hop multas: `'1) Multas coercitivas'!A3:AV`. Etapas: `'2) Etapas'!A2:L` (header fila 2).
+
+`COD_UNIDAD` se inyecta post-carga en STG; `COORD` del sheet alimenta `MI_DIM_ORGANO_UNIDAD` (`SIGLA` + `DESCRIPCION` desde el catálogo).
 
 ### 3.1 Hoja `1) Multas coercitivas` (48 columnas)
 
@@ -98,22 +108,20 @@ Contiene las 32 columnas de F1 (mismos códigos) **más** las siguientes:
 | `JEFE` | ESTADO | Texto | Jefe de equipo responsable | `PEÑA, AGUSTÍN` (6), `RIMACHI, LUIS` (1) |
 | `ETA_REG_PROY_MC` | ESTADO | Texto | Etapa de registro del proyecto | `EN ETAPA DE COBRANZA` (7) |
 | `N_PROY_MC` | — | Entero | N.° de proyecto | 1..5 |
-| `COORD` | INF. GENERAL | Texto | Coordinación | ⚠ `CÓDIGO DE EXPEDIENTE INVÁLIDO` (fórmula rota) |
-| `ADM` | INF. GENERAL | Texto | Administrado | ⚠ idem |
-| `UF` | INF. GENERAL | Texto | Unidad fiscalizable | ⚠ idem |
-| `EST_DCG` | DESCARGOS | Texto | Estado de descargos | `NO PRESENTÓ DESCARGOS` (7) |
-| `RESULT_PROY_MC` | RESULTADO | Texto | Resultado del proyecto | `ELABORAR MC` (7) |
-| `ETA_REG_MC` | ETAPAS REG. | Texto | Etapas de registro de la MC | `SIN REGISTRO DE ETAPAS` (7) |
-| `ESTADO_PAGO_MC` | COBRANZA | Texto | Estado del pago de la multa | `NO PAGÓ MULTA` (7) |
-| `AUX_FIN_MC` | AUXILIARES | Entero | Auxiliar de finalizado | `-1` (verdadero en Sheets) |
+| `COORD` | INF. GENERAL | Texto | Coordinación / unidad | En sheets vivos: `CMIN`, `CHID`, `CRES`, … (alineado a `cod_unidad`) |
+| `ADM` | INF. GENERAL | Texto | Administrado | Texto libre |
+| `UF` | INF. GENERAL | Texto | Unidad fiscalizable | Texto libre |
+| `EST_DCG` | DESCARGOS | Texto | Estado de descargos | p. ej. `NO PRESENTÓ DESCARGOS` |
+| `RESULT_PROY_MC` | RESULTADO | Texto | Resultado del proyecto | |
+| `ETA_REG_MC` | ETAPAS REG. | Texto | Etapas de registro de la MC | |
+| `ESTADO_PAGO_MC` | COBRANZA | Texto | Estado del pago de la multa | |
+| `AUX_FIN_MC` | AUXILIARES | Entero | Auxiliar de finalizado | |
 | `AUX_COD_MA` | AUXILIARES | Texto | COD_MA auxiliar | |
-| `AUX_EST_MC` | AUXILIARES | Texto | Estado auxiliar de MC | ⚠ `#VALUE!` |
-| `URESOL_MC` | AUXILIARES | Texto | Última resolución de MC | ⚠ `#VALUE!` |
+| `AUX_EST_MC` | AUXILIARES | Texto | Estado auxiliar de MC | |
+| `URESOL_MC` | AUXILIARES | Texto | Última resolución de MC | |
 | `FN_URESOL_MC` | AUXILIARES | Fecha | Fecha de notificación de la última resolución | |
 
-> **Observación:** `MULTA_S` llega como `#N/A` en las 7 filas (referencia rota a
-> parámetros) → en el DWH el monto en soles se **recalcula** siempre como
-> `MULTA_UIT × UIT(año)`.
+> **Nota:** la muestra TDR (Excel CAGR, 7 filas) tenía fórmulas rotas (`#N/A`, `#VALUE!`). En Google Sheets vivos F2 el volumen y la calidad son distintos; `MONTO_S` se recalcula en DWH como `MULTA_UIT × UIT(año)` cuando hace falta.
 
 ### 3.2 Hoja `2) Etapas` (12 columnas; encabezados en fila 2)
 
@@ -134,13 +142,13 @@ Contiene las 32 columnas de F1 (mismos códigos) **más** las siguientes:
 
 ### 3.3 Hojas de gobierno y apoyo
 
-| Hoja | Estructura | Estado |
-|---|---|---|
-| `Equipo` | `RESPONSABLE`, `ESTADO`, `RESPONSABLE` (lista duplicada) | ✅ 20 personas, todas `ACTIVO` |
-| `DIC_TABLAS` | `DATASET`, `DESCRIPCION / INSTRUCCIONES` | ✅ 2 datasets documentados |
-| `DIC_VARIABLES` | `DATASET`, `SECCION`, `CAMPO EN BD`, `CODIGO CAMPO`, `CAMPO NO PUBLICABLE`, `NO PUBLICABLE PERO NECESARIO (CSEP)`, `VARIABLES DE LLENADO MINIMO`, `DESCRIPCION`, `TIPO DE VARIABLE` | ❌ 594 filas de estructura con `#REF!` (IMPORTRANGE roto) — **reconstruir como activo institucional** |
-| `PARAMETROS` | 26 columnas | ❌ `#REF!` |
-| `MA_INDIVIDUALES` | 18 columnas | Parcial: solo lista de proyectos que ameritan multa (col. R) |
+| Hoja | Uso en ETL vigente |
+|---|---|
+| `2) Etapas` | Stage desde las 10 sheets → `STG_GS1_ETAPAS` |
+| `DIC_TABLAS` / `DIC_VARIABLES` | Desde **Excel legacy** CAGR (`pl_stage_excel.hpl`) → `STG_GS1_DIC_*` |
+| `Equipo`, `PARAMETROS`, `MA_INDIVIDUALES` | Presentes en sheets; **no** stageados al DW |
+
+El Excel original CAGR está en `input_excel/legacy/` solo para DIC (y referencia).
 
 ---
 
@@ -259,19 +267,21 @@ resolución de MC** (un expediente puede repetirse con varias medidas y CUM).
 
 ## 7. Matriz de correspondencia entre fuentes
 
-| Concepto | F1 Excel OD Lamb. | F2 Excel CAGR | F4 gappsdb | F5 Vista Oracle | F3 Informes | Modelo DWH |
+| Concepto | F1 Sheets OD (31) | F2 Sheets CSEP (10) | F4 gappsdb | F5 Vista Oracle | F3 Informes | Modelo DWH |
 |---|---|---|---|---|---|---|
 | Medida administrativa | `COD_MA` | `COD_MA`/`AUX_COD_MA` | — | (en `MEDIDA_ADMINISTRATIVA`) | — | `COD_MA` |
 | Código CUM | — | — | `TX_IDCUM` | `CUM` | — | `CUM` (normalizado, 11 díg.) |
 | Código CAM | — | — | `TX_IDCAM` | `CAM` | — | `CAM` (normalizado, 13 díg.) |
-| Expediente supervisión | `EXP_INF_INCUMP` | `EXP_INF_INCUMP` | — | `NUMERO_EXPEDIENTE` | `TXCUC` / `TXNUMEXP` | `NUMERO_EXPEDIENTE` → amarre a hecho de supervisión |
+| Expediente supervisión | `EXP_INF_INCUMP` | `EXP_INF_INCUMP` | — | `NUMERO_EXPEDIENTE` | `TXCUC` / `TXNUMEXP` | `NUMERO_EXPEDIENTE` |
 | Resolución MC | `N_RES_MC` | `N_RES_MC` | — | `RESOLUCION` | — | `N_RES_MC` |
-| Monto UIT | `MULTA_UIT` | `MULTA_UIT` | `NU_MONTOMCUIT` | `MONTO_MULTA` | — | `MONTO_UIT` (conciliado R07) |
-| Monto S/ | `MULTA_S` | `MULTA_S` (roto: `#N/A`) | `NU_MONTOMCS` | — | — | `MONTO_S` + `MONTO_S_CALC` |
-| Estado multa | `ESTADO_MC` | `ESTADO_MC`/`AUX_EST_MC` | `FG_ESTADOMULTA` | `ESTADO_MULTA` | — | `ID_ESTADO_MULTA` (homologado) |
+| Monto UIT | `MULTA_UIT` | `MULTA_UIT` | `NU_MONTOMCUIT` | `MONTO_MULTA` | — | `MONTO_UIT` |
+| Monto S/ | `MULTA_S` | `MULTA_S` | `NU_MONTOMCS` | — | — | `MONTO_S` + `MONTO_S_CALC` |
+| Estado multa | `ESTADO_MC` | `ESTADO_MC`/`AUX_EST_MC` | `FG_ESTADOMULTA` | `ESTADO_MULTA` | — | `ID_ESTADO_MULTA` |
 | Verificación post-MC | `F_VERIF_POST_MC`, `DOC_VERIF_MC` | idem | `FE_F_VERIF_POST_MC`, `TX_DOC_VERIF_MC` | — | — | `F_VERIF_POST_MC`, `DOC_VERIF_MC` |
 | SIGED | `SIGED` | `SIGED`, `EXP_SIGED_DOC` | `TX_EXP_SIGED_DOC` | `NUMERO_REGISTRO` | — | `SIGED` |
-| Proyecto / etapas | — | `COD_PROY_MC`, hoja `2) Etapas` | `TX_PASOACTUAL` | — | — | `FACT_ETAPA_MC` |
+| Proyecto / etapas | — | `COD_PROY_MC`, hoja `2) Etapas` | `TX_PASOACTUAL` | — | — | `MI_DET_ETAPA_MC` |
+| Territorio / unidad | `COD_OD` (inyectado) → `MI_DIM_OD` | `COORD` / `COD_UNIDAD` → `MI_DIM_ORGANO_UNIDAD` (+ `DESCRIPCION`) | — | — | — | dims órgano / OD |
+| `FUENTE_REGISTRO` | `OD_SHEETS` | `CAGR` | `GAPPS` | `SISUD_VW` | — | `MI_FACT_MULTA_COERCITIVA` |
 
 ---
 
@@ -284,10 +294,10 @@ resolución de MC** (un expediente puede repetirse con varias medidas y CUM).
 | H3 | Texto multilínea en `MEDIDA_ADMINISTRATIVA` | saltos de línea embebidos en F5 | Limpieza de caracteres de control en ODS |
 | H4 | Heterogeneidad de motores y fechas | Oracle `TIMESTAMP'...'` (F3) vs cadenas ISO (F4) | Parseo tipificado único a `DATE` |
 | H5 | Lógica de negocio en fórmulas Excel | `WORKDAY.INTL`, `ArrayFormula`, `INDEX/MATCH` | Migración de reglas a la capa DWH documentada |
-| H6 | IMPORTRANGE rotos | `M_FERIADO`, `M_UBIGEO`, `M_PARAMETROS`, `DIC_VARIABLES`, `PARAMETROS` con `#REF!` | Materialización de catálogos + solicitud a CSEP |
-| H7 | Dos versiones del registro de MC | F1 (32 col) vs F2 (48 col) con códigos comunes | Integración en una tabla con `FUENTE_ORIGEN` |
-| H8 | Estados como texto libre | `INCUMPLIDO` (F1), `ACTIVO`/`INACTIVO` (F5), `1` (F4), `EN REVISIÓN` (F3) | `MI_DIM_ESTADO` con homologación aprobada por CSEP |
-| H9 | Claves de cruce múltiples sin correspondencia total | `CUM`/`CAM` (F4↔F5), `COD_MA` (F1↔F2), expedientes (F5↔F3) | Tabla puente de equivalencias + tasa de amarre medida |
+| H6 | Catálogos / IMPORTRANGE históricos | Plantillas Excel con `#REF!` (no stageados) | UIT desde MEF; DIC desde Excel legacy |
+| H7 | Dos layouts de registro de MC | F1 (32 col OD) vs F2 (48 col CSEP) | Integración en `DF_MULTAS` con `FUENTE_ORIGEN` |
+| H8 | Estados como texto libre | `INCUMPLIDO` (F1/F2), `ACTIVO`/`INACTIVO` (F5), `1` (F4) | `MI_DIM_ESTADO` con homologación |
+| H9 | Claves de cruce sin correspondencia total | `CUM`/`CAM` (F4↔F5), `COD_MA` (F1↔F2) | `QA_AMARRE` / K5 |
 
 ---
 

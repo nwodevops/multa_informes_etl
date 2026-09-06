@@ -95,7 +95,7 @@ Se recrean al inicio: `reset_and_create.sh` (DDL base) + `create_stg.py` (DDL st
 | Tabla | Origen | Quién crea el DDL | Quién carga filas |
 |---|---|---|---|
 | `DEMO_TABLA_EJEMPLO` | Smoke arquetipo | `h2/sql/01_schema.sql` | Insert fijo en DDL |
-| `STG_GS1_MULTAS_COERCITIVAS` | F2 Excel CAGR | `create_stg.py` | `pl_stage_excel.hpl` |
+| `STG_GS1_CSEP_MULTAS` | F2 Google Sheets CSEP | `create_stg.py` | `pl_stage_csep_sheet.hpl` + `stage_csep_sheets.sh` |
 | `STG_GS1_ETAPAS` | F2 Excel etapas | `create_stg.py` | `pl_stage_excel.hpl` |
 | `STG_GS2_MULTAS_COERCITIVAS` | F1 Excel Lambayeque | `create_stg.py` | `pl_stage_excel.hpl` |
 | `STG_GS1_DIC_TABLAS` | F2 hoja DIC_TABLAS | `create_stg.py` | Pendiente en Hop* |
