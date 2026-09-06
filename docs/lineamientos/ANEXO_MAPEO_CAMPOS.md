@@ -27,6 +27,8 @@
 | `GAPPS` | F4 MySQL |
 | `SISUD_VW` | F5 Oracle |
 
+Dimensión formal: `MI_DIM_FUENTE_REGISTRO` (`ID_FUENTE` en el hecho y en etapas). El VARCHAR `FUENTE_REGISTRO` se mantiene alineado a `CODIGO`.
+
 > Excel OD / CAGR históricos viven en `input_excel/.../legacy/`. Solo el DIC (`DIC_TABLAS` / `DIC_VARIABLES`) se stagea aún desde el Excel CAGR legacy (`pl_stage_excel.hpl`).
 
 **Regla general de prioridad cuando dos fuentes traen el mismo dato:** se prioriza la fuente
@@ -51,6 +53,7 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | `ID_ADMINISTRADO` | F5 `ADMINISTRADO` | F2 `ADM` / nombre si existe | lookup en `MI_DIM_ADMINISTRADO` (`NOM-…`); `-1` si no resuelve |
 | `ID_ORGANO` | F2 `COORD` (o `COD_UNIDAD` inyectado) | sigla final de `NUMERO_EXPEDIENTE` | lookup `MI_DIM_ORGANO_UNIDAD.SIGLA`; `-1` si no resuelve |
 | `ID_OD` | F1 `COD_OD` (inyectado desde catálogo OD) | — | lookup `MI_DIM_OD`; `-1` si no aplica (filas F2/F4/F5) |
+| `ID_FUENTE` | `FUENTE_ORIGEN` → código | catálogo `MI_DIM_FUENTE_REGISTRO` | lookup por `CODIGO`; alias `LAM_OD`/`OD_EXCEL` → `OD_SHEETS` |
 | `ID_MATERIA` | catálogo semilla | — | lookup en `MI_DIM_MATERIA_SUBSECTOR`; `-1` si no resuelve |
 | `ID_ESTADO_RESOLUCION` | F5 `ESTADO_RESOLUCION` | — | homologar contra `MI_DIM_ESTADO` (`TIPO_ESTADO='RESOLUCION'`) |
 | `ID_ESTADO_MULTA` | F1/F2 `ESTADO_MC` | F5 `ESTADO_MULTA`; F4 `FG_ESTADOMULTA` (conciliar) | homologar contra `MI_DIM_ESTADO` (`TIPO_ESTADO='MULTA'`) |
@@ -91,7 +94,7 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | `FLAG_PAGADA` | calculado | `1` si `ID_ESTADO_PAGO` homologa a grupo `CUMPLIDO` / `PAGADO` | — |
 | `FLAG_EJECUCION_FORZOSA` | calculado | `1` si `MEMO_EF` no es nulo | — |
 | `FLAG_CUMPLIO_VERIF` | calculado | `1` si `F_VERIF_POST_MC` no es nulo | — |
-| `FUENTE_REGISTRO` | asignado por el proceso | `'OD_SHEETS'` (F1), `'CAGR'` (F2), `'GAPPS'` / `'SISUD_VW'` (F4/F5). Alias legacy `LAM_OD`/`OD_EXCEL` → `OD_SHEETS` | — |
+| `FUENTE_REGISTRO` | asignado por el proceso | `'OD_SHEETS'` (F1), `'CAGR'` (F2), `'GAPPS'` / `'SISUD_VW'` (F4/F5). Igual a `MI_DIM_FUENTE_REGISTRO.CODIGO` | — |
 | `FECHA_CARGA` | asignado por el proceso | timestamp al construir el hecho | — |
 
 ---
@@ -117,6 +120,7 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | `ESTADO_ETAPA` | `EST_ETAPA_MC` | ninguna (`TERMINADO`/`PENDIENTE`) |
 | `CONFORMIDAD` | `CONFORMIDAD_MC` | ninguna |
 | `DIAS_ELABORACION` | `T_ELAB_MC` | validar/recalcular con `MI_DIM_TIEMPO.ES_DIA_HABIL` si se requiere precisión |
+| `ID_FUENTE` | asignado | lookup `CAGR` en `MI_DIM_FUENTE_REGISTRO` |
 | `FUENTE_REGISTRO` | asignado | `'CAGR'` constante |
 | `FECHA_CARGA` | asignado | timestamp al insertar |
 
@@ -146,6 +150,13 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | Columna | Origen |
 |---|---|
 | `COD_OD` / `NOMBRE` / `TIPO` / `ORDEN` | catálogo F1 (`f1_ods_sheets.json` / semilla `ODS_OEFA`); `ID_OD` en el hecho desde `COD_OD` de STG F1 |
+
+### `MI_DIM_FUENTE_REGISTRO`
+
+| Columna | Origen |
+|---|---|
+| `CODIGO` / `NOMBRE` / `FAMILIA_TDR` / `DESCRIPCION` | semillas en `constantes.SEMILLAS_FUENTE_REGISTRO` (`OD_SHEETS`, `CAGR`, `GAPPS`, `SISUD_VW`, legacy `OD_EXCEL`) |
+| `ID_FUENTE` en hecho/etapas | lookup por `CODIGO` (= `FUENTE_REGISTRO`) |
 
 ### `MI_DIM_MATERIA_SUBSECTOR`
 

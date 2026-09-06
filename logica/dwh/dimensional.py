@@ -9,7 +9,7 @@ from datetime import date, datetime
 import pandas as pd
 
 from .catalogos import MI_DIM_ESTADO as SEMILLAS_ESTADO, MI_DIM_PARAMETRO_UIT as UIT_MEF, ODS_OEFA
-from .constantes import ID_CARGA
+from .constantes import ID_CARGA, SEMILLAS_FUENTE_REGISTRO
 from .homologacion import homologar_estado, vacio
 
 ND = -1
@@ -299,6 +299,30 @@ def _build_dim_od() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _build_dim_fuente() -> pd.DataFrame:
+    rows = []
+    for id_f, codigo, nombre, familia, desc in SEMILLAS_FUENTE_REGISTRO:
+        rows.append(
+            {
+                "ID_FUENTE": int(id_f),
+                "CODIGO": str(codigo),
+                "NOMBRE": str(nombre),
+                "FAMILIA_TDR": str(familia),
+                "DESCRIPCION": str(desc)[:300],
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _normalizar_codigo_fuente(val) -> str:
+    fuente = str(val) if not vacio(val) else "CAGR"
+    if fuente in ("LAM_OD", "OD_EXCEL"):
+        fuente = "OD_SHEETS"
+    if fuente not in ("OD_SHEETS", "CAGR", "GAPPS", "SISUD_VW"):
+        fuente = "CAGR"
+    return fuente
+
+
 def _build_dim_administrado(df_multas: pd.DataFrame) -> pd.DataFrame:
     rows = [
         {
@@ -353,6 +377,8 @@ def _lk_simple(dim: pd.DataFrame, col_key: str, col_id: str = None) -> dict[str,
         col_id = "ID_UIT"
     if col_key == "COD_OD":
         col_id = "ID_OD"
+    if col_key == "CODIGO" and "ID_FUENTE" in dim.columns:
+        col_id = "ID_FUENTE"
     out = {}
     for r in dim.itertuples(index=False):
         k = getattr(r, col_key)
@@ -378,6 +404,7 @@ def _build_fact_multas(
     dim_est: pd.DataFrame,
     dim_uit: pd.DataFrame,
     dim_od: pd.DataFrame,
+    dim_fuente: pd.DataFrame,
 ) -> pd.DataFrame:
     lk_a = _lk_simple(dim_admin, "COD_ADMINISTRADO")
     lk_o = _lk_simple(dim_org, "SIGLA")
@@ -385,6 +412,7 @@ def _build_fact_multas(
     id_pagado = lk_e.get(("PAGO", "PAGADO"), ND)
     lk_u = _lk_simple(dim_uit, "ANIO")
     lk_od = _lk_simple(dim_od, "COD_OD")
+    lk_f = _lk_simple(dim_fuente, "CODIGO")
     _ = dim_mat
 
     rows = []
@@ -420,11 +448,8 @@ def _build_fact_multas(
             except (TypeError, ValueError):
                 pass
 
-        fuente = str(r.get("FUENTE_ORIGEN", "CAGR"))
-        if fuente in ("LAM_OD", "OD_EXCEL"):
-            fuente = "OD_SHEETS"
-        if fuente not in ("OD_SHEETS", "CAGR", "GAPPS", "SISUD_VW"):
-            fuente = "CAGR"
+        fuente = _normalizar_codigo_fuente(r.get("FUENTE_ORIGEN", "CAGR"))
+        id_fuente = lk_f.get(fuente, ND)
 
         id_od = ND
         if not vacio(r.get("COD_OD")):
@@ -445,6 +470,7 @@ def _build_fact_multas(
                 "ID_ORGANO": id_org,
                 "ID_MATERIA": id_mat,
                 "ID_OD": id_od,
+                "ID_FUENTE": id_fuente,
                 "ID_ESTADO_RESOLUCION": id_est_res,
                 "ID_ESTADO_MULTA": id_est_mul,
                 "ID_ESTADO_PAGO": id_est_pago,
@@ -491,12 +517,16 @@ def _build_fact_multas(
     return pd.DataFrame(rows)
 
 
-def _build_det_etapas(df: pd.DataFrame, fact_mc: pd.DataFrame) -> pd.DataFrame:
+def _build_det_etapas(
+    df: pd.DataFrame, fact_mc: pd.DataFrame, dim_fuente: pd.DataFrame
+) -> pd.DataFrame:
     lk_proy = {}
     if len(fact_mc) and "COD_PROY_MC" in fact_mc.columns:
         for r in fact_mc.itertuples(index=False):
             if not vacio(r.COD_PROY_MC):
                 lk_proy[str(r.COD_PROY_MC).strip()] = int(r.ID_MC)
+    lk_f = _lk_simple(dim_fuente, "CODIGO")
+    id_fuente_cagr = lk_f.get("CAGR", ND)
     rows = []
     for i, r in df.iterrows():
         cod = str(r.get("COD_PROY_MC")).strip() if not vacio(r.get("COD_PROY_MC")) else ""
@@ -514,6 +544,7 @@ def _build_det_etapas(df: pd.DataFrame, fact_mc: pd.DataFrame) -> pd.DataFrame:
                 "ESTADO_ETAPA": r.get("ESTADO_ETAPA"),
                 "CONFORMIDAD": r.get("CONFORMIDAD"),
                 "DIAS_ELABORACION": r.get("DIAS_ELABORACION"),
+                "ID_FUENTE": id_fuente_cagr,
                 "FUENTE_REGISTRO": "CAGR",
                 "FECHA_CARGA": datetime.now(),
             }
@@ -532,18 +563,27 @@ def construir_modelo(
     dim_materia = _build_dim_materia()
     dim_organo = _build_dim_organo(df_multas)
     dim_od = _build_dim_od()
+    dim_fuente = _build_dim_fuente()
     dim_admin = _build_dim_administrado(df_multas)
 
     fact_multas = _build_fact_multas(
-        df_multas, dim_admin, dim_organo, dim_materia, dim_estado, dim_uit, dim_od
+        df_multas,
+        dim_admin,
+        dim_organo,
+        dim_materia,
+        dim_estado,
+        dim_uit,
+        dim_od,
+        dim_fuente,
     )
-    det_etapas = _build_det_etapas(df_etapas, fact_multas)
+    det_etapas = _build_det_etapas(df_etapas, fact_multas, dim_fuente)
 
     return {
         "MI_DIM_TIEMPO": dim_tiempo,
         "MI_DIM_ADMINISTRADO": dim_admin,
         "MI_DIM_ORGANO_UNIDAD": dim_organo,
         "MI_DIM_OD": dim_od,
+        "MI_DIM_FUENTE_REGISTRO": dim_fuente,
         "MI_DIM_MATERIA_SUBSECTOR": dim_materia,
         "MI_DIM_ESTADO": dim_estado,
         "MI_DIM_PARAMETRO_UIT": dim_uit,

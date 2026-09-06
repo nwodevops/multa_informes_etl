@@ -19,6 +19,16 @@ FUENTE_REGISTRO = {
     "ETAPAS": "CAGR",
 }
 
+# Semillas MI_DIM_FUENTE_REGISTRO (ID fijo; CODIGO = FUENTE_REGISTRO del hecho)
+SEMILLAS_FUENTE_REGISTRO = (
+    (-1, "ND", "NO ESPECIFICADO", "ND", "NO ESPECIFICADO"),
+    (1, "OD_SHEETS", "Sheets OD", "F1", "31 Google Sheets OD → STG_GS2_OD_MULTAS"),
+    (2, "CAGR", "Sheets CSEP", "F2", "10 Google Sheets CSEP → STG_GS1_CSEP_MULTAS / ETAPAS"),
+    (3, "GAPPS", "MySQL GAPP", "F4", "gappsdb.T_MVC_MULTACOERCITIVA_MC → STG_MYSQL_*"),
+    (4, "SISUD_VW", "Oracle SISUD", "F5", "SISUD.VW_MULTA_COERCITIVA → STG_ORA_*"),
+    (5, "OD_EXCEL", "Excel OD (legacy)", "F1", "Alias histórico; el ETL normaliza a OD_SHEETS"),
+)
+
 # Lectura H2 unificada F1 (COD_OD viene en la STG). Ampliación = catálogo JSON.
 F1_OD_LECTURAS: dict[str, str] = {"GS2": "*"}
 

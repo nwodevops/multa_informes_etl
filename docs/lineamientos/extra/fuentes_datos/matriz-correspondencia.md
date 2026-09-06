@@ -15,4 +15,4 @@ Inventario runtime: [`docs/inputs/README.md`](../../../inputs/README.md).
 | Verificación post-MC | `F_VERIF_POST_MC`, `DOC_VERIF_MC` | `F_VERIF_POST_MC`, `DOC_VERIF_MC` | `FE_F_VERIF_POST_MC`, `TX_DOC_VERIF_MC` | — | `F_VERIF_POST_MC`, `DOC_VERIF_MC` |
 | SIGED | `SIGED` | `SIGED`, `EXP_SIGED_DOC` | `TX_EXP_SIGED_DOC` | `NUMERO_REGISTRO` | `SIGED` |
 | Territorio / unidad | `COD_OD` → `MI_DIM_OD` | `COORD`/`COD_UNIDAD` → `MI_DIM_ORGANO_UNIDAD` (`DESCRIPCION`) | — | — | dims |
-| `FUENTE_REGISTRO` | `OD_SHEETS` | `CAGR` | `GAPPS` | `SISUD_VW` | hecho multa |
+| Universo de origen | `OD_SHEETS` | `CAGR` | `GAPPS` | `SISUD_VW` | `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO` (+ degenerado `FUENTE_REGISTRO`) |

@@ -5,13 +5,15 @@ Prefijo de tablas: **`MI_`**. Esquema según entorno: `APP` (local) o `REPOCSEP`
 
 **Alcance:** solo Multas. F3 (informes de supervisión) no entra en Hop, Kimball ni Oracle.
 
-Referencias: [`../lineamientos/PROPUESTA_ADAPTADA_ETL.md`](../lineamientos/PROPUESTA_ADAPTADA_ETL.md), DDL en [`../lineamientos/ddl/`](../lineamientos/ddl/), mapeo en [`../lineamientos/ANEXO_MAPEO_CAMPOS.md`](../lineamientos/ANEXO_MAPEO_CAMPOS.md). Manifiesto: [`../../inputs.yaml`](../../inputs.yaml).
+**Primera vez con Kimball / este DW:** empieza por [`guia-leer-modelo-dimensional.md`](guia-leer-modelo-dimensional.md).
+
+Referencias: [`../lineamientos/PROPUESTA_ADAPTADA_ETL.md`](../lineamientos/PROPUESTA_ADAPTADA_ETL.md), DDL en [`../lineamientos/ddl/`](../lineamientos/ddl/), mapeo en [`../lineamientos/ANEXO_MAPEO_CAMPOS.md`](../lineamientos/ANEXO_MAPEO_CAMPOS.md). Manifiesto: [`../../inputs.yaml`](../../inputs.yaml). Inputs: [`../inputs/README.md`](../inputs/README.md).
 
 ---
 
 ## 0. Fuentes de entrada (inputs)
 
-Cuatro fuentes de multa (**F1, F2, F4, F5**) declaradas en `inputs.yaml`. Hop extrae cada una a `STG_*` en H2; Python integra hacia el modelo dimensional.
+Cuatro fuentes de multa (**F1, F2, F4, F5**) declaradas en `inputs.yaml`. Hop extrae cada una a `STG_*` en H2; Python integra hacia el modelo dimensional. Cada fila del hecho queda etiquetada con `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO` (y el degenerado `FUENTE_REGISTRO` = `CODIGO`).
 
 ```mermaid
 flowchart TB
@@ -41,6 +43,7 @@ flowchart TB
     DF_E["DF_ETAPAS F2-ET"]
   end
   subgraph destino [Destino Kimball]
+    DIMF["MI_DIM_FUENTE_REGISTRO"]
     FMC(("MI_FACT_MULTA_COERCITIVA"))
     DET["MI_DET_ETAPA_MC"]
   end
@@ -51,18 +54,20 @@ flowchart TB
   O5 --> SV --> DF_M
   DF_M --> FMC
   DF_E --> DET
+  DIMF --> FMC
+  DIMF --> DET
 ```
 
-| ID | Origen | Tabla STG | Uso en el DW |
-|---|---|---|---|
-| **F1** | Google Sheets familia OD (31 en catálogo; `MI_DIM_OD`) | `STG_GS2_OD_MULTAS` | Hecho multa + `ID_OD` |
-| **F2** | Sheets CSEP (10 unidades) | `STG_GS1_CSEP_MULTAS` | Hecho multa |
-| **F2-ET** | Sheets CSEP etapas | `STG_GS1_ETAPAS` | Detalle etapas |
-| **F2-DIC** | Diccionario (Excel legacy) | `STG_GS1_DIC_*` | Perfilamiento |
-| **F4** | MySQL GAPP | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | Conciliación CUM/CAM |
-| **F5** | Oracle SISUD | `STG_ORA_VW_MULTA_COERCITIVA` | Expediente, resolución, CUM/CAM |
+| ID | Origen | Tabla STG | Uso en el DW | `CODIGO` fuente |
+|---|---|---|---|---|
+| **F1** | Google Sheets familia OD (31; `MI_DIM_OD`) | `STG_GS2_OD_MULTAS` | Hecho + `ID_OD` | `OD_SHEETS` |
+| **F2** | Sheets CSEP (10 unidades) | `STG_GS1_CSEP_MULTAS` | Hecho + `ID_ORGANO` | `CAGR` |
+| **F2-ET** | Sheets CSEP etapas | `STG_GS1_ETAPAS` | Detalle etapas | `CAGR` |
+| **F2-DIC** | Diccionario (Excel legacy) | `STG_GS1_DIC_*` | Perfilamiento | — |
+| **F4** | MySQL GAPP | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | Conciliación CUM/CAM | `GAPPS` |
+| **F5** | Oracle SISUD | `STG_ORA_VW_MULTA_COERCITIVA` | Expediente, resolución, CUM/CAM | `SISUD_VW` |
 
-**Integración:** F1+F2+F4+F5 en `DF_MULTAS` con `FUENTE_ORIGEN` (`OD_SHEETS` / `CAGR` / `GAPPS` / `SISUD_VW`). Territorio F1: `ID_OD` → `MI_DIM_OD`. **H9:** amarre entre fuentes de multa (COD_MA, CUM F4↔F5), medido en `QA_AMARRE` / K5. No hay hecho informe ni `ID_INFORME`.
+**Integración:** F1+F2+F4+F5 en `DF_MULTAS` → hecho con `ID_FUENTE` + `FUENTE_REGISTRO`. Territorio F1: `ID_OD` → `MI_DIM_OD`. Territorio F2: `ID_ORGANO` → `MI_DIM_ORGANO_UNIDAD` (`DESCRIPCION` desde catálogo). **H9:** amarre entre fuentes (COD_MA, CUM F4↔F5), medido en `QA_AMARRE` / K5. No hay hecho informe ni `ID_INFORME`.
 
 ---
 
@@ -70,7 +75,7 @@ flowchart TB
 
 | Capa | Tablas | Rol |
 |---|---|---|
-| **Dimensiones** | 7 × `MI_DIM_*` | Quién, dónde (órgano + OD), cuándo, estado, UIT |
+| **Dimensiones** | 8 × `MI_DIM_*` | Quién, dónde (órgano + OD), **fuente**, cuándo, estado, UIT |
 | **Hechos** | 1 × `MI_FACT_MULTA_COERCITIVA` | Evento medible: multa coercitiva |
 | **Detalle** | `MI_DET_ETAPA_MC` | Etapas del flujo interno (1:N con multa) |
 | **Calidad** | `MI_DQ_HALLAZGO` | Hallazgos R01–R05 |
@@ -87,6 +92,8 @@ erDiagram
   MI_DIM_ADMINISTRADO ||--o{ MI_FACT_MULTA_COERCITIVA : ID_ADMINISTRADO
   MI_DIM_ORGANO_UNIDAD ||--o{ MI_FACT_MULTA_COERCITIVA : ID_ORGANO
   MI_DIM_OD ||--o{ MI_FACT_MULTA_COERCITIVA : ID_OD
+  MI_DIM_FUENTE_REGISTRO ||--o{ MI_FACT_MULTA_COERCITIVA : ID_FUENTE
+  MI_DIM_FUENTE_REGISTRO ||--o{ MI_DET_ETAPA_MC : ID_FUENTE
   MI_DIM_MATERIA_SUBSECTOR ||--o{ MI_FACT_MULTA_COERCITIVA : ID_MATERIA
   MI_DIM_ESTADO ||--o{ MI_FACT_MULTA_COERCITIVA : ID_ESTADO_RESOLUCION
   MI_DIM_ESTADO ||--o{ MI_FACT_MULTA_COERCITIVA : ID_ESTADO_MULTA
@@ -99,7 +106,7 @@ erDiagram
 
 Las fuentes no comparten llave única con correspondencia total. El cruce se **mide** (K5 / `QA_AMARRE`), no se fuerza con INNER JOIN.
 
-Claves: `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE` entre Excel, SISUD vista y GAPP.
+Claves: `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE` entre Sheets OD/CSEP, SISUD vista y GAPP.
 
 ---
 
@@ -110,18 +117,30 @@ Clave **-1** = miembro *NO ESPECIFICADO*.
 | Tabla | Grano | Uso |
 |---|---|---|
 | **MI_DIM_TIEMPO** | 1 día | Periodo; días hábiles |
-| **MI_DIM_ADMINISTRADO** | 1 administrado | Sujeto fiscalizado (desde nombre F5/Excel) |
-| **MI_DIM_ORGANO_UNIDAD** | 1 órgano | COORD / expediente |
-| **MI_DIM_OD** | 1 oficina F1 | Territorio Excel OD (32 semillas + ND) |
+| **MI_DIM_ADMINISTRADO** | 1 administrado | Sujeto fiscalizado (desde nombre F5 / Sheets) |
+| **MI_DIM_ORGANO_UNIDAD** | 1 órgano | `COORD` / catálogo F2 + siglas de expediente |
+| **MI_DIM_OD** | 1 oficina F1 | Territorio Sheets OD |
+| **MI_DIM_FUENTE_REGISTRO** | 1 universo de origen | `CODIGO` = `FUENTE_REGISTRO` (F1…F5 + legacy) |
 | **MI_DIM_MATERIA_SUBSECTOR** | 1 materia | Catálogo semilla (`-1` si no hay dato en multa) |
 | **MI_DIM_ESTADO** | 1 estado | Resolución, multa, pago, etapa, descargos |
 | **MI_DIM_PARAMETRO_UIT** | 1 año | Conversión UIT ↔ soles |
 | **MI_FACT_MULTA_COERCITIVA** | 1 multa | Cobranza (K3), oportunidad (K2), verificación (K4) |
-| **MI_DET_ETAPA_MC** | 1 etapa | Drill-down del flujo interno |
+| **MI_DET_ETAPA_MC** | 1 etapa | Drill-down del flujo interno (F2) |
 | **MI_DQ_HALLAZGO** | 1 defecto | Auditoría R01–R05; alimenta K5 |
 | **MI_INDICADOR_RESULTADO** | 1 métrica | KPIs K1–K5 |
 
-Degeneradas: `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE`.
+Degeneradas en el hecho: `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE`, `FUENTE_REGISTRO` (redundante con `ID_FUENTE` / `CODIGO`).
+
+### Semillas `MI_DIM_FUENTE_REGISTRO`
+
+| ID | CODIGO | NOMBRE | FAMILIA |
+|---|---|---|---|
+| −1 | `ND` | NO ESPECIFICADO | ND |
+| 1 | `OD_SHEETS` | Sheets OD | F1 |
+| 2 | `CAGR` | Sheets CSEP | F2 |
+| 3 | `GAPPS` | MySQL GAPP | F4 |
+| 4 | `SISUD_VW` | Oracle SISUD | F5 |
+| 5 | `OD_EXCEL` | Excel OD (legacy) | F1 |
 
 ---
 
@@ -132,6 +151,7 @@ flowchart TB
   ADM[MI_DIM_ADMINISTRADO]
   ORG[MI_DIM_ORGANO_UNIDAD]
   OD[MI_DIM_OD]
+  FUE[MI_DIM_FUENTE_REGISTRO]
   MAT[MI_DIM_MATERIA_SUBSECTOR]
   EST_R[MI_DIM_ESTADO resolucion]
   EST_M[MI_DIM_ESTADO multa]
@@ -141,6 +161,7 @@ flowchart TB
   ADM --> FMC
   ORG --> FMC
   OD --> FMC
+  FUE --> FMC
   MAT --> FMC
   EST_R --> FMC
   EST_M --> FMC
@@ -148,7 +169,7 @@ flowchart TB
   UIT --> FMC
 ```
 
-`MI_DIM_ESTADO` es **role-playing** (resolución / multa / pago). Drill-down a `MI_DET_ETAPA_MC` por `ID_MC`.
+`MI_DIM_ESTADO` es **role-playing** (resolución / multa / pago). Drill-down a `MI_DET_ETAPA_MC` por `ID_MC` (etapas también llevan `ID_FUENTE` = CAGR).
 
 ---
 
@@ -166,20 +187,33 @@ flowchart TB
 
 ## 6. Orden de carga
 
-`MI_DIM_*` → `MI_FACT_MULTA_COERCITIVA` → `MI_DET_ETAPA_MC` → `MI_DQ_HALLAZGO` → `MI_INDICADOR_RESULTADO`.
+`MI_DIM_*` (incluye `MI_DIM_FUENTE_REGISTRO`) → `MI_FACT_MULTA_COERCITIVA` → `MI_DET_ETAPA_MC` → `MI_DQ_HALLAZGO` → `MI_INDICADOR_RESULTADO`.
 
 DDL: [`01_dimensiones.sql`](../lineamientos/ddl/01_dimensiones.sql) → [`02_hechos.sql`](../lineamientos/ddl/02_hechos.sql) → [`03_bitacora.sql`](../lineamientos/ddl/03_bitacora.sql) → [`04_indicadores.sql`](../lineamientos/ddl/04_indicadores.sql).
 
 ---
 
-## 7. Volúmenes de referencia (corrida típica)
+## 7. Volúmenes de referencia (corrida local reciente)
 
-| Objeto | Orden de magnitud |
+Tras `./init.sh` en esquema `APP` (orientativo; cambia por corrida):
+
+| Objeto | Filas |
 |---|---|
-| `MI_DIM_OD` | 33 (32 oficinas + ND) |
-| `MI_FACT_MULTA_COERCITIVA` | ~600 (F5 dominante + Excel OD) |
-| `MI_DET_ETAPA_MC` | ~55 |
-| `MI_DQ_HALLAZGO` | decenas |
-| `MI_INDICADOR_RESULTADO` | cientos (K1–K5, grano año×órgano) |
+| `MI_DIM_TIEMPO` | ~4 384 |
+| `MI_DIM_ADMINISTRADO` | ~194 |
+| `MI_DIM_ORGANO_UNIDAD` | ~314 (10 CSEP + siglas expediente) |
+| `MI_DIM_OD` | 33 |
+| `MI_DIM_FUENTE_REGISTRO` | 6 |
+| `MI_DIM_MATERIA_SUBSECTOR` | 7 |
+| `MI_DIM_ESTADO` | ~21 |
+| `MI_DIM_PARAMETRO_UIT` | 12 |
+| `MI_FACT_MULTA_COERCITIVA` | **~1 801** |
+| · `CAGR` | ~986 |
+| · `SISUD_VW` | ~530 |
+| · `OD_SHEETS` | ~281 |
+| · `GAPPS` | ~4 |
+| `MI_DET_ETAPA_MC` | ~2 070 |
+| `MI_DQ_HALLAZGO` | ~207 |
+| `MI_INDICADOR_RESULTADO` | ~691 |
 
-Cifras exactas dependen de la corrida y del entorno.
+F2 por unidad (ej.): CMIN ~387, CHID ~365, CRES ~173, CIND ~31, CAGR ~16, CELE ~14 (otras unidades pueden ir en 0).
