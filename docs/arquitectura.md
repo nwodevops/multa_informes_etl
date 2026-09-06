@@ -4,9 +4,8 @@ Cómo está armado este ETL hoy, con foco en qué hace exactamente la capa de l�
 (Python). Rama `capa-python`: la capa R de `master` se reemplazó; el contrato es el mismo.
 
 Estado: capa lógica alineada a [`lineamientos/PROPUESTA_ADAPTADA_ETL.md`](lineamientos/PROPUESTA_ADAPTADA_ETL.md)
-**Fases 2–3** (`logica/dwh/`: perfilamiento, diccionario, homologación, integración en memoria).
-Modelo dimensional `FACT_*`/`DIM_*` en Oracle BD_CURSOR = lineamiento Fases 5–6 (pendiente).
-Detalle implementación: [`lineamientos/implementacion-fase-2-3.md`](lineamientos/implementacion-fase-2-3.md).
+**Fases 2–7** (`logica/dwh/` → perfilamiento … indicadores) y carga Oracle vía `python/io/cargar_dw.py`
+(`MI_*`, vistas `VW_MC_*`, QA amarre). Guía del modelo: [`adjuntos/guia-leer-modelo-dimensional.md`](adjuntos/guia-leer-modelo-dimensional.md).
 TDR: [`TDR REQ 3629-2026.pdf`](TDR%20REQ%203629-2026.pdf).
 
 ## Vista general
@@ -44,7 +43,7 @@ flowchart TB
   end
 
   subgraph destino [Destino]
-    OUT["Excel fase1.xlsx<br/>Oracle APP@BD_CURSOR"]
+    OUT["Oracle APP@BD_CURSOR<br/>MI_* + VW_MC_*"]
   end
 
   GS --> YAML
@@ -90,9 +89,7 @@ flowchart TB
 
   subgraph io [I O generico, no se toca por proyecto]
     LEER["io/leer_h2.py<br/>LECTURAS: nombre a query"]
-    XLS["io/escribir_excel.py"]
-    MYW["io/escribir_mysql.py"]
-    ORAW["io/escribir_oracle.py legado"]
+    DW["io/cargar_dw.py<br/>TRUNCATE+INSERT MI_*"]
   end
 
   subgraph zona [Zona de pegado, se reemplaza por proyecto]
@@ -108,9 +105,7 @@ flowchart TB
   LEER --> ENT
   ENT -->|"inyecta nombres + pd"| LOG
   LOG --> SAL
-  SAL --> XLS
-  SAL --> MYW
-  SAL --> ORAW
+  SAL --> DW
 ```
 
 ### La orquestación es deliberadamente tonta
@@ -121,7 +116,7 @@ flowchart TB
 2. **Entrada**: carga `python/io/leer_h2.py` por ruta, llama a `leer_h2(root, variables)`.
 3. **Lógica**: lista los `.py` de `logica/` (raíz del proyecto) y hace `exec` del único que encuentra,
    con los DataFrames y `pd` inyectados en el namespace.
-4. **Salida**: verifica que exista `RESULTADO` y lo pasa a los escritores.
+4. **Salida**: verifica `RESULTADO` y, si hay tablas `MI_*`, llama a `cargar_dw.py` (TRUNCATE+INSERT a Oracle).
 
 El paso 3 es el corazón del arquetipo: `main.py` **auto-descubre** el archivo de lógica y
 **falla a propósito** si hay cero o más de uno. Esa restricción es la que hace que las
@@ -163,9 +158,8 @@ sequenceDiagram
   participant H2 as H2 mem:csep
   participant MAIN as python/main.py
   participant LEER as io/leer_h2.py
-  participant LOG as logica/*.py
-  participant XLS as io/escribir_excel.py
-  participant ESC as io/escribir_mysql Oracle
+  participant LOG as logica/ejecutar.py
+  participant DW as io/cargar_dw.py
 
   HOP->>H2: reset (stop, start, DDL)
   HOP->>H2: pipelines: truncate + insert STG_*
@@ -175,9 +169,8 @@ sequenceDiagram
   H2-->>LEER: filas
   LEER-->>MAIN: dict de DataFrames
   MAIN->>LOG: exec del unico .py
-  LOG-->>MAIN: RESULTADO
-  MAIN->>XLS: output/resultado.xlsx
-  MAIN->>ESC: TRUNCATE INSERT COUNT
+  LOG-->>MAIN: RESULTADO + MI_*
+  MAIN->>DW: TRUNCATE INSERT MI_* VW_MC_*
 ```
 
 Los escritores a BD consultan `COUNT(*)` **después** del `INSERT`. Contar el DataFrame en

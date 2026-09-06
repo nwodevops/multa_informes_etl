@@ -125,6 +125,60 @@
       "passes": true,
       "criterio": "Columna DESCRIPCION en MI_DIM_ORGANO_UNIDAD; CMIN→Minería etc. desde f2_csep_sheets.json; 10 unidades sembradas; carga Oracle OK",
       "doc": "docs/lineamientos/ANEXO_MAPEO_CAMPOS.md"
+    },
+    {
+      "id": "dim-organo-csep-limpia",
+      "title": "MI_DIM_ORGANO_UNIDAD limpia: solo CSEP (+ ND), sin siglas de expediente",
+      "status": "done",
+      "passes": true,
+      "criterio": "Dim órgano sembrada desde f2_csep_sheets.json (+ ND); hechos F2 resuelven ID_ORGANO por COORD/COD_UNIDAD; siglas de expediente no hinchan la dim; reportes CAGR filtrables; ./init.sh HARNESS OK",
+      "doc": "docs/adjuntos/guia-leer-modelo-dimensional.md",
+      "evidencia": "progress/impl_dim-organo-csep-limpia.md"
+    },
+    {
+      "id": "vistas-mc-por-fuente",
+      "title": "Vistas Oracle de multas por universo (ID_FUENTE)",
+      "status": "done",
+      "passes": true,
+      "criterio": "Vistas VW_MC_CSEP|OD|SISUD|GAPPS vía MI_DIM_FUENTE_REGISTRO; no sumar universos por defecto; ./init.sh HARNESS OK",
+      "doc": "docs/lineamientos/ddl/06_vistas.sql",
+      "evidencia": "progress/impl_mejoras-kimball-2-7.md"
+    },
+    {
+      "id": "amarre-h9-detalle",
+      "title": "Detalle usable de no-amarre H9 (pares/motivos además de K5)",
+      "status": "done",
+      "passes": true,
+      "criterio": "MI_QA_AMARRE + MI_QA_AMARRE_DETALLE con claves SOLO_IZQ/SOLO_DER y motivo; K5 sigue agregado; documentado; ./init.sh HARNESS OK",
+      "doc": "docs/adjuntos/guia-leer-modelo-dimensional.md",
+      "evidencia": "progress/impl_mejoras-kimball-2-7.md"
+    },
+    {
+      "id": "deprecar-fuente-registro-varchar",
+      "title": "Quitar VARCHAR FUENTE_REGISTRO del hecho/etapas (solo ID_FUENTE)",
+      "status": "done",
+      "passes": true,
+      "criterio": "Sin columna FUENTE_REGISTRO ni CHECK en hecho/etapas; linaje vía ID_FUENTE; ./init.sh HARNESS OK",
+      "doc": "docs/lineamientos/ddl/02_hechos.sql",
+      "evidencia": "progress/impl_mejoras-kimball-2-7.md"
+    },
+    {
+      "id": "id-tiempo-firma",
+      "title": "ID_TIEMPO_FIRMA role-playing sobre MI_DIM_TIEMPO",
+      "status": "done",
+      "passes": true,
+      "criterio": "Columna FK en hecho desde F_FIRMA_RES_MC; cortes Q/año sin EXTRACT; ./init.sh HARNESS OK",
+      "doc": "docs/adjuntos/guia-leer-modelo-dimensional.md",
+      "evidencia": "progress/impl_mejoras-kimball-2-7.md"
+    },
+    {
+      "id": "ops-conteos-contrato-sheets",
+      "title": "Alertas de conteo por fuente + contrato JSON/SLA Sheets",
+      "status": "done",
+      "passes": true,
+      "criterio": "init.sh falla si CAGR/OD/SISUD bajo mínimos; docs contrato f1/f2 JSON y SLA reintentos",
+      "doc": "docs/inputs/README.md",
+      "evidencia": "progress/impl_mejoras-kimball-2-7.md"
     }
   ]
 }

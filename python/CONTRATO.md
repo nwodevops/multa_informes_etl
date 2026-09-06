@@ -12,7 +12,7 @@ CAPA POST-STAGING (lineamientos Fases 2–7)
   python/io/leer_h2.py      ENTRADA: H2 STG_* → DataFrames
   logica/ejecutar.py        delega a logica/dwh/
   logica/dwh/               perfilamiento, diccionario, homologación, integración, calidad, dimensional, indicadores
-  python/io/cargar_dw.py    SALIDA: TRUNCATE+INSERT DIM_*/FACT_*/DET_*/DQ_*/MI_INDICADOR_RESULTADO → Oracle BD_CURSOR
+  python/io/cargar_dw.py    SALIDA: TRUNCATE+INSERT MI_DIM_*/FACT_*/DET_*/DQ_*/QA_*/INDICADOR + vistas VW_MC_*
 ```
 
 ## Entrada (`python/io/leer_h2.py`)
@@ -34,13 +34,12 @@ CAPA POST-STAGING (lineamientos Fases 2–7)
 | `PROF_RESUMEN` / `PROF_HALLAZGO` | 2 | Perfilamiento |
 | `DICCIONARIO` | 2 | Campos documentados |
 | `DF_MULTAS` / `DF_ETAPAS` | 3–4 | Integración + `FG_CONFORME` |
-| `MI_DQ_HALLAZGO` / `QA_AMARRE` | 4 | Calidad + amarre H9 |
-| `DIM_*` | 5 | Dimensiones con miembro `-1` |
-| `FACT_*` / `MI_DET_ETAPA_MC` | 5 | Hechos y detalle |
+| `MI_DQ_HALLAZGO` / `MI_QA_AMARRE` / `MI_QA_AMARRE_DETALLE` | 4 | Calidad + amarre H9 (resumen y claves sin match) |
+| `MI_DIM_*` / `MI_FACT_*` / `MI_DET_ETAPA_MC` | 5 | Dimensiones (órgano CSEP limpia, OD, fuente, …), hecho con `ID_FUENTE` + `ID_TIEMPO_FIRMA` |
 | `MI_INDICADOR_RESULTADO` | 7 | KPIs K1–K5 |
 | `RESULTADO` | 2–7 | Resumen de corrida |
 
-Carga Oracle: `python/io/cargar_dw.py` aplica DDL formal (01–04) si falta, elimina vistas `VW_FCT_*` legacy, y hace TRUNCATE+INSERT.
+Carga Oracle: `python/io/cargar_dw.py` aplica DDL formal (01–04) si falta, elimina vistas `VW_FCT_*` legacy, recrea `VW_MC_*`, y hace TRUNCATE+INSERT (incluye `MI_QA_*`).
 
 ## Reglas
 

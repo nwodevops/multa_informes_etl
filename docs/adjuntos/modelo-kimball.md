@@ -13,7 +13,7 @@ Referencias: [`../lineamientos/PROPUESTA_ADAPTADA_ETL.md`](../lineamientos/PROPU
 
 ## 0. Fuentes de entrada (inputs)
 
-Cuatro fuentes de multa (**F1, F2, F4, F5**) declaradas en `inputs.yaml`. Hop extrae cada una a `STG_*` en H2; Python integra hacia el modelo dimensional. Cada fila del hecho queda etiquetada con `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO` (y el degenerado `FUENTE_REGISTRO` = `CODIGO`).
+Cuatro fuentes de multa (**F1, F2, F4, F5**) declaradas en `inputs.yaml`. Hop extrae cada una a `STG_*` en H2; Python integra hacia el modelo dimensional. Cada fila del hecho queda etiquetada con `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO`. Reportes por universo: vistas `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` / `VW_MC_GAPPS`.
 
 ```mermaid
 flowchart TB
@@ -67,7 +67,7 @@ flowchart TB
 | **F4** | MySQL GAPP | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | Conciliación CUM/CAM | `GAPPS` |
 | **F5** | Oracle SISUD | `STG_ORA_VW_MULTA_COERCITIVA` | Expediente, resolución, CUM/CAM | `SISUD_VW` |
 
-**Integración:** F1+F2+F4+F5 en `DF_MULTAS` → hecho con `ID_FUENTE` + `FUENTE_REGISTRO`. Territorio F1: `ID_OD` → `MI_DIM_OD`. Territorio F2: `ID_ORGANO` → `MI_DIM_ORGANO_UNIDAD` (`DESCRIPCION` desde catálogo). **H9:** amarre entre fuentes (COD_MA, CUM F4↔F5), medido en `QA_AMARRE` / K5. No hay hecho informe ni `ID_INFORME`.
+**Integración:** F1+F2+F4+F5 en `DF_MULTAS` → hecho con `ID_FUENTE` (+ `ID_TIEMPO_FIRMA` role-playing). Territorio F1: `ID_OD` → `MI_DIM_OD`. Territorio F2: `ID_ORGANO` → `MI_DIM_ORGANO_UNIDAD` (`DESCRIPCION` desde catálogo). **H9:** amarre medido en `MI_QA_AMARRE` / `MI_QA_AMARRE_DETALLE` / K5. No hay hecho informe ni `ID_INFORME`.
 
 ---
 
@@ -78,14 +78,15 @@ flowchart TB
 | **Dimensiones** | 8 × `MI_DIM_*` | Quién, dónde (órgano + OD), **fuente**, cuándo, estado, UIT |
 | **Hechos** | 1 × `MI_FACT_MULTA_COERCITIVA` | Evento medible: multa coercitiva |
 | **Detalle** | `MI_DET_ETAPA_MC` | Etapas del flujo interno (1:N con multa) |
-| **Calidad** | `MI_DQ_HALLAZGO` | Hallazgos R01–R05 |
+| **Calidad** | `MI_DQ_HALLAZGO`, `MI_QA_AMARRE`, `MI_QA_AMARRE_DETALLE` | Hallazgos R01–R05; amarre H9 resumen + claves sin match |
+| **Vistas** | `VW_MC_*` | Universos CSEP / OD / SISUD / GAPPS (no sumar 1801 “como uno”) |
 | **Indicadores** | `MI_INDICADOR_RESULTADO` | KPIs K1–K5 |
 
 ---
 
 ## 2. Estrella dimensional
 
-Un hecho. `MI_DIM_TIEMPO` agrupa por calendario; las fechas del ciclo van como columnas `DATE` en el hecho.
+Un hecho. Fechas del ciclo como columnas `DATE`; además `ID_TIEMPO_FIRMA` (role-playing) hacia `MI_DIM_TIEMPO` para cortes Q/año en BI.
 
 ```mermaid
 erDiagram
@@ -94,6 +95,7 @@ erDiagram
   MI_DIM_OD ||--o{ MI_FACT_MULTA_COERCITIVA : ID_OD
   MI_DIM_FUENTE_REGISTRO ||--o{ MI_FACT_MULTA_COERCITIVA : ID_FUENTE
   MI_DIM_FUENTE_REGISTRO ||--o{ MI_DET_ETAPA_MC : ID_FUENTE
+  MI_DIM_TIEMPO ||--o{ MI_FACT_MULTA_COERCITIVA : ID_TIEMPO_FIRMA
   MI_DIM_MATERIA_SUBSECTOR ||--o{ MI_FACT_MULTA_COERCITIVA : ID_MATERIA
   MI_DIM_ESTADO ||--o{ MI_FACT_MULTA_COERCITIVA : ID_ESTADO_RESOLUCION
   MI_DIM_ESTADO ||--o{ MI_FACT_MULTA_COERCITIVA : ID_ESTADO_MULTA
@@ -104,7 +106,7 @@ erDiagram
 
 ### Amarre H9 (fuentes de multa)
 
-Las fuentes no comparten llave única con correspondencia total. El cruce se **mide** (K5 / `QA_AMARRE`), no se fuerza con INNER JOIN.
+Las fuentes no comparten llave única con correspondencia total. El cruce se **mide** (`MI_QA_AMARRE` + detalle `MI_QA_AMARRE_DETALLE` + K5), no se fuerza con INNER JOIN.
 
 Claves: `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE` entre Sheets OD/CSEP, SISUD vista y GAPP.
 
@@ -118,18 +120,20 @@ Clave **-1** = miembro *NO ESPECIFICADO*.
 |---|---|---|
 | **MI_DIM_TIEMPO** | 1 día | Periodo; días hábiles |
 | **MI_DIM_ADMINISTRADO** | 1 administrado | Sujeto fiscalizado (desde nombre F5 / Sheets) |
-| **MI_DIM_ORGANO_UNIDAD** | 1 órgano | `COORD` / catálogo F2 + siglas de expediente |
+| **MI_DIM_ORGANO_UNIDAD** | 1 órgano CSEP | Solo catálogo F2 (10 + ND); no siglas de expediente |
 | **MI_DIM_OD** | 1 oficina F1 | Territorio Sheets OD |
-| **MI_DIM_FUENTE_REGISTRO** | 1 universo de origen | `CODIGO` = `FUENTE_REGISTRO` (F1…F5 + legacy) |
+| **MI_DIM_FUENTE_REGISTRO** | 1 universo de origen | `CODIGO` (F1…F5 + legacy `OD_EXCEL`) |
 | **MI_DIM_MATERIA_SUBSECTOR** | 1 materia | Catálogo semilla (`-1` si no hay dato en multa) |
 | **MI_DIM_ESTADO** | 1 estado | Resolución, multa, pago, etapa, descargos |
 | **MI_DIM_PARAMETRO_UIT** | 1 año | Conversión UIT ↔ soles |
 | **MI_FACT_MULTA_COERCITIVA** | 1 multa | Cobranza (K3), oportunidad (K2), verificación (K4) |
 | **MI_DET_ETAPA_MC** | 1 etapa | Drill-down del flujo interno (F2) |
 | **MI_DQ_HALLAZGO** | 1 defecto | Auditoría R01–R05; alimenta K5 |
+| **MI_QA_AMARRE** | 1 puente | % match H9 agregado |
+| **MI_QA_AMARRE_DETALLE** | 1 clave sin match | Pares SOLO_IZQ / SOLO_DER + motivo |
 | **MI_INDICADOR_RESULTADO** | 1 métrica | KPIs K1–K5 |
 
-Degeneradas en el hecho: `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE`, `FUENTE_REGISTRO` (redundante con `ID_FUENTE` / `CODIGO`).
+Degeneradas en el hecho: `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE` (linaje de universo solo vía `ID_FUENTE`).
 
 ### Semillas `MI_DIM_FUENTE_REGISTRO`
 
@@ -187,9 +191,9 @@ flowchart TB
 
 ## 6. Orden de carga
 
-`MI_DIM_*` (incluye `MI_DIM_FUENTE_REGISTRO`) → `MI_FACT_MULTA_COERCITIVA` → `MI_DET_ETAPA_MC` → `MI_DQ_HALLAZGO` → `MI_INDICADOR_RESULTADO`.
+`MI_DIM_*` → `MI_FACT_MULTA_COERCITIVA` → `MI_DET_ETAPA_MC` → `MI_DQ_HALLAZGO` → `MI_QA_AMARRE*` → `MI_INDICADOR_RESULTADO` → vistas `06_vistas.sql`.
 
-DDL: [`01_dimensiones.sql`](../lineamientos/ddl/01_dimensiones.sql) → [`02_hechos.sql`](../lineamientos/ddl/02_hechos.sql) → [`03_bitacora.sql`](../lineamientos/ddl/03_bitacora.sql) → [`04_indicadores.sql`](../lineamientos/ddl/04_indicadores.sql).
+DDL: [`01_dimensiones.sql`](../lineamientos/ddl/01_dimensiones.sql) → [`02_hechos.sql`](../lineamientos/ddl/02_hechos.sql) → [`03_bitacora.sql`](../lineamientos/ddl/03_bitacora.sql) → [`04_indicadores.sql`](../lineamientos/ddl/04_indicadores.sql) → [`06_vistas.sql`](../lineamientos/ddl/06_vistas.sql).
 
 ---
 
@@ -201,7 +205,7 @@ Tras `./init.sh` en esquema `APP` (orientativo; cambia por corrida):
 |---|---|
 | `MI_DIM_TIEMPO` | ~4 384 |
 | `MI_DIM_ADMINISTRADO` | ~194 |
-| `MI_DIM_ORGANO_UNIDAD` | ~314 (10 CSEP + siglas expediente) |
+| `MI_DIM_ORGANO_UNIDAD` | ~11 (10 CSEP + ND) |
 | `MI_DIM_OD` | 33 |
 | `MI_DIM_FUENTE_REGISTRO` | 6 |
 | `MI_DIM_MATERIA_SUBSECTOR` | 7 |
@@ -214,6 +218,7 @@ Tras `./init.sh` en esquema `APP` (orientativo; cambia por corrida):
 | · `GAPPS` | ~4 |
 | `MI_DET_ETAPA_MC` | ~2 070 |
 | `MI_DQ_HALLAZGO` | ~207 |
+| `MI_QA_AMARRE_DETALLE` | ~3 078 |
 | `MI_INDICADOR_RESULTADO` | ~691 |
 
 F2 por unidad (ej.): CMIN ~387, CHID ~365, CRES ~173, CIND ~31, CAGR ~16, CELE ~14 (otras unidades pueden ir en 0).

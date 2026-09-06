@@ -1,0 +1,47 @@
+--------------------------------------------------------------------------------
+-- 06_vistas.sql
+-- Vistas de reporte por universo (ID_FUENTE). No sumar universos por defecto.
+-- Idempotente: CREATE OR REPLACE VIEW.
+--------------------------------------------------------------------------------
+
+CREATE OR REPLACE VIEW VW_MC_CSEP AS
+SELECT
+    f.*,
+    fu.CODIGO   AS COD_FUENTE,
+    fu.NOMBRE   AS NOMBRE_FUENTE,
+    fu.FAMILIA_TDR
+FROM MI_FACT_MULTA_COERCITIVA f
+JOIN MI_DIM_FUENTE_REGISTRO fu ON fu.ID_FUENTE = f.ID_FUENTE
+WHERE fu.CODIGO = 'CAGR';
+
+CREATE OR REPLACE VIEW VW_MC_OD AS
+SELECT
+    f.*,
+    fu.CODIGO   AS COD_FUENTE,
+    fu.NOMBRE   AS NOMBRE_FUENTE,
+    fu.FAMILIA_TDR
+FROM MI_FACT_MULTA_COERCITIVA f
+JOIN MI_DIM_FUENTE_REGISTRO fu ON fu.ID_FUENTE = f.ID_FUENTE
+WHERE fu.CODIGO = 'OD_SHEETS';
+
+CREATE OR REPLACE VIEW VW_MC_SISUD AS
+SELECT
+    f.*,
+    fu.CODIGO   AS COD_FUENTE,
+    fu.NOMBRE   AS NOMBRE_FUENTE,
+    fu.FAMILIA_TDR
+FROM MI_FACT_MULTA_COERCITIVA f
+JOIN MI_DIM_FUENTE_REGISTRO fu ON fu.ID_FUENTE = f.ID_FUENTE
+WHERE fu.CODIGO = 'SISUD_VW';
+
+CREATE OR REPLACE VIEW VW_MC_GAPPS AS
+SELECT
+    f.*,
+    fu.CODIGO   AS COD_FUENTE,
+    fu.NOMBRE   AS NOMBRE_FUENTE,
+    fu.FAMILIA_TDR
+FROM MI_FACT_MULTA_COERCITIVA f
+JOIN MI_DIM_FUENTE_REGISTRO fu ON fu.ID_FUENTE = f.ID_FUENTE
+WHERE fu.CODIGO = 'GAPPS';
+
+COMMIT;

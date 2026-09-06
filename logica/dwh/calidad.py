@@ -168,8 +168,9 @@ def _validar_multas(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
     return conforme, hallazgos
 
 
-def _amarre(df_multas: pd.DataFrame) -> pd.DataFrame:
-    puentes: list[tuple[str, pd.Series, pd.Series]] = []
+def _amarre(df_multas: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Resumen QA_AMARRE + detalle de claves sin match (MI_QA_AMARRE_DETALLE)."""
+    puentes: list[tuple[str, pd.Series, pd.Series, str]] = []
     if not df_multas.empty:
         excel = df_multas[df_multas["FUENTE_ORIGEN"].isin(["OD_SHEETS", "OD_EXCEL", "LAM_OD", "CAGR"])]
         sisud = df_multas[df_multas["FUENTE_ORIGEN"] == "SISUD_VW"]
@@ -180,6 +181,7 @@ def _amarre(df_multas: pd.DataFrame) -> pd.DataFrame:
                     "COD_MA_vs_EXPEDIENTE_excel",
                     excel["COD_MA"].dropna().astype(str).str.strip(),
                     excel["NUMERO_EXPEDIENTE"].dropna().astype(str).str.strip(),
+                    "COD_MA sin expediente / expediente sin COD_MA en Sheets",
                 )
             )
         if not excel.empty and not sisud.empty and "COD_MA" in excel.columns and "CUM" in sisud.columns:
@@ -188,6 +190,7 @@ def _amarre(df_multas: pd.DataFrame) -> pd.DataFrame:
                     "COD_MA_vs_CUM_SISUD",
                     excel["COD_MA"].dropna().astype(str).str.strip(),
                     sisud["CUM"].dropna().astype(str).str.strip(),
+                    "COD_MA Sheets sin CUM SISUD / CUM SISUD sin COD_MA Sheets",
                 )
             )
         if not sisud.empty and not gapp.empty and "CUM" in sisud.columns and "CUM" in gapp.columns:
@@ -196,11 +199,14 @@ def _amarre(df_multas: pd.DataFrame) -> pd.DataFrame:
                     "CUM_SISUD_vs_GAPP",
                     sisud["CUM"].dropna().astype(str).str.strip(),
                     gapp["CUM"].dropna().astype(str).str.strip(),
+                    "CUM solo en SISUD o solo en GAPP",
                 )
             )
 
     rows = []
-    for puente, izq, der in puentes:
+    det: list[dict] = []
+    max_det = MAX_HALLAZGOS
+    for puente, izq, der, motivo_base in puentes:
         set_i = set(izq.unique()) - {""}
         set_d = set(der.unique()) - {""}
         match = set_i & set_d
@@ -216,14 +222,42 @@ def _amarre(df_multas: pd.DataFrame) -> pd.DataFrame:
                 "PCT_MATCH_IZQ": pct,
             }
         )
+        for clave in sorted(set_i - set_d):
+            if len(det) >= max_det:
+                break
+            det.append(
+                {
+                    "ID_CARGA": ID_CARGA,
+                    "PUENTE": puente,
+                    "LADO": "SOLO_IZQ",
+                    "CLAVE": str(clave)[:200],
+                    "MOTIVO": f"{motivo_base} (solo izquierda)",
+                }
+            )
+        for clave in sorted(set_d - set_i):
+            if len(det) >= max_det:
+                break
+            det.append(
+                {
+                    "ID_CARGA": ID_CARGA,
+                    "PUENTE": puente,
+                    "LADO": "SOLO_DER",
+                    "CLAVE": str(clave)[:200],
+                    "MOTIVO": f"{motivo_base} (solo derecha)",
+                }
+            )
+
     cols = ["ID_CARGA", "PUENTE", "N_IZQ", "N_DER", "N_MATCH", "PCT_MATCH_IZQ"]
-    return pd.DataFrame(rows) if rows else pd.DataFrame(columns=cols)
+    dcols = ["ID_CARGA", "PUENTE", "LADO", "CLAVE", "MOTIVO"]
+    resumen = pd.DataFrame(rows) if rows else pd.DataFrame(columns=cols)
+    detalle = pd.DataFrame(det) if det else pd.DataFrame(columns=dcols)
+    return resumen, detalle
 
 
 def aplicar_calidad(
     df_multas: pd.DataFrame,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Marca conformidad, arma MI_DQ_HALLAZGO y QA_AMARRE. No elimina filas."""
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Marca conformidad, arma MI_DQ_HALLAZGO, QA_AMARRE y detalle. No elimina filas."""
     multas = df_multas.copy()
     hallazgos: list[dict] = []
 
@@ -251,5 +285,5 @@ def aplicar_calidad(
         "RESUELTO_POR",
     ]
     dq = pd.DataFrame(hallazgos) if hallazgos else pd.DataFrame(columns=dq_cols)
-    amarre = _amarre(multas)
-    return multas, dq, amarre
+    amarre, amarre_det = _amarre(multas)
+    return multas, dq, amarre, amarre_det

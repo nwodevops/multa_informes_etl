@@ -1,6 +1,7 @@
 # Fases 2–7 — criterios de avance
 
-Referencia canónica: `docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`.
+Referencia canónica: `docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`.  
+Estado del modelo: `docs/adjuntos/guia-leer-modelo-dimensional.md`.
 
 ## Fase 2 — Perfilamiento y diccionario
 
@@ -16,7 +17,7 @@ Referencia canónica: `docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`.
 
 ## Fase 4 — Calidad
 
-**Salida:** `FG_CONFORME` en dataframes; `MI_DQ_HALLAZGO`; `QA_AMARRE` (% puente H9).
+**Salida:** `FG_CONFORME`; `MI_DQ_HALLAZGO`; `MI_QA_AMARRE` + `MI_QA_AMARRE_DETALLE` (H9).
 
 **Reglas:** R01 completitud, R02 CUM/CAM, R03 temporal, R04 UIT≥0, R05 UIT↔soles.
 
@@ -24,15 +25,15 @@ Referencia canónica: `docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`.
 
 ## Fase 5 — Modelo dimensional
 
-**Salida:** `DIM_*` (6), `MI_FACT_MULTA_COERCITIVA`, `MI_DET_ETAPA_MC`.
+**Salida:** 8× `MI_DIM_*` (incluye OD y fuente), `MI_FACT_MULTA_COERCITIVA` (`ID_FUENTE`, `ID_TIEMPO_FIRMA`), `MI_DET_ETAPA_MC`.
 
-**Avance:** ningún hecho sin dimensión (`ID_* = -1` si falta lookup).
+**Avance:** ningún hecho sin dimensión (`ID_* = -1` si falta lookup); órgano solo CSEP+ND.
 
 ## Fase 6 — Carga Oracle
 
-**Salida:** tablas en BD_CURSOR vía `TRUNCATE + INSERT` tipado.
+**Salida:** tablas en BD_CURSOR vía `TRUNCATE + INSERT`; vistas `VW_MC_*`.
 
-**Avance:** `COUNT(*)` Oracle = filas DataFrame por tabla; DDL formal (`01`–`03`); DROP vistas legacy.
+**Avance:** `COUNT(*)` Oracle = filas DataFrame; DDL `01`–`04` + `06_vistas.sql`; DROP vistas legacy `VW_FCT_*`.
 
 ## Fase 7 — Indicadores
 
@@ -44,7 +45,7 @@ Referencia canónica: `docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`.
 | K2 | `PROM_DIAS_NOTIF_FIRMA` |
 | K3 | `RATIO_COBRANZA_SOLES`, `RATIO_COBRANZA_UIT` |
 | K4 | `TASA_VERIF_POST_MC` |
-| K5 | `PCT_CONFORME` (por regla), `PCT_AMARRE` (puentes) |
+| K5 | `PCT_CONFORME` (por regla), `PCT_AMARRE` (puentes; detalle en `MI_QA_AMARRE_DETALLE`) |
 
 **Avance:** reproducible; presencia de K1–K5; DDL `04_indicadores.sql`.
 

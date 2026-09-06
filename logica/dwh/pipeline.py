@@ -42,7 +42,7 @@ def ejecutar(
     diccionario = armar_diccionario(tablas, root=root)
 
     df_multas, df_etapas = integrar(gs1, gs2, etapas, ora, mysql, gs2_ods=extra_ods)
-    df_multas, dq_hallazgo, qa_amarre = aplicar_calidad(df_multas)
+    df_multas, dq_hallazgo, qa_amarre, qa_amarre_det = aplicar_calidad(df_multas)
     modelo = construir_modelo(df_multas, df_etapas)
     indicadores = calcular_indicadores(
         modelo["MI_FACT_MULTA_COERCITIVA"],
@@ -70,6 +70,7 @@ def ejecutar(
                 "N_FACT_MULTAS": len(modelo["MI_FACT_MULTA_COERCITIVA"]),
                 "N_DET_ETAPAS": len(modelo["MI_DET_ETAPA_MC"]),
                 "N_INDICADORES": len(indicadores),
+                "N_QA_AMARRE_DET": len(qa_amarre_det),
             }
         ]
     )
@@ -82,6 +83,8 @@ def ejecutar(
         "DF_ETAPAS": df_etapas,
         "MI_DQ_HALLAZGO": dq_hallazgo,
         "QA_AMARRE": qa_amarre,
+        "MI_QA_AMARRE": qa_amarre,
+        "MI_QA_AMARRE_DETALLE": qa_amarre_det,
         "MI_INDICADOR_RESULTADO": indicadores,
         "RESULTADO": resultado,
     }

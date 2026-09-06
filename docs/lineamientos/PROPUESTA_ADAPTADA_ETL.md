@@ -11,6 +11,7 @@
 | **Cambio respecto a la consolidada** | No se introduce SQL Server ni un motor nuevo; se reutilizan Apache Hop, H2 en memoria y Oracle BD_CURSOR tal como ya existen |
 | **Alcance de este documento** | Planteamiento técnico y plan de implementación por fases (diseño conceptual, sin scripts ejecutables) |
 | **Documentos complementarios** | `ddl/` (scripts de creación de tablas) · [`ANEXO_MAPEO_CAMPOS.md`](ANEXO_MAPEO_CAMPOS.md) (mapeo campo a campo fuente → modelo) |
+| **Estado implementado (repo)** | Fases 2–7 en código; DW solo Multas; linaje `ID_FUENTE`; vistas `VW_MC_*`; amarre `MI_QA_AMARRE`(+`_DETALLE`); órgano CSEP limpia; sin VARCHAR `FUENTE_REGISTRO`. Guía: [`../adjuntos/guia-leer-modelo-dimensional.md`](../adjuntos/guia-leer-modelo-dimensional.md) |
 
 ---
 

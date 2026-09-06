@@ -61,7 +61,7 @@ Vista consolidada de multas coercitivas. Staging: `STG_ORA_VW_MULTA_COERCITIVA` 
 | MONTO_MULTA_TFA | NUMBER | Monto de multa TFA |
 | ESTADO_MULTA | VARCHAR2 | Estado de la multa (ACTIVO, INACTIVO) |
 
-**Volumen estimado**: ~10,000+ registros · `FUENTE_REGISTRO=SISUD_VW`
+**Volumen estimado**: ~10,000+ registros · universo DW `SISUD_VW` (`ID_FUENTE`)
 
 ---
 
@@ -69,7 +69,7 @@ Vista consolidada de multas coercitivas. Staging: `STG_ORA_VW_MULTA_COERCITIVA` 
 
 #### Tabla: `gappsdb.T_MVC_MULTACOERCITIVA_MC`
 
-Staging: `STG_MYSQL_T_MVC_MULTACOERCITIVA` · Hop `pl_stage_mysql.hpl` · `FUENTE_REGISTRO=GAPPS`.
+Staging: `STG_MYSQL_T_MVC_MULTACOERCITIVA` · Hop `pl_stage_mysql.hpl` · universo `GAPPS`.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -98,7 +98,7 @@ Staging: `STG_MYSQL_T_MVC_MULTACOERCITIVA` · Hop `pl_stage_mysql.hpl` · `FUENT
 ### 3. Google Sheets — F1 familia OD (31 oficinas)
 
 Catálogo: [`docs/inputs/f1_ods_sheets.json`](../../../inputs/f1_ods_sheets.json).  
-Staging: `STG_GS2_OD_MULTAS` (+ `COD_OD`) · `scripts/stage_ods_sheets.sh` · `FUENTE_REGISTRO=OD_SHEETS`.
+Staging: `STG_GS2_OD_MULTAS` (+ `COD_OD`) · `scripts/stage_ods_sheets.sh` · universo `OD_SHEETS` (`VW_MC_OD`).
 
 | Elemento | Valor |
 |----------|--------|
@@ -146,7 +146,7 @@ Detalle columna a columna: [`01-fuentes-de-datos.md`](01-fuentes-de-datos.md) §
 ### 4. Google Sheets — F2 unidades CSEP (10)
 
 Catálogo: [`docs/inputs/f2_csep_sheets.json`](../../../inputs/f2_csep_sheets.json).  
-Staging: `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) + `STG_GS1_ETAPAS` · `scripts/stage_csep_sheets.sh` · `FUENTE_REGISTRO=CAGR`.
+Staging: `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) + `STG_GS1_ETAPAS` · `scripts/stage_csep_sheets.sh` · universo `CAGR` (`VW_MC_CSEP`).
 
 | # | `cod_unidad` | Descripción (dim órgano) |
 |---|---|---|
@@ -180,15 +180,15 @@ Staging: `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) + `STG_GS1_ETAPAS` · `scripts/s
 ```
 SISUD.VW_MULTA_COERCITIVA (F5)
     └── CUM / CAM ──────────┐
-                             ├──► amarre H9 / K5 (QA_AMARRE)
+                             ├──► MI_QA_AMARRE / MI_QA_AMARRE_DETALLE / K5
 gappsdb.T_MVC_MULTACOERCITIVA_MC (F4)
     └── TX_IDCUM / TX_IDCAM ─┘
 
 F1 Sheets OD (31)
-    └── COD_MA + COD_OD ───► MI_DIM_OD · FUENTE=OD_SHEETS
+    └── COD_MA + COD_OD ───► MI_DIM_OD · ID_FUENTE=OD_SHEETS · VW_MC_OD
 
 F2 Sheets CSEP (10)
-    └── COD_MA + COORD ────► MI_DIM_ORGANO_UNIDAD (DESCRIPCION) · FUENTE=CAGR
+    └── COD_MA + COORD ────► MI_DIM_ORGANO_UNIDAD (DESCRIPCION) · ID_FUENTE=CAGR · VW_MC_CSEP
     └── COD_PROY_MC ───────► MI_DET_ETAPA_MC
 ```
 

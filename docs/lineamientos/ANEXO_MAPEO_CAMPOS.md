@@ -20,19 +20,19 @@
 | F4 | MySQL gapps | `T_MVC_MULTACOERCITIVA_MC` → `STG_MYSQL_*` | 17 |
 | F5 | Oracle SISUD | `VW_MULTA_COERCITIVA` → `STG_ORA_*` | 13 |
 
-| `FUENTE_REGISTRO` | Significado |
+| `CODIGO` (`MI_DIM_FUENTE_REGISTRO`) | Significado |
 |---|---|
 | `OD_SHEETS` | Fila procedente de F1 (Sheets OD) |
 | `CAGR` | Fila procedente de F2 (Sheets CSEP; unidad en `COORD` / `COD_UNIDAD`) |
 | `GAPPS` | F4 MySQL |
 | `SISUD_VW` | F5 Oracle |
 
-Dimensión formal: `MI_DIM_FUENTE_REGISTRO` (`ID_FUENTE` en el hecho y en etapas). El VARCHAR `FUENTE_REGISTRO` se mantiene alineado a `CODIGO`.
+Dimensión formal: `MI_DIM_FUENTE_REGISTRO` (`ID_FUENTE` en el hecho y en etapas). El VARCHAR degenerado `FUENTE_REGISTRO` **se eliminó** del hecho; usar `CODIGO` vía join o vistas `VW_MC_*`.
 
 > Excel OD / CAGR históricos viven en `input_excel/.../legacy/`. Solo el DIC (`DIC_TABLAS` / `DIC_VARIABLES`) se stagea aún desde el Excel CAGR legacy (`pl_stage_excel.hpl`).
 
 **Regla general de prioridad cuando dos fuentes traen el mismo dato:** se prioriza la fuente
-más confiable/reciente y se conserva el resto como respaldo con su `FUENTE_REGISTRO` visible;
+más confiable/reciente y se conserva el resto como respaldo con su `ID_FUENTE` visible;
 nunca se descarta el dato divergente, se registra como hallazgo de calidad (R… según regla
 aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 
@@ -54,6 +54,7 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | `ID_ORGANO` | F2 `COORD` (o `COD_UNIDAD` inyectado) | sigla final de `NUMERO_EXPEDIENTE` | lookup `MI_DIM_ORGANO_UNIDAD.SIGLA`; `-1` si no resuelve |
 | `ID_OD` | F1 `COD_OD` (inyectado desde catálogo OD) | — | lookup `MI_DIM_OD`; `-1` si no aplica (filas F2/F4/F5) |
 | `ID_FUENTE` | `FUENTE_ORIGEN` → código | catálogo `MI_DIM_FUENTE_REGISTRO` | lookup por `CODIGO`; alias `LAM_OD`/`OD_EXCEL` → `OD_SHEETS` |
+| `ID_TIEMPO_FIRMA` | `F_FIRMA_RES_MC` | `MI_DIM_TIEMPO` | `AAAAMMDD`; `-1` si no hay fecha |
 | `ID_MATERIA` | catálogo semilla | — | lookup en `MI_DIM_MATERIA_SUBSECTOR`; `-1` si no resuelve |
 | `ID_ESTADO_RESOLUCION` | F5 `ESTADO_RESOLUCION` | — | homologar contra `MI_DIM_ESTADO` (`TIPO_ESTADO='RESOLUCION'`) |
 | `ID_ESTADO_MULTA` | F1/F2 `ESTADO_MC` | F5 `ESTADO_MULTA`; F4 `FG_ESTADOMULTA` (conciliar) | homologar contra `MI_DIM_ESTADO` (`TIPO_ESTADO='MULTA'`) |
@@ -94,7 +95,6 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | `FLAG_PAGADA` | calculado | `1` si `ID_ESTADO_PAGO` homologa a grupo `CUMPLIDO` / `PAGADO` | — |
 | `FLAG_EJECUCION_FORZOSA` | calculado | `1` si `MEMO_EF` no es nulo | — |
 | `FLAG_CUMPLIO_VERIF` | calculado | `1` si `F_VERIF_POST_MC` no es nulo | — |
-| `FUENTE_REGISTRO` | asignado por el proceso | `'OD_SHEETS'` (F1), `'CAGR'` (F2), `'GAPPS'` / `'SISUD_VW'` (F4/F5). Igual a `MI_DIM_FUENTE_REGISTRO.CODIGO` | — |
 | `FECHA_CARGA` | asignado por el proceso | timestamp al construir el hecho | — |
 
 ---
@@ -121,7 +121,6 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | `CONFORMIDAD` | `CONFORMIDAD_MC` | ninguna |
 | `DIAS_ELABORACION` | `T_ELAB_MC` | validar/recalcular con `MI_DIM_TIEMPO.ES_DIA_HABIL` si se requiere precisión |
 | `ID_FUENTE` | asignado | lookup `CAGR` en `MI_DIM_FUENTE_REGISTRO` |
-| `FUENTE_REGISTRO` | asignado | `'CAGR'` constante |
 | `FECHA_CARGA` | asignado | timestamp al insertar |
 
 ---
@@ -140,10 +139,12 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 
 | Columna | Origen | Transformación |
 |---|---|---|
-| `SIGLA` | F2 `COORD` / `COD_UNIDAD` / catálogo `f2_csep_sheets.json` | se siembran las 10 unidades CSEP activas; también siglas vistas en expedientes |
+| `SIGLA` | F2 `COORD` / `COD_UNIDAD` / catálogo `f2_csep_sheets.json` | **solo** las 10 unidades CSEP activas (+ ND); no se agregan siglas de expediente a la dim |
 | `NOMBRE` | igual a `SIGLA` | código corto (compat) |
 | `DESCRIPCION` | `f2_csep_sheets.json` → `nombre` | nombre largo (ej. `CMIN` → `Minería`); si no hay match → `SIGLA` |
-| `TIPO` | inferido de la sigla | `DIRECCION`/`COORDINACION`/`ODES`/`OD` / `NO ESPECIFICADO` |
+| `TIPO` | inferido de la sigla | CSEP (`C*`/`UF*`) → `COORDINACION` |
+
+Lookup en el hecho: `COORD` → `COD_UNIDAD` → último token de `NUMERO_EXPEDIENTE` **solo si** es una SIGLA CSEP conocida; si no → `ID_ORGANO = -1`.
 
 ### `MI_DIM_OD`
 
@@ -156,7 +157,13 @@ aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
 | Columna | Origen |
 |---|---|
 | `CODIGO` / `NOMBRE` / `FAMILIA_TDR` / `DESCRIPCION` | semillas en `constantes.SEMILLAS_FUENTE_REGISTRO` (`OD_SHEETS`, `CAGR`, `GAPPS`, `SISUD_VW`, legacy `OD_EXCEL`) |
-| `ID_FUENTE` en hecho/etapas | lookup por `CODIGO` (= `FUENTE_REGISTRO`) |
+| `ID_FUENTE` en hecho/etapas | lookup por `CODIGO` (= valor de `FUENTE_ORIGEN` normalizado) |
+
+### `MI_DIM_TIEMPO` (role-playing en el hecho)
+
+| Columna hecho | Uso |
+|---|---|
+| `ID_TIEMPO_FIRMA` | Día de `F_FIRMA_RES_MC` para cortes Q/año sin `EXTRACT` |
 
 ### `MI_DIM_MATERIA_SUBSECTOR`
 
@@ -188,12 +195,29 @@ Generada por script de calendario (no proviene de ninguna fuente). `ES_FERIADO` 
 
 ---
 
-## 5. Tabla `MI_DQ_HALLAZGO` — qué la alimenta
+## 5. Calidad y amarre
+
+### `MI_DQ_HALLAZGO`
 
 Cada regla (R01–R05, ver `PROPUESTA_ADAPTADA_ETL.md` sección 4) genera una fila por cada
 registro no conforme, con `REGISTRO_ID` igual a la clave natural del registro afectado
-(`COD_MA`, `CUM+CAM`, o `NUMERO_EXPEDIENTE` según el caso) para poder rastrearlo hasta la
-fuente original sin necesidad de una FK dura.
+(`COD_MA`, `CUM+CAM`, o `NUMERO_EXPEDIENTE` según el caso).
+
+### `MI_QA_AMARRE` / `MI_QA_AMARRE_DETALLE`
+
+| Tabla | Contenido |
+|---|---|
+| `MI_QA_AMARRE` | Resumen por puente H9 (`PCT_MATCH_IZQ`, etc.); alimenta K5 |
+| `MI_QA_AMARRE_DETALLE` | Claves sin match (`SOLO_IZQ` / `SOLO_DER`, `CLAVE`, `MOTIVO`) |
+
+### Vistas de reporte
+
+| Vista | Universo (`CODIGO`) |
+|---|---|
+| `VW_MC_CSEP` | `CAGR` |
+| `VW_MC_OD` | `OD_SHEETS` |
+| `VW_MC_SISUD` | `SISUD_VW` |
+| `VW_MC_GAPPS` | `GAPPS` |
 
 ---
 

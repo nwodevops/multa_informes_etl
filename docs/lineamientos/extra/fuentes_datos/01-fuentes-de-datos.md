@@ -21,7 +21,8 @@
 | **F4** | `gappsdb.T_MVC_MULTACOERCITIVA_MC` | MySQL GAPP | Tabla transaccional MC | `STG_MYSQL_T_MVC_MULTACOERCITIVA` |
 | **F5** | `SISUD.VW_MULTA_COERCITIVA` | Oracle SISUD | Vista institucional MC | `STG_ORA_VW_MULTA_COERCITIVA` |
 
-> **`FUENTE_REGISTRO`:** F1 → `OD_SHEETS`; F2 → `CAGR` (unidad en `COORD` / `MI_DIM_ORGANO_UNIDAD.SIGLA` + `DESCRIPCION` desde catálogo).  
+> **Linaje en DW:** `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO.CODIGO` (F1=`OD_SHEETS`, F2=`CAGR`, F4=`GAPPS`, F5=`SISUD_VW`). El VARCHAR `FUENTE_REGISTRO` ya no existe en el hecho. Reportes: vistas `VW_MC_*`.  
+> Unidad F2: `COORD` / `MI_DIM_ORGANO_UNIDAD.SIGLA` + `DESCRIPCION` desde catálogo (solo 10 CSEP + ND).  
 > **Auth Google:** `client_secret.json` (gitignored); cada spreadsheet compartido con el service account.
 
 > **Nota de volumen:** los conteos de muestra del TDR son históricos. En producción el volumen depende de los sheets vivos (p. ej. CMIN/CHID/CRES concentran la mayor parte de F2).
@@ -281,7 +282,7 @@ resolución de MC** (un expediente puede repetirse con varias medidas y CUM).
 | SIGED | `SIGED` | `SIGED`, `EXP_SIGED_DOC` | `TX_EXP_SIGED_DOC` | `NUMERO_REGISTRO` | — | `SIGED` |
 | Proyecto / etapas | — | `COD_PROY_MC`, hoja `2) Etapas` | `TX_PASOACTUAL` | — | — | `MI_DET_ETAPA_MC` |
 | Territorio / unidad | `COD_OD` (inyectado) → `MI_DIM_OD` | `COORD` / `COD_UNIDAD` → `MI_DIM_ORGANO_UNIDAD` (+ `DESCRIPCION`) | — | — | — | dims órgano / OD |
-| `FUENTE_REGISTRO` | `OD_SHEETS` | `CAGR` | `GAPPS` | `SISUD_VW` | — | `MI_FACT_MULTA_COERCITIVA` |
+| Universo (`CODIGO`) | `OD_SHEETS` | `CAGR` | `GAPPS` | `SISUD_VW` | — | `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO` / `VW_MC_*` |
 
 ---
 
@@ -297,7 +298,7 @@ resolución de MC** (un expediente puede repetirse con varias medidas y CUM).
 | H6 | Catálogos / IMPORTRANGE históricos | Plantillas Excel con `#REF!` (no stageados) | UIT desde MEF; DIC desde Excel legacy |
 | H7 | Dos layouts de registro de MC | F1 (32 col OD) vs F2 (48 col CSEP) | Integración en `DF_MULTAS` con `FUENTE_ORIGEN` |
 | H8 | Estados como texto libre | `INCUMPLIDO` (F1/F2), `ACTIVO`/`INACTIVO` (F5), `1` (F4) | `MI_DIM_ESTADO` con homologación |
-| H9 | Claves de cruce sin correspondencia total | `CUM`/`CAM` (F4↔F5), `COD_MA` (F1↔F2) | `QA_AMARRE` / K5 |
+| H9 | Claves de cruce sin correspondencia total | `CUM`/`CAM` (F4↔F5), `COD_MA` (F1↔F2) | `MI_QA_AMARRE` + `MI_QA_AMARRE_DETALLE` / K5 |
 
 ---
 

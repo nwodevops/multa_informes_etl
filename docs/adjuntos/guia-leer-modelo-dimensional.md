@@ -92,8 +92,9 @@ El ETL (Hop + Python) es el “traductor”. Tú, como lector del modelo, trabaj
 Columnas útiles para orientarte:
 
 - **Identidad / cruce:** `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE`, `N_RES_MC`
-- **De qué fuente vino la fila:** `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO` (el texto `FUENTE_REGISTRO` es el mismo código, por comodidad)
+- **De qué fuente vino la fila:** `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO` (usar vistas `VW_MC_*` por universo)
 - **Territorio:** `ID_ORGANO` (unidades CSEP) y `ID_OD` (oficinas OD)
+- **Calendario firma:** `ID_TIEMPO_FIRMA` → `MI_DIM_TIEMPO` (además de `F_FIRMA_RES_MC` DATE)
 - **Montos:** `MONTO_UIT`, `MONTO_S`, `MONTO_S_CALC` (recalculado con UIT)
 - **Tiempos del ciclo:** `F_NOTIF_DCG`, `F_FIRMA_RES_MC`, `F_VENC_MC`, … y `DIAS_*`
 - **Semáforos:** `FLAG_PAGADA`, `FLAG_PRESENTO_DCG`, …
@@ -102,14 +103,14 @@ Columnas útiles para orientarte:
 
 | Tabla | Responde | Origen principal (idea) |
 |---|---|---|
-| `MI_DIM_FUENTE_REGISTRO` | ¿De qué sistema/universo vino la fila? | Semilla F1…F5 (`CODIGO` = `FUENTE_REGISTRO`) |
-| `MI_DIM_ORGANO_UNIDAD` | ¿Qué unidad CSEP? (`SIGLA`, `DESCRIPCION`) | F2 Sheets + catálogo `f2_csep_sheets.json` (`COORD` → `SIGLA`) |
+| `MI_DIM_FUENTE_REGISTRO` | ¿De qué sistema/universo vino la fila? | Semilla F1…F5 (`CODIGO`) |
+| `MI_DIM_ORGANO_UNIDAD` | ¿Qué unidad CSEP? (`SIGLA`, `DESCRIPCION`) | Solo las 10 del catálogo `f2_csep_sheets.json` (+ ND). Lookup hecho: `COORD` / `COD_UNIDAD` (o último token de expediente si es CSEP) |
 | `MI_DIM_OD` | ¿Qué oficina desconcentrada? | F1 Sheets OD (`COD_OD`) |
 | `MI_DIM_ADMINISTRADO` | ¿Quién es el administrado? | Sobre todo nombres de F5 |
 | `MI_DIM_ESTADO` | ¿En qué estado? (varios roles) | Textos homologados de F1/F2/F4/F5 |
 | `MI_DIM_PARAMETRO_UIT` | ¿Cuánto valía la UIT ese año? | Catálogo MEF en el ETL |
 | `MI_DIM_MATERIA_SUBSECTOR` | ¿Qué materia? | Semilla; a menudo `-1` si no hay dato |
-| `MI_DIM_TIEMPO` | Calendario día a día | Generada; no es FK obligatoria del hecho |
+| `MI_DIM_TIEMPO` | Calendario día a día | Generada; FK role-playing `ID_TIEMPO_FIRMA` |
 
 #### Catálogo `MI_DIM_FUENTE_REGISTRO` (semillas)
 
@@ -128,6 +129,7 @@ Columnas útiles para orientarte:
 |---|---|---|
 | `MI_DET_ETAPA_MC` | Una etapa del flujo interno de un proyecto MC | Drill-down de F2 (elaboración, revisión, …); `ID_FUENTE` = CAGR |
 | `MI_DQ_HALLAZGO` | Un defecto detectado en un registro | Auditar calidad; no “borra” la multa |
+| `MI_QA_AMARRE` / `MI_QA_AMARRE_DETALLE` | Resumen y claves que no amarran | Auditoría H9 / CSEP (además de K5) |
 | `MI_INDICADOR_RESULTADO` | Un KPI ya agregado (K1–K5) | Tableros / respuesta rápida sin recalcular |
 
 ### Clave especial: `-1`
@@ -143,14 +145,14 @@ Es la duda más frecuente al abrir el modelo:
 
 | Pregunta | Tabla / FK | Cómo filtrar |
 |---|---|---|
-| ¿Unidad sectorial CSEP? (Minería, Residuos, …) | `MI_DIM_ORGANO_UNIDAD` vía `ID_ORGANO` | `ID_FUENTE` → `CAGR` (o `FUENTE_REGISTRO = 'CAGR'`) |
-| ¿Oficina desconcentrada OD? (Ica, Puno, …) | `MI_DIM_OD` vía `ID_OD` | `ID_FUENTE` → `OD_SHEETS` |
+| ¿Unidad sectorial CSEP? (Minería, Residuos, …) | `MI_DIM_ORGANO_UNIDAD` vía `ID_ORGANO` | Vista `VW_MC_CSEP` o `fu.CODIGO = 'CAGR'` |
+| ¿Oficina desconcentrada OD? (Ica, Puno, …) | `MI_DIM_OD` vía `ID_OD` | Vista `VW_MC_OD` |
 
 Una multa F2 suele tener órgano CSEP y `ID_OD = -1`.  
 Una multa F1 suele tener OD y `ID_ORGANO` no resuelto (o solo por expediente).  
-Por eso **acota siempre por fuente** (`ID_FUENTE` / `FUENTE_REGISTRO`) cuando compares mundos.
+Por eso **acota siempre por fuente** (`ID_FUENTE` / vistas `VW_MC_*`) cuando compares mundos.
 
-> **Nota:** `MI_DIM_ORGANO_UNIDAD` también acumula siglas derivadas de expedientes (no solo las 10 CSEP). Para reportes CSEP limpios, filtra `FUENTE_REGISTRO = 'CAGR'` y cruza con `DESCRIPCION` del catálogo F2.
+> **Nota:** `MI_DIM_ORGANO_UNIDAD` tiene **solo** las 10 unidades CSEP (+ ND). No se hincha con siglas de expediente. Filas sin `COORD`/`COD_UNIDAD` reconocido quedan en `ID_ORGANO = -1`.
 
 ---
 
@@ -158,11 +160,20 @@ Por eso **acota siempre por fuente** (`ID_FUENTE` / `FUENTE_REGISTRO`) cuando co
 
 ### Paso a paso
 
-1. **Define el grano:** “quiero multas” → `MI_FACT_MULTA_COERCITIVA`.
-2. **Acota la fuente:** join a `MI_DIM_FUENTE_REGISTRO` (o filtro `FUENTE_REGISTRO`).
+1. **Define el grano:** “quiero multas” → `MI_FACT_MULTA_COERCITIVA` (o una vista `VW_MC_*`).
+2. **Acota la fuente:** preferir `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` / `VW_MC_GAPPS` (evita sumar 1801 filas “como un solo universo”).
 3. **Elige el corte territorial:** unidad CSEP → `MI_DIM_ORGANO_UNIDAD`; OD → `MI_DIM_OD`.
 4. **Elige la medida:** `COUNT(*)`, `SUM(MONTO_UIT)`, `AVG(DIAS_NOTIF_A_FIRMA)`, etc.
-5. Si el número “no cuadra” entre sistemas: mira **amarre / calidad** (`MI_DQ_HALLAZGO`, KPI K5), no asumas un INNER JOIN mágico entre fuentes.
+5. Si el número “no cuadra” entre sistemas: mira **`MI_QA_AMARRE`** / **`MI_QA_AMARRE_DETALLE`** y KPI K5 — no fuerces INNER JOIN.
+
+### Vistas por universo (disciplina de reporte)
+
+```sql
+SELECT COUNT(*) FROM APP.VW_MC_CSEP;   -- solo F2
+SELECT COUNT(*) FROM APP.VW_MC_OD;     -- solo F1
+SELECT COUNT(*) FROM APP.VW_MC_SISUD;  -- solo F5
+SELECT COUNT(*) FROM APP.VW_MC_GAPPS;  -- solo F4
+```
 
 ### Patrón SQL (esqueleto)
 
@@ -189,14 +200,31 @@ SELECT
     o.SIGLA,
     o.DESCRIPCION,
     COUNT(*) AS n_multas,
-    SUM(f.MONTO_UIT) AS suma_uit
-FROM APP.MI_FACT_MULTA_COERCITIVA f
-JOIN APP.MI_DIM_FUENTE_REGISTRO fu
-  ON fu.ID_FUENTE = f.ID_FUENTE AND fu.CODIGO = 'CAGR'
+    SUM(v.MONTO_UIT) AS suma_uit
+FROM APP.VW_MC_CSEP v
 LEFT JOIN APP.MI_DIM_ORGANO_UNIDAD o
-  ON o.ID_ORGANO = f.ID_ORGANO
+  ON o.ID_ORGANO = v.ID_ORGANO
 GROUP BY o.SIGLA, o.DESCRIPCION
 ORDER BY n_multas DESC;
+```
+
+Multas firmadas en un trimestre (vía `ID_TIEMPO_FIRMA`):
+
+```sql
+SELECT t.ANIO, t.TRIMESTRE, COUNT(*) AS n
+FROM APP.MI_FACT_MULTA_COERCITIVA f
+JOIN APP.MI_DIM_TIEMPO t ON t.ID_TIEMPO = f.ID_TIEMPO_FIRMA
+WHERE t.ANIO = 2024 AND t.TRIMESTRE = 3
+GROUP BY t.ANIO, t.TRIMESTRE;
+```
+
+No-amarre H9 (detalle):
+
+```sql
+SELECT PUENTE, LADO, CLAVE, MOTIVO
+FROM APP.MI_QA_AMARRE_DETALLE
+WHERE PUENTE = 'CUM_SISUD_vs_GAPP'
+FETCH FIRST 100 ROWS ONLY;
 ```
 
 Multas por oficina OD (F1):
@@ -206,11 +234,9 @@ SELECT
     d.COD_OD,
     d.NOMBRE,
     COUNT(*) AS n_multas
-FROM APP.MI_FACT_MULTA_COERCITIVA f
-JOIN APP.MI_DIM_FUENTE_REGISTRO fu
-  ON fu.ID_FUENTE = f.ID_FUENTE AND fu.CODIGO = 'OD_SHEETS'
+FROM APP.VW_MC_OD v
 LEFT JOIN APP.MI_DIM_OD d
-  ON d.ID_OD = f.ID_OD
+  ON d.ID_OD = v.ID_OD
 GROUP BY d.COD_OD, d.NOMBRE
 ORDER BY 1;
 ```
@@ -221,7 +247,7 @@ Buscar una multa concreta:
 SELECT f.*, fu.NOMBRE AS FUENTE_NOMBRE
 FROM APP.MI_FACT_MULTA_COERCITIVA f
 LEFT JOIN APP.MI_DIM_FUENTE_REGISTRO fu ON fu.ID_FUENTE = f.ID_FUENTE
-WHERE f.COD_MA = :cod_ma          -- o CUM / CAM / NUMERO_EXPEDIENTE
+WHERE f.COD_MA = :cod_ma
 ;
 ```
 
@@ -250,12 +276,12 @@ Mira `MI_INDICADOR_RESULTADO` (códigos K1…K5) antes de reinventar el cálculo
 
 ## 7. De dónde “nacen” los datos (vista rápida)
 
-| `CODIGO` / `FUENTE_REGISTRO` | Origen | Staging Hop |
-|---|---|---|
-| `OD_SHEETS` | 31 Google Sheets OD | `STG_GS2_OD_MULTAS` |
-| `CAGR` | 10 Google Sheets CSEP | `STG_GS1_CSEP_MULTAS` (+ etapas) |
-| `GAPPS` | MySQL GAPP | `STG_MYSQL_*` |
-| `SISUD_VW` | Vista Oracle SISUD | `STG_ORA_*` |
+| `CODIGO` (dim fuente) | Origen | Staging Hop | Vista reporte |
+|---|---|---|---|
+| `OD_SHEETS` | 31 Google Sheets OD | `STG_GS2_OD_MULTAS` | `VW_MC_OD` |
+| `CAGR` | 10 Google Sheets CSEP | `STG_GS1_CSEP_MULTAS` (+ etapas) | `VW_MC_CSEP` |
+| `GAPPS` | MySQL GAPP | `STG_MYSQL_*` | `VW_MC_GAPPS` |
+| `SISUD_VW` | Vista Oracle SISUD | `STG_ORA_*` | `VW_MC_SISUD` |
 
 Inventario de campos crudos: carpeta [`../lineamientos/extra/fuentes_datos/`](../lineamientos/extra/fuentes_datos/).
 
@@ -275,7 +301,8 @@ Cifras orientativas tras `./init.sh` (esquema `APP`). Cambian con cada corrida.
 | `MI_DET_ETAPA_MC` | ~2 070 |
 | `MI_DIM_FUENTE_REGISTRO` | 6 (semilla) |
 | `MI_DIM_OD` | 33 |
-| `MI_DIM_ORGANO_UNIDAD` | cientos (10 CSEP + siglas de expediente) |
+| `MI_DIM_ORGANO_UNIDAD` | ~11 (10 CSEP + ND) |
+| `MI_QA_AMARRE_DETALLE` | ~3 078 (claves sin match) |
 | `MI_DQ_HALLAZGO` | ~200 |
 | `MI_INDICADOR_RESULTADO` | ~690 |
 
@@ -283,14 +310,15 @@ Detalle y diagramas: [`modelo-kimball.md`](modelo-kimball.md) §7.
 
 ---
 
-## 9. Errores típicos al leer el modelo (primera vez)
+## 9. Errores típicos y anti-patrones (no hacer)
 
-1. **Sumar F1+F2+F4+F5 como si fueran el mismo universo** sin mirar `ID_FUENTE` / `FUENTE_REGISTRO` → doble conteo o mundos distintos.
+1. **Sumar F1+F2+F4+F5** sin acotar por `VW_MC_*` / `ID_FUENTE` → doble conteo.
 2. **Usar `ID_ORGANO` para ODs** (o al revés) → territorio incorrecto.
-3. **INNER JOIN entre fuentes** esperando 100 % de match → las claves no amarran completo; el diseño **mide** el amarre (H9 / K5).
-4. **Ignorar `-1`** → “faltan” atribuciones que en realidad son “no especificado”.
-5. **Creer que staging `STG_*` es el DW** → el destino analítico son las tablas `MI_*` en Oracle.
-6. **Contar todas las filas de `MI_DIM_ORGANO_UNIDAD` como “unidades CSEP”** → la dim también tiene siglas de expediente; las 10 CSEP están en el catálogo F2 / `DESCRIPCION`.
+3. **INNER JOIN entre fuentes “para que cuadre”** → el diseño mide amarre (H9 / `MI_QA_AMARRE_DETALLE` / K5).
+4. **Ignorar `-1`** → “faltan” atribuciones que son “no especificado”.
+5. **Creer que staging `STG_*` es el DW** → destino analítico = `MI_*` / `VW_MC_*`.
+6. **Volver a meter F3 (informes)** en este DW → fuera de alcance.
+7. **Fusionar OD y órgano en una sola dim** → son territorios distintos (F1 vs F2).
 
 ---
 
@@ -298,8 +326,8 @@ Detalle y diagramas: [`modelo-kimball.md`](modelo-kimball.md) §7.
 
 1. Este documento (mapa mental).
 2. [`modelo-kimball.md`](modelo-kimball.md) — diagrama de estrella, KPIs y volúmenes.
-3. DDL [`../lineamientos/ddl/01_dimensiones.sql`](../lineamientos/ddl/01_dimensiones.sql) y [`02_hechos.sql`](../lineamientos/ddl/02_hechos.sql) — columnas exactas.
+3. DDL [`../lineamientos/ddl/`](../lineamientos/ddl/) — dims, hechos, bitácora, vistas `06_vistas.sql`.
 4. [`../lineamientos/ANEXO_MAPEO_CAMPOS.md`](../lineamientos/ANEXO_MAPEO_CAMPOS.md) — origen campo a campo.
-5. Corrida real en Oracle: conteos por `MI_DIM_FUENTE_REGISTRO` y por `SIGLA` / `COD_OD`.
+5. Corrida real: `VW_MC_*`, `MI_QA_AMARRE_DETALLE`, conteos por `SIGLA` / `COD_OD`.
 
 Con eso ya puedes **navegar** el warehouse sin haber visto Kimball antes: hecho en el centro, dimensiones para cortar, fuente etiquetada, y calidad aparte.

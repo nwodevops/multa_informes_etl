@@ -19,7 +19,7 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) secciones 5
 | K2 | `PROM_DIAS_NOTIF_FIRMA` | idem (solo casos con días válidos) |
 | K3 | `RATIO_COBRANZA_SOLES`, `RATIO_COBRANZA_UIT` | idem (multas con resolución) |
 | K4 | `TASA_VERIF_POST_MC` | idem |
-| K5 | `PCT_CONFORME`, `PCT_AMARRE` | global / por regla R01–R05 / por puente H9 |
+| K5 | `PCT_CONFORME`, `PCT_AMARRE` | global / por regla R01–R05 / por puente H9 (detalle en `MI_QA_AMARRE_DETALLE`) |
 
 Entrada: hechos y dataframes post-calidad en memoria (no re-lectura Oracle).
 
