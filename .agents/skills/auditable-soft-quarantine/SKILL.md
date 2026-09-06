@@ -3,7 +3,7 @@ name: auditable-soft-quarantine
 description: >-
   Cuarentena blanda para ETLs auditables: defectos se marcan (FG_CONFORME,
   MI_DQ_HALLAZGO) en lugar de descartarse porque son parte del entregable. Reglas
-  R01–R05, QA_AMARRE entre fuentes sin llave conformada, conteos por capa.
+  R01–R05, MI_QA_AMARRE(+DETALLE) entre fuentes sin llave conformada, conteos por capa.
   Usar en consultorías/TDR donde hay que defender cifras ante un tercero, al
   diseñar calidad de datos o indicadores K5 de amarre.
 ---
@@ -18,7 +18,7 @@ description: >-
 |---|---|
 | ¿Los defectos son hallazgo entregable? | Cuarentena blanda |
 | ¿Hay que defender cifras ante un tercero? | `MI_DQ_HALLAZGO` materializado |
-| ¿Varias fuentes sin llave única? | `QA_AMARRE` + KPI de amarre (K5), no INNER JOIN forzado |
+| ¿Varias fuentes sin llave única? | `MI_QA_AMARRE` + `MI_QA_AMARRE_DETALLE` + KPI K5, no INNER JOIN forzado |
 
 Si solo hay que limpiar datos y nadie audita → ETL clásico con rechazo es más simple.
 
@@ -56,10 +56,11 @@ Adaptar descripciones al dominio; mantener códigos estables para K5:
 
 Implementación: `aplicar_calidad()` devuelve dataframes **sin drop** + lista/`DataFrame` de hallazgos.
 
-## QA_AMARRE (fuentes sin llave conformada)
+## MI_QA_AMARRE (fuentes sin llave conformada)
 
-- Comparar conjuntos de claves candidatas (expediente, CUM, COD_PROY_MC…).
-- Campos: `PUENTE`, `N_IZQ`, `N_DER`, `N_MATCH`, `PCT_MATCH_IZQ`.
+- Comparar conjuntos de claves candidatas (expediente, CUM, COD_MA…).
+- Resumen: `PUENTE`, `N_IZQ`, `N_DER`, `N_MATCH`, `PCT_MATCH_IZQ` → `MI_QA_AMARRE`.
+- Detalle usable: `LADO` (`SOLO_IZQ`/`SOLO_DER`), `CLAVE`, `MOTIVO` → `MI_QA_AMARRE_DETALLE`.
 - **No** usar match bajo como filtro de carga; solo diagnóstico + K5.
 
 ## Invariantes a loguear (no bloqueantes)
@@ -81,6 +82,6 @@ Una rama por **fase de servicio** del contrato (fase-1, fase-2, fase-3), no carp
 
 ## Referencia en código
 
-- `logica/dwh/calidad.py` — reglas y `QA_AMARRE`
+- `logica/dwh/calidad.py` — reglas y `MI_QA_AMARRE`(+`_DETALLE`)
 - `logica/dwh/indicadores.py` — K5 `PCT_CONFORME`, `PCT_AMARRE`
-- `docs/lineamientos/ddl/03_bitacora.sql` — `MI_DQ_HALLAZGO`
+- `docs/lineamientos/ddl/03_bitacora.sql` — `MI_DQ_HALLAZGO`, `MI_QA_AMARRE*`

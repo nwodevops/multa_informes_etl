@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import pandas as pd
 
-from .constantes import FUENTE_REGISTRO, ID_CARGA
+from .constantes import F1_OD_LECTURAS, FUENTE_REGISTRO, ID_CARGA
 from .homologacion import aplicar_homologacion
 
 # Columnas canónicas pre-FACT_MULTA (ANEXO_MAPEO_CAMPOS.md)
 COLS_MULTAS = [
     "ID_CARGA",
     "FUENTE_ORIGEN",
+    "COD_OD",
     "COD_MA",
     "COD_PROY_MC",
     "NUMERO_EXPEDIENTE",
@@ -79,7 +80,7 @@ def _a_canonico(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     return out[cols]
 
 
-def _integrar_gs2(gs2: pd.DataFrame) -> pd.DataFrame:
+def _integrar_gs2(gs2: pd.DataFrame, cod_od: str | None = None) -> pd.DataFrame:
     h = aplicar_homologacion(gs2, FUENTE_REGISTRO["GS2"])
     m = {
         "FN_MC": "F_NOTIF_DCG",
@@ -91,6 +92,13 @@ def _integrar_gs2(gs2: pd.DataFrame) -> pd.DataFrame:
         "EXP_INF_INCUMP": "NUMERO_EXPEDIENTE",
     }
     h = _renombrar(h, m)
+    if cod_od:
+        h["COD_OD"] = cod_od
+    elif "COD_OD" in gs2.columns:
+        h["COD_OD"] = gs2["COD_OD"].values
+    elif "COD_OD" not in h.columns:
+        h["COD_OD"] = pd.NA
+    h["FUENTE_ORIGEN"] = FUENTE_REGISTRO["GS2"]
     return _a_canonico(h, COLS_MULTAS)
 
 
@@ -104,10 +112,16 @@ def _integrar_gs1(gs1: pd.DataFrame) -> pd.DataFrame:
         "AMERIT_MC": "AMERITA_MC",
         "REQ_VERIF_CAMPO": "REQUIERE_VERIF_CAMPO",
         "EXP_INF_INCUMP": "NUMERO_EXPEDIENTE",
+        "ADM": "ADMINISTRADO",
     }
     h = _renombrar(h, m)
-    if "COORD" not in h.columns and "COORD" in gs1.columns:
+    if "COORD" in gs1.columns:
         h["COORD"] = gs1["COORD"].values
+    # Si COORD vacío, rellenar con COD_UNIDAD del catálogo F2 (inyectado en STG).
+    if "COD_UNIDAD" in gs1.columns:
+        coord = h["COORD"] if "COORD" in h.columns else pd.Series(pd.NA, index=h.index)
+        empty = coord.isna() | (coord.astype("string").str.strip() == "")
+        h["COORD"] = coord.where(~empty, gs1["COD_UNIDAD"].astype("string").values)
     return _a_canonico(h, COLS_MULTAS)
 
 
@@ -165,13 +179,23 @@ def integrar(
     etapas: pd.DataFrame,
     ora: pd.DataFrame,
     mysql: pd.DataFrame,
+    gs2_ods: dict[str, pd.DataFrame] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    # GS2 unificado trae COD_OD por fila (STG_GS2_OD_MULTAS).
     partes = [
-        _integrar_gs2(gs2),
+        _integrar_gs2(gs2, None),
         _integrar_gs1(gs1),
         _integrar_mysql(mysql),
         _integrar_ora(ora),
     ]
+    extra = gs2_ods or {}
+    for clave, df in extra.items():
+        if df is None or df.empty:
+            continue
+        cod = F1_OD_LECTURAS.get(clave)
+        if cod == "*":
+            cod = None
+        partes.append(_integrar_gs2(df, cod))
     df_multas = pd.concat(partes, ignore_index=True, sort=False)
     df_etapas = _integrar_etapas(etapas)
     return df_multas, df_etapas

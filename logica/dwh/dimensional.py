@@ -8,8 +8,8 @@ from datetime import date, datetime
 
 import pandas as pd
 
-from .catalogos import MI_DIM_ESTADO as SEMILLAS_ESTADO, MI_DIM_PARAMETRO_UIT as UIT_MEF
-from .constantes import ID_CARGA
+from .catalogos import MI_DIM_ESTADO as SEMILLAS_ESTADO, MI_DIM_PARAMETRO_UIT as UIT_MEF, ODS_OEFA
+from .constantes import ID_CARGA, SEMILLAS_FUENTE_REGISTRO
 from .homologacion import homologar_estado, vacio
 
 ND = -1
@@ -39,13 +39,15 @@ def _norm_text(s) -> str:
     return re.sub(r"\s+", " ", t)
 
 
-def _sigla_expediente(exp) -> str | None:
+def _sigla_csep_desde_expediente(exp, csep_siglas: set[str]) -> str | None:
+    """Último segmento del expediente solo si es una unidad CSEP conocida (no hincha la dim)."""
     if vacio(exp):
         return None
     parts = str(exp).strip().upper().split("-")
-    if len(parts) >= 2:
-        return "-".join(parts[-2:])
-    return str(exp).strip().upper()[:30]
+    if not parts:
+        return None
+    last = parts[-1][:30]
+    return last if last in csep_siglas else None
 
 
 def _infer_tipo_organo(sigla: str) -> str:
@@ -54,6 +56,8 @@ def _infer_tipo_organo(sigla: str) -> str:
         return "OD"
     if u.startswith("ODES"):
         return "ODES"
+    if u.startswith("UF") or u.startswith("C"):
+        return "COORDINACION"
     if "COORD" in u or "-C" in u:
         return "COORDINACION"
     if u.startswith("D"):
@@ -78,6 +82,20 @@ def _anio_fecha(v) -> int | None:
         return int(pd.Timestamp(v).year)
     except Exception:
         return None
+
+
+def _id_tiempo_fecha(v) -> int:
+    """Clave AAAAMMDD de MI_DIM_TIEMPO; -1 si no hay fecha o fuera del rango sembrado (2015–2026)."""
+    if vacio(v):
+        return ND
+    try:
+        ts = pd.Timestamp(v)
+        y, m, d = int(ts.year), int(ts.month), int(ts.day)
+        if y < 2015 or y > 2026:
+            return ND
+        return y * 10000 + m * 100 + d
+    except Exception:
+        return ND
 
 
 def _flag_si(val, esperado: str = "S") -> int:
@@ -215,38 +233,103 @@ def _build_dim_materia() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def _build_dim_organo(df_multas: pd.DataFrame) -> pd.DataFrame:
-    siglas: set[str] = set()
-    if "COORD" in df_multas.columns:
-        for v in df_multas["COORD"].dropna():
-            s = str(v).strip().upper()
-            if s:
-                siglas.add(s[:30])
-    if "NUMERO_EXPEDIENTE" in df_multas.columns:
-        for v in df_multas["NUMERO_EXPEDIENTE"].dropna():
-            s = _sigla_expediente(v)
-            if s:
-                siglas.add(s[:30])
+def _build_dim_organo(_df_multas: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Semilla fija: 10 unidades CSEP del catálogo + ND. No incorpora siglas de expediente."""
+    from pathlib import Path
+
+    desc_map: dict[str, str] = {}
+    csep_siglas: set[str] = set()
+    try:
+        from f2_csep_catalog import active_unidades, descripcion_por_sigla, load_catalog
+    except ImportError:
+        import sys
+
+        here = Path(__file__).resolve().parents[2] / "python"
+        if str(here) not in sys.path:
+            sys.path.insert(0, str(here))
+        from f2_csep_catalog import active_unidades, descripcion_por_sigla, load_catalog
+
+    try:
+        root = Path(__file__).resolve().parents[2]
+        cat = load_catalog(root)
+        desc_map = descripcion_por_sigla(cat)
+        csep_siglas = {
+            str(o["cod_unidad"]).strip().upper()[:30]
+            for o in active_unidades(cat)
+            if o.get("cod_unidad")
+        }
+    except (FileNotFoundError, ValueError, KeyError, TypeError):
+        pass
+
     rows = [
         {
             "ID_ORGANO": ND,
             "SIGLA": "ND",
             "NOMBRE": "NO ESPECIFICADO",
+            "DESCRIPCION": "NO ESPECIFICADO",
             "TIPO": "NO ESPECIFICADO",
             "ORGANO_SUPERIOR": None,
         }
     ]
-    for sigla in sorted(siglas):
+    for sigla in sorted(csep_siglas):
         rows.append(
             {
                 "ID_ORGANO": len(rows),
                 "SIGLA": sigla,
                 "NOMBRE": sigla,
+                "DESCRIPCION": desc_map.get(sigla, sigla)[:200],
                 "TIPO": _infer_tipo_organo(sigla),
                 "ORGANO_SUPERIOR": None,
             }
         )
     return pd.DataFrame(rows)
+
+
+def _build_dim_od() -> pd.DataFrame:
+    rows = [
+        {
+            "ID_OD": ND,
+            "COD_OD": "ND",
+            "NOMBRE": "NO ESPECIFICADO",
+            "TIPO": "NO ESPECIFICADO",
+            "ORDEN": None,
+        }
+    ]
+    for i, od in enumerate(ODS_OEFA, start=1):
+        rows.append(
+            {
+                "ID_OD": i,
+                "COD_OD": str(od["COD_OD"]),
+                "NOMBRE": str(od["NOMBRE"]),
+                "TIPO": str(od["TIPO"]),
+                "ORDEN": int(od["ORDEN"]),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _build_dim_fuente() -> pd.DataFrame:
+    rows = []
+    for id_f, codigo, nombre, familia, desc in SEMILLAS_FUENTE_REGISTRO:
+        rows.append(
+            {
+                "ID_FUENTE": int(id_f),
+                "CODIGO": str(codigo),
+                "NOMBRE": str(nombre),
+                "FAMILIA_TDR": str(familia),
+                "DESCRIPCION": str(desc)[:300],
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _normalizar_codigo_fuente(val) -> str:
+    fuente = str(val) if not vacio(val) else "CAGR"
+    if fuente in ("LAM_OD", "OD_EXCEL"):
+        fuente = "OD_SHEETS"
+    if fuente not in ("OD_SHEETS", "CAGR", "GAPPS", "SISUD_VW"):
+        fuente = "CAGR"
+    return fuente
 
 
 def _build_dim_administrado(df_multas: pd.DataFrame) -> pd.DataFrame:
@@ -301,6 +384,10 @@ def _lk_simple(dim: pd.DataFrame, col_key: str, col_id: str = None) -> dict[str,
         col_id = "ID_ADMINISTRADO"
     if col_key == "ANIO":
         col_id = "ID_UIT"
+    if col_key == "COD_OD":
+        col_id = "ID_OD"
+    if col_key == "CODIGO" and "ID_FUENTE" in dim.columns:
+        col_id = "ID_FUENTE"
     out = {}
     for r in dim.itertuples(index=False):
         k = getattr(r, col_key)
@@ -325,12 +412,17 @@ def _build_fact_multas(
     dim_mat: pd.DataFrame,
     dim_est: pd.DataFrame,
     dim_uit: pd.DataFrame,
+    dim_od: pd.DataFrame,
+    dim_fuente: pd.DataFrame,
 ) -> pd.DataFrame:
     lk_a = _lk_simple(dim_admin, "COD_ADMINISTRADO")
     lk_o = _lk_simple(dim_org, "SIGLA")
     lk_e = _lk_estado(dim_est)
     id_pagado = lk_e.get(("PAGO", "PAGADO"), ND)
     lk_u = _lk_simple(dim_uit, "ANIO")
+    lk_od = _lk_simple(dim_od, "COD_OD")
+    lk_f = _lk_simple(dim_fuente, "CODIGO")
+    csep_known = {k for k in lk_o if k != "ND"}
     _ = dim_mat
 
     rows = []
@@ -345,8 +437,10 @@ def _build_fact_multas(
         sigla = None
         if not vacio(r.get("COORD")):
             sigla = str(r.get("COORD")).strip().upper()[:30]
+        elif not vacio(r.get("COD_UNIDAD")):
+            sigla = str(r.get("COD_UNIDAD")).strip().upper()[:30]
         elif not vacio(r.get("NUMERO_EXPEDIENTE")):
-            sigla = _sigla_expediente(r.get("NUMERO_EXPEDIENTE"))
+            sigla = _sigla_csep_desde_expediente(r.get("NUMERO_EXPEDIENTE"), csep_known)
         id_org = lk_o.get(sigla, ND) if sigla else ND
 
         est_mul_val = r.get("ESTADO_MC") if not vacio(r.get("ESTADO_MC")) else r.get("ESTADO_MULTA")
@@ -366,9 +460,12 @@ def _build_fact_multas(
             except (TypeError, ValueError):
                 pass
 
-        fuente = str(r.get("FUENTE_ORIGEN", "CAGR"))
-        if fuente not in ("LAM_OD", "CAGR", "GAPPS", "SISUD_VW"):
-            fuente = "CAGR"
+        fuente = _normalizar_codigo_fuente(r.get("FUENTE_ORIGEN", "CAGR"))
+        id_fuente = lk_f.get(fuente, ND)
+
+        id_od = ND
+        if not vacio(r.get("COD_OD")):
+            id_od = lk_od.get(str(r.get("COD_OD")).strip().upper(), ND)
 
         rows.append(
             {
@@ -384,6 +481,9 @@ def _build_fact_multas(
                 "ID_ADMINISTRADO": id_admin,
                 "ID_ORGANO": id_org,
                 "ID_MATERIA": id_mat,
+                "ID_OD": id_od,
+                "ID_FUENTE": id_fuente,
+                "ID_TIEMPO_FIRMA": _id_tiempo_fecha(r.get("F_FIRMA_RES_MC")),
                 "ID_ESTADO_RESOLUCION": id_est_res,
                 "ID_ESTADO_MULTA": id_est_mul,
                 "ID_ESTADO_PAGO": id_est_pago,
@@ -423,19 +523,22 @@ def _build_fact_multas(
                 "FLAG_PAGADA": 1 if id_est_pago == id_pagado and id_pagado != ND else 0,
                 "FLAG_EJECUCION_FORZOSA": 0 if vacio(r.get("MEMO_EF")) else 1,
                 "FLAG_CUMPLIO_VERIF": 0 if vacio(r.get("F_VERIF_POST_MC")) else 1,
-                "FUENTE_REGISTRO": fuente,
                 "FECHA_CARGA": datetime.now(),
             }
         )
     return pd.DataFrame(rows)
 
 
-def _build_det_etapas(df: pd.DataFrame, fact_mc: pd.DataFrame) -> pd.DataFrame:
+def _build_det_etapas(
+    df: pd.DataFrame, fact_mc: pd.DataFrame, dim_fuente: pd.DataFrame
+) -> pd.DataFrame:
     lk_proy = {}
     if len(fact_mc) and "COD_PROY_MC" in fact_mc.columns:
         for r in fact_mc.itertuples(index=False):
             if not vacio(r.COD_PROY_MC):
                 lk_proy[str(r.COD_PROY_MC).strip()] = int(r.ID_MC)
+    lk_f = _lk_simple(dim_fuente, "CODIGO")
+    id_fuente_cagr = lk_f.get("CAGR", ND)
     rows = []
     for i, r in df.iterrows():
         cod = str(r.get("COD_PROY_MC")).strip() if not vacio(r.get("COD_PROY_MC")) else ""
@@ -453,7 +556,7 @@ def _build_det_etapas(df: pd.DataFrame, fact_mc: pd.DataFrame) -> pd.DataFrame:
                 "ESTADO_ETAPA": r.get("ESTADO_ETAPA"),
                 "CONFORMIDAD": r.get("CONFORMIDAD"),
                 "DIAS_ELABORACION": r.get("DIAS_ELABORACION"),
-                "FUENTE_REGISTRO": "CAGR",
+                "ID_FUENTE": id_fuente_cagr,
                 "FECHA_CARGA": datetime.now(),
             }
         )
@@ -469,18 +572,29 @@ def construir_modelo(
     dim_estado = _build_dim_estado(df_multas)
     dim_uit = _build_dim_uit()
     dim_materia = _build_dim_materia()
-    dim_organo = _build_dim_organo(df_multas)
+    dim_organo = _build_dim_organo()
+    dim_od = _build_dim_od()
+    dim_fuente = _build_dim_fuente()
     dim_admin = _build_dim_administrado(df_multas)
 
     fact_multas = _build_fact_multas(
-        df_multas, dim_admin, dim_organo, dim_materia, dim_estado, dim_uit
+        df_multas,
+        dim_admin,
+        dim_organo,
+        dim_materia,
+        dim_estado,
+        dim_uit,
+        dim_od,
+        dim_fuente,
     )
-    det_etapas = _build_det_etapas(df_etapas, fact_multas)
+    det_etapas = _build_det_etapas(df_etapas, fact_multas, dim_fuente)
 
     return {
         "MI_DIM_TIEMPO": dim_tiempo,
         "MI_DIM_ADMINISTRADO": dim_admin,
         "MI_DIM_ORGANO_UNIDAD": dim_organo,
+        "MI_DIM_OD": dim_od,
+        "MI_DIM_FUENTE_REGISTRO": dim_fuente,
         "MI_DIM_MATERIA_SUBSECTOR": dim_materia,
         "MI_DIM_ESTADO": dim_estado,
         "MI_DIM_PARAMETRO_UIT": dim_uit,

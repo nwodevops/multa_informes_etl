@@ -53,6 +53,7 @@ def _es_salida(nombre: str) -> bool:
             "MI_FACT_",
             "MI_DET_",
             "MI_DQ_",
+            "MI_QA_",
             "MI_INDICADOR_",
         )
     )
@@ -108,7 +109,7 @@ def main() -> int:
     tablas_dw = {
         k: v
         for k, v in salidas.items()
-        if k.startswith(("DIM_", "FACT_", "DET_", "MI_DIM_", "MI_FACT_", "MI_DET_"))
+        if k.startswith(("DIM_", "FACT_", "DET_", "MI_DIM_", "MI_FACT_", "MI_DET_", "MI_QA_"))
         or k in ("DQ_HALLAZGO", "MI_DQ_HALLAZGO", "INDICADOR_RESULTADO", "MI_INDICADOR_RESULTADO")
     }
     if tablas_dw:

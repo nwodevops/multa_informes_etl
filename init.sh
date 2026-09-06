@@ -55,11 +55,25 @@ step "Reset H2 + DDL STG"
 step "Python create STG (inputs.yaml -> tablas STG_*)"
 "$PY" python/create_stg.py
 
-step "Staging Excel local (Hop pl_stage_excel)"
+step "Staging Excel local DIC (Hop pl_stage_excel, legacy CAGR)"
 if [ -x "$HOP_RUN" ]; then
   "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_excel.hpl" -r local
 else
-  warn "hop-run no encontrado ($HOP_RUN); STG Excel puede quedar vacío"
+  warn "hop-run no encontrado ($HOP_RUN); STG Excel DIC puede quedar vacío"
+fi
+
+step "Staging F2 CSEP Google Sheets (unidades activas)"
+if [ -x "$HOP_RUN" ]; then
+  ./scripts/stage_csep_sheets.sh
+else
+  warn "hop-run no encontrado ($HOP_RUN); STG CSEP Sheets puede quedar vacío"
+fi
+
+step "Staging F1 ODs Google Sheets (31 oficinas)"
+if [ -x "$HOP_RUN" ]; then
+  ./scripts/stage_ods_sheets.sh
+else
+  warn "hop-run no encontrado ($HOP_RUN); STG ODs Sheets puede quedar vacío"
 fi
 
 step "Staging Oracle / MySQL (Hop directo)"
@@ -155,6 +169,65 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
         if n_col:
             sys.exit("MI_FACT_MULTA_COERCITIVA.ID_INFORME aún existe (F3 debe estar droppeada)")
         print("ID_INFORME: inexistente en MI_FACT_MULTA_COERCITIVA")
+        cur.execute(
+            """
+            SELECT COUNT(*) FROM all_tab_columns
+            WHERE owner = 'APP' AND table_name = 'MI_FACT_MULTA_COERCITIVA'
+              AND column_name = 'FUENTE_REGISTRO'
+            """
+        )
+        if cur.fetchone()[0]:
+            sys.exit("MI_FACT_MULTA_COERCITIVA.FUENTE_REGISTRO aún existe (debe deprecarse)")
+        print("FUENTE_REGISTRO VARCHAR: inexistente")
+        cur.execute(
+            """
+            SELECT COUNT(*) FROM all_tab_columns
+            WHERE owner = 'APP' AND table_name = 'MI_FACT_MULTA_COERCITIVA'
+              AND column_name = 'ID_TIEMPO_FIRMA'
+            """
+        )
+        if not cur.fetchone()[0]:
+            sys.exit("falta MI_FACT_MULTA_COERCITIVA.ID_TIEMPO_FIRMA")
+        print("ID_TIEMPO_FIRMA: presente")
+        cur.execute(
+            """
+            SELECT fu.CODIGO, COUNT(*)
+            FROM APP.MI_FACT_MULTA_COERCITIVA f
+            JOIN APP.MI_DIM_FUENTE_REGISTRO fu ON fu.ID_FUENTE = f.ID_FUENTE
+            GROUP BY fu.CODIGO
+            """
+        )
+        by_src = {r[0]: int(r[1]) for r in cur.fetchall()}
+        print(f"Conteos por fuente: {by_src}")
+        # Bandas orientativas (corrida local típica); aviso si caen de golpe
+        expected_min = {"CAGR": 200, "OD_SHEETS": 50, "SISUD_VW": 50}
+        for cod, mn in expected_min.items():
+            n = by_src.get(cod, 0)
+            if n < mn:
+                sys.exit(f"conteo {cod}={n} bajo mínimo esperado {mn} (posible fallo de staging)")
+        cur.execute("SELECT COUNT(*) FROM APP.MI_DIM_ORGANO_UNIDAD")
+        n_org, = cur.fetchone()
+        if n_org > 20:
+            sys.exit(f"MI_DIM_ORGANO_UNIDAD={n_org} (esperado ~11 CSEP+ND)")
+        print(f"MI_DIM_ORGANO_UNIDAD: {n_org}")
+        for v in ("VW_MC_CSEP", "VW_MC_OD", "VW_MC_SISUD", "VW_MC_GAPPS"):
+            cur.execute(
+                "SELECT COUNT(*) FROM all_views WHERE owner='APP' AND view_name=:1",
+                [v],
+            )
+            if not cur.fetchone()[0]:
+                sys.exit(f"falta vista APP.{v}")
+        print("Vistas VW_MC_*: OK")
+        cur.execute("SELECT COUNT(*) FROM APP.MI_QA_AMARRE_DETALLE")
+        n_det, = cur.fetchone()
+        print(f"MI_QA_AMARRE_DETALLE: {n_det} filas")
+        if n_det < 1:
+            sys.exit("MI_QA_AMARRE_DETALLE vacío (esperado claves sin match H9)")
+        cur.execute("SELECT COUNT(*) FROM APP.MI_QA_AMARRE")
+        n_am, = cur.fetchone()
+        print(f"MI_QA_AMARRE: {n_am} filas")
+        if n_am < 1:
+            sys.exit("MI_QA_AMARRE vacío (esperado resumen de puentes H9)")
 PY
 
 echo ""

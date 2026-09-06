@@ -130,3 +130,14 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 **Evidencia:** [`progress/impl_dw-solo-multas.md`](impl_dw-solo-multas.md) — `./init.sh` → **HARNESS OK**; 571 multas, 152 indicadores; hecho informe inexistente.
 
 **Siguiente:** backlog harness vacío (Fase 8 fuera de alcance).
+
+## 2026-09-06 — mejoras Kimball 2–7
+
+- Vistas VW_MC_*, MI_QA_AMARRE(+DETALLE), DROP FUENTE_REGISTRO, ID_TIEMPO_FIRMA, alertas conteo init.sh, anti-patrones en guía.
+- ./init.sh → HARNESS OK (QA detalle 3078; órgano 11; sin VARCHAR FUENTE_REGISTRO).
+- Evidencia: progress/impl_mejoras-kimball-2-7.md
+
+## 2026-09-06 — docs alineados al DW post backlog 2–7
+
+- Actualizados verification, CHECKPOINTS, arquitectura, fase1-3/status, ddl/README, implementacion-fase-4/5-6/7, inputs, fuentes_datos, ANEXO, PROPUESTA (fila estado), CONTRATO, LEEME, skills.
+- Punto de verdad de lectura: docs/adjuntos/guia-leer-modelo-dimensional.md

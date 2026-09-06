@@ -20,9 +20,9 @@ Detalle por fase: [phases.md](phases.md).
 |:---:|---|---|
 | 2 | `PROF_*`, `DICCIONARIO` | `perfilamiento.py`, `diccionario.py` |
 | 3 | `DF_MULTAS`, `DF_ETAPAS` | `homologacion.py`, `integracion.py` |
-| 4 | `FG_CONFORME`, `MI_DQ_HALLAZGO`, `QA_AMARRE` | `calidad.py` |
-| 5 | `DIM_*`, `FACT_*`, `DET_*` | `dimensional.py` |
-| 6 | Carga Oracle | `python/io/cargar_dw.py` |
+| 4 | `FG_CONFORME`, `MI_DQ_HALLAZGO`, `MI_QA_AMARRE`(+`_DETALLE`) | `calidad.py` |
+| 5 | `MI_DIM_*`, `MI_FACT_*` (`ID_FUENTE`, `ID_TIEMPO_FIRMA`), `DET_*` | `dimensional.py` |
+| 6 | Carga Oracle + vistas `VW_MC_*` | `python/io/cargar_dw.py` |
 | 7 | `MI_INDICADOR_RESULTADO` K1–K5 | `indicadores.py` |
 
 Orquestación: `logica/dwh/pipeline.py` → `logica/ejecutar.py` → `python/main.py`.
@@ -31,12 +31,12 @@ Orquestación: `logica/dwh/pipeline.py` → `logica/ejecutar.py` → `python/mai
 
 ```
 logica/dwh/
-  constantes.py      # ID_CARGA, FUENTE_REGISTRO
+  constantes.py      # ID_CARGA, FUENTE_REGISTRO (mapa staging → CODIGO)
   catalogos.py       # semillas DIM_*
   homologacion.py    # vacio(), CUM/CAM, SI/NO, estados
   integracion.py     # UNION por fuente + columnas canónicas
-  calidad.py         # R01–R05, no elimina filas
-  dimensional.py     # modelo en memoria, miembro -1
+  calidad.py         # R01–R05, MI_QA_AMARRE*, no elimina filas
+  dimensional.py     # modelo en memoria, miembro -1, ID_FUENTE / ID_TIEMPO_FIRMA
   indicadores.py     # K1–K5 sobre hechos en memoria
   pipeline.py        # ejecutar() devuelve dict[str, DataFrame]
 ```

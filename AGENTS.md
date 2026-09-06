@@ -36,7 +36,8 @@ Requerimiento: [`docs/TDR REQ 3629-2026.pdf`](docs/TDR%20REQ%203629-2026.pdf).
 - [`.agents/skills/auditable-soft-quarantine/SKILL.md`](.agents/skills/auditable-soft-quarantine/SKILL.md)
 - [`.agents/skills/oracle-cargar-dw/SKILL.md`](.agents/skills/oracle-cargar-dw/SKILL.md)
 
-Lineamiento canónico: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md). Status: [`docs/fases/status.md`](docs/fases/status.md). DDL DW: [`docs/lineamientos/ddl/`](docs/lineamientos/ddl/).
+Lineamiento canónico: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md).  
+Modelo vigente: [`docs/adjuntos/guia-leer-modelo-dimensional.md`](docs/adjuntos/guia-leer-modelo-dimensional.md). Status: [`docs/fases/status.md`](docs/fases/status.md). DDL DW: [`docs/lineamientos/ddl/`](docs/lineamientos/ddl/).
 
 ## Inicio rápido (Windows)
 

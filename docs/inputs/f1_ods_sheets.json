@@ -1,0 +1,241 @@
+{
+  "worksheet": "5) Multas Coercitivas",
+  "header_row": 3,
+  "range_a1": "'5) Multas Coercitivas'!A3:AF",
+  "stg_table": "STG_GS2_OD_MULTAS",
+  "columns": [
+    "COD_MA",
+    "EXP_INF_INCUMP",
+    "N_CARTA_DCG",
+    "FN_MC",
+    "F_VENC_DCG",
+    "PRESENT_DCG_ADM",
+    "F_RPTA_ADM",
+    "DOC_SIGED",
+    "F_INIC_ANALISIS",
+    "REQ_VERIF_CAMPO",
+    "F_VERIF_CAMPO",
+    "F_FIN_ANALISIS",
+    "AMERIT_MC",
+    "N_DOC_NO_AMERIT",
+    "F_DOC_NO_AMERIT",
+    "MOTIVO_NO_AMERIT",
+    "EXP_RES_MC",
+    "N_RES_MC",
+    "F_FIRMA_RES_MC",
+    "FN_RES_MC",
+    "F_VENC_MC",
+    "MULTA_UIT",
+    "MULTA_S",
+    "RECORD_SEG",
+    "F_VERIF_POST_MC",
+    "DOC_VERIF_MC",
+    "EXP_SIGED_DOC",
+    "ESTADO_MC",
+    "F_PAGO",
+    "MEMO_EF",
+    "F_REMIS",
+    "SIGED"
+  ],
+  "ods": [
+    {
+      "cod_od": "AMAZONAS",
+      "nombre": "Amazonas",
+      "spreadsheet_key": "1-UrRoe4BoOhuWj2vHrds3SX0DSdyKojliS6pkln-WYg",
+      "activo": true
+    },
+    {
+      "cod_od": "ANCASH",
+      "nombre": "Ancash",
+      "spreadsheet_key": "1huVZW34EP2z2jywAI8JQ0CD9M5fCdz0x_BA9toGWKNg",
+      "activo": true
+    },
+    {
+      "cod_od": "APURIMAC",
+      "nombre": "Apurimac",
+      "spreadsheet_key": "15hkZIRcAmroRdMRZ1gBolbLyvDTwXf6jlV_Ya52B7eI",
+      "activo": true
+    },
+    {
+      "cod_od": "AREQUIPA",
+      "nombre": "Arequipa",
+      "spreadsheet_key": "1A5h3aVDEyYa-HWaBAJNNAU10gNN4wppi4dVR3LgjMXs",
+      "activo": true
+    },
+    {
+      "cod_od": "AYACUCHO",
+      "nombre": "Ayacucho",
+      "spreadsheet_key": "1HoF5ldqAGxIvd99Og2AKPCmzIN20aqvt8GzF5Ffiblk",
+      "activo": true
+    },
+    {
+      "cod_od": "CAJAMARCA",
+      "nombre": "Cajamarca",
+      "spreadsheet_key": "1I08UZWwZZfgBaddeRi1n-nna9ZIIrGyx2S9iniTRIsc",
+      "activo": true
+    },
+    {
+      "cod_od": "CHIMBOTE",
+      "nombre": "Chimbote",
+      "spreadsheet_key": "1YXxz-s_zWUl7y-uTKNVa65C7PZ4L9hs-mn7NUa12-sY",
+      "activo": true
+    },
+    {
+      "cod_od": "CORACORA",
+      "nombre": "Coracora",
+      "spreadsheet_key": "1Y8N1mswVxyjIq5gVaqUzVWawihr6_ud6pTHA-7VxGoo",
+      "activo": true
+    },
+    {
+      "cod_od": "COTABAMBAS",
+      "nombre": "Cotabambas",
+      "spreadsheet_key": "1_cmZZenIOjoPBLlL8ML6zUGGufnlWmrvN9nFvA68bgU",
+      "activo": true
+    },
+    {
+      "cod_od": "CUSCO",
+      "nombre": "Cusco",
+      "spreadsheet_key": "1IViGomlPKMxwh3xEcgNT7xsEVkQbbenE0PG-qjr6jWw",
+      "activo": true
+    },
+    {
+      "cod_od": "ESPINAR",
+      "nombre": "Espinar",
+      "spreadsheet_key": "1tFwbdZlzhPGblBFfnE9o8HUww8gVzNEySjt6pT08fJk",
+      "activo": true
+    },
+    {
+      "cod_od": "HUANCAVELICA",
+      "nombre": "Huancavelica",
+      "spreadsheet_key": "1JsfoLB3gHgXfElPmR3-jTw4H99qFLlz202ZBOpxKtws",
+      "activo": true
+    },
+    {
+      "cod_od": "HUANUCO",
+      "nombre": "Huánuco",
+      "spreadsheet_key": "1KCPG1ekZe4qCDr_WYpR_aX-Lj90RUQlsEfgYoPQHqs0",
+      "activo": true
+    },
+    {
+      "cod_od": "ICA",
+      "nombre": "Ica",
+      "spreadsheet_key": "176VBmDqlE9zTX_FGcnNqGQ1W2bgCbQEk7V8CWGQrGHY",
+      "activo": true
+    },
+    {
+      "cod_od": "JUNIN",
+      "nombre": "Junin",
+      "spreadsheet_key": "1ZZnXmNPoQKOE3P82ObIGxsMx9qUpSrWsG_Vs24aour4",
+      "activo": true
+    },
+    {
+      "cod_od": "LAMBAYEQUE",
+      "nombre": "Lambayeque",
+      "spreadsheet_key": "1hMTJkPgZ1z7WI77IhPP87b09PIoYFNCP7mhcXaD6XPM",
+      "activo": true
+    },
+    {
+      "cod_od": "LA_CONVENCION",
+      "nombre": "La Convención",
+      "spreadsheet_key": "1VDFZL6OzzF2ZpkPrSAkPR2GiJMB1DyR9mkXqV0ryWNA",
+      "activo": true
+    },
+    {
+      "cod_od": "LA_LIBERTAD",
+      "nombre": "La Libertad",
+      "spreadsheet_key": "1kb0i7z3YCOAv_F8Mn64TvmvI1HD2i9WpmgTITIfEpnI",
+      "activo": true
+    },
+    {
+      "cod_od": "LORETO",
+      "nombre": "Loreto",
+      "spreadsheet_key": "1oNDE2FURm5zxjRNUpa_78aDVonjrM-NoI_KtlvAZB3k",
+      "activo": true
+    },
+    {
+      "cod_od": "MADRE_DE_DIOS",
+      "nombre": "Madre De Dios",
+      "spreadsheet_key": "1_THeFJuCZ2Dpyi5BFD3nrOIiPGTk6hUvUSEJYovMNFQ",
+      "activo": true
+    },
+    {
+      "cod_od": "MOQUEGUA",
+      "nombre": "Moquegua",
+      "spreadsheet_key": "1Y0Y5oNeZqI1WgzXl3rvzTvRZuP0AFateuoGZZOjzhcE",
+      "activo": true
+    },
+    {
+      "cod_od": "PASCO",
+      "nombre": "Pasco",
+      "spreadsheet_key": "1vMz9sfg9KygG-mKhZC-_PdGeK9i5qmmayybAO8IjmWo",
+      "activo": true
+    },
+    {
+      "cod_od": "PICHANAKI",
+      "nombre": "Pichanaki",
+      "spreadsheet_key": "1qFIYxtmGx4rAZxEHqGvTJtLeaKRvA-LnqdYydvSutmM",
+      "activo": true
+    },
+    {
+      "cod_od": "PIURA",
+      "nombre": "Piura",
+      "spreadsheet_key": "1hdCvBbRF5zArb1vzfnpVWfVdnuqyBxTgoxWZ6K5vsa4",
+      "activo": true
+    },
+    {
+      "cod_od": "PUNO",
+      "nombre": "Puno",
+      "spreadsheet_key": "1Sw14XQK_BqOj6NDYPAub8RfgrigpEtpbOtIAl4UueJQ",
+      "activo": true
+    },
+    {
+      "cod_od": "SAN_MARTIN",
+      "nombre": "San Martín",
+      "spreadsheet_key": "1IQEGcMsM5t9iWzd-q04ZpamkwUHrnM3xHPikwz8nRAE",
+      "activo": true
+    },
+    {
+      "cod_od": "TACNA",
+      "nombre": "Tacna",
+      "spreadsheet_key": "1uA6lHY7hOLZG8-laRa8PiDlluxSLR8b2Gtsn597s_wE",
+      "activo": true
+    },
+    {
+      "cod_od": "TALARA",
+      "nombre": "Talara",
+      "spreadsheet_key": "1t1Ebh6B47aAB7lG8_5lweHz279RoAHWF0Yr91sQtkoc",
+      "activo": true
+    },
+    {
+      "cod_od": "TUMBES",
+      "nombre": "Tumbes",
+      "spreadsheet_key": "1UAlzG0LyazzmbfuG6uXxj9jbYHtGAegxR9rITNxAg9g",
+      "activo": true
+    },
+    {
+      "cod_od": "UCAYALI",
+      "nombre": "Ucayali",
+      "spreadsheet_key": "1aclo1CkESRIeaUc9_PsOpYICNyRilFDSWchKLykpEEQ",
+      "activo": true
+    },
+    {
+      "cod_od": "VRAEM",
+      "nombre": "Vraem",
+      "spreadsheet_key": "1y-DkvoSK7ESjsKNedWed3F_b0TT7KucGezuKzr1kTxw",
+      "activo": true
+    }
+  ],
+  "excluidos": [
+    {
+      "nombre": "CONSOLIDADO MEDIDAS ADMINISTRATIVAS",
+      "spreadsheet_key": "1fSyTFvTydnBXqKy2ro_ptznWIckVJsK_XOCs-fl1_BM",
+      "motivo": "consolidado_fuera_de_alcance"
+    },
+    {
+      "nombre": "CONSOLIDADO MEDIDAS ADMINISTRATIVAS CSEP",
+      "spreadsheet_key": "1fIla3BDuGsYvdpQrmOhhAxtpgsenDxPa1Jk2ghObKq8",
+      "motivo": "consolidado_fuera_de_alcance"
+    }
+  ],
+  "nota": "Hop GoogleSheetsInput salta la 1ª fila del rango; A3=COD_* (header), datos desde A4. CODE sin sheet."
+}

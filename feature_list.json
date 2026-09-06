@@ -1,5 +1,5 @@
 {
-  "project": "multa_informes_etl",
+  "project": "datawarehouse_multa_etl",
   "lineamiento": "docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md",
   "branch_trabajo": "windows",
   "entorno": "windows-exclusive",
@@ -112,12 +112,97 @@
       "evidencia": "progress/impl_dw-solo-multas.md"
     },
     {
+      "id": "f1-ods-ica-puno",
+      "title": "F1 familia OD (Ica, Lambayeque, Puno) + MI_DIM_OD 31 oficinas",
+      "status": "done",
+      "criterio": "3 Excel en STG; FACT con ID_OD resuelto para LAM/ICA; dim sembrada 31+ND; FUENTE_REGISTRO=OD_EXCEL en esas filas; ./init.sh HARNESS OK; docs/inputs describe convención para el resto",
+      "doc": "docs/inputs/README.md"
+    },
+    {
+      "id": "f1-ods-google-sheets",
+      "title": "F1: 31 ODs desde Google Sheets (catálogo JSON + Hop)",
+      "status": "done",
+      "passes": true,
+      "criterio": "Catálogo docs/inputs/f1_ods_sheets.json (31 ODs, sin consolidados); Excel OD fuera de inputs; Hop descarga con client_secret.json a STG_GS2_OD_MULTAS; FUENTE_REGISTRO=OD_SHEETS + ID_OD; ./init.sh HARNESS OK",
+      "doc": "docs/inputs/README.md"
+    },
+    {
+      "id": "f2-csep-google-sheets",
+      "title": "F2: 10 unidades CSEP desde Google Sheets (reemplaza Excel CAGR)",
+      "status": "done",
+      "passes": true,
+      "criterio": "Catálogo docs/inputs/f2_csep_sheets.json (10 unidades); Excel CAGR en legacy; Hop descarga a STG_GS1_CSEP_MULTAS; FUENTE_REGISTRO=CAGR; ./init.sh HARNESS OK",
+      "doc": "docs/inputs/README.md"
+    },
+    {
+      "id": "dim-organo-descripcion-csep",
+      "title": "MI_DIM_ORGANO_UNIDAD.DESCRIPCION (nombre largo CSEP desde catálogo)",
+      "status": "done",
+      "passes": true,
+      "criterio": "Columna DESCRIPCION en MI_DIM_ORGANO_UNIDAD; CMIN→Minería etc. desde f2_csep_sheets.json; 10 unidades sembradas; carga Oracle OK",
+      "doc": "docs/lineamientos/ANEXO_MAPEO_CAMPOS.md"
+    },
+    {
+      "id": "dim-organo-csep-limpia",
+      "title": "MI_DIM_ORGANO_UNIDAD limpia: solo CSEP (+ ND), sin siglas de expediente",
+      "status": "done",
+      "passes": true,
+      "criterio": "Dim órgano sembrada desde f2_csep_sheets.json (+ ND); hechos F2 resuelven ID_ORGANO por COORD/COD_UNIDAD; siglas de expediente no hinchan la dim; reportes CAGR filtrables; ./init.sh HARNESS OK",
+      "doc": "docs/adjuntos/guia-leer-modelo-dimensional.md",
+      "evidencia": "progress/impl_dim-organo-csep-limpia.md"
+    },
+    {
+      "id": "vistas-mc-por-fuente",
+      "title": "Vistas Oracle de multas por universo (ID_FUENTE)",
+      "status": "done",
+      "passes": true,
+      "criterio": "Vistas VW_MC_CSEP|OD|SISUD|GAPPS vía MI_DIM_FUENTE_REGISTRO; no sumar universos por defecto; ./init.sh HARNESS OK",
+      "doc": "docs/lineamientos/ddl/06_vistas.sql",
+      "evidencia": "progress/impl_mejoras-kimball-2-7.md"
+    },
+    {
+      "id": "amarre-h9-detalle",
+      "title": "Detalle usable de no-amarre H9 (pares/motivos además de K5)",
+      "status": "done",
+      "passes": true,
+      "criterio": "MI_QA_AMARRE + MI_QA_AMARRE_DETALLE con claves SOLO_IZQ/SOLO_DER y motivo; K5 sigue agregado; documentado; ./init.sh HARNESS OK",
+      "doc": "docs/adjuntos/guia-leer-modelo-dimensional.md",
+      "evidencia": "progress/impl_mejoras-kimball-2-7.md"
+    },
+    {
+      "id": "deprecar-fuente-registro-varchar",
+      "title": "Quitar VARCHAR FUENTE_REGISTRO del hecho/etapas (solo ID_FUENTE)",
+      "status": "done",
+      "passes": true,
+      "criterio": "Sin columna FUENTE_REGISTRO ni CHECK en hecho/etapas; linaje vía ID_FUENTE; ./init.sh HARNESS OK",
+      "doc": "docs/lineamientos/ddl/02_hechos.sql",
+      "evidencia": "progress/impl_mejoras-kimball-2-7.md"
+    },
+    {
+      "id": "id-tiempo-firma",
+      "title": "ID_TIEMPO_FIRMA role-playing sobre MI_DIM_TIEMPO",
+      "status": "done",
+      "passes": true,
+      "criterio": "Columna FK en hecho desde F_FIRMA_RES_MC; cortes Q/año sin EXTRACT; ./init.sh HARNESS OK",
+      "doc": "docs/adjuntos/guia-leer-modelo-dimensional.md",
+      "evidencia": "progress/impl_mejoras-kimball-2-7.md"
+    },
+    {
+      "id": "ops-conteos-contrato-sheets",
+      "title": "Alertas de conteo por fuente + contrato JSON/SLA Sheets",
+      "status": "done",
+      "passes": true,
+      "criterio": "init.sh falla si CAGR/OD/SISUD bajo mínimos; docs contrato f1/f2 JSON y SLA reintentos",
+      "doc": "docs/inputs/README.md",
+      "evidencia": "progress/impl_mejoras-kimball-2-7.md"
+    },
+    {
       "id": "fase-remote-deploy",
       "title": "Despliegue remoto Windows (REPOCSEP → 10.6.0.15:1532/dvoefacore)",
       "status": "in_progress",
       "criterio": "git pull + switch-env.ps1 remote + wf_main_win/init.bat → Success + DW (OK) K1–K5",
       "doc": "environments/remote.json",
-      "nota": "Tras merge dw-solo-multas: re-corrida WIN multa-only (sin informes) post fix-dw-schema-user"
+      "nota": "Tras merge linux (Sheets F1/F2 + Kimball 2–7): re-corrida WIN con client_secret.json"
     }
   ]
 }

@@ -8,13 +8,12 @@
 | Status | `in_progress` |
 | Criterio | `init.bat` o `wf_main_win.hwf` → Success + DW (OK) K1–K5 |
 
-> Merge `linux` → `windows` reciente: rama `windows` hereda `dw-solo-multas` (done), `docs-reorg`, `fix-dw-schema-user`, `python-io-cleanup`, Docker/Superset.
+> Merge `linux` → `windows`: F1/F2 Google Sheets, `MI_DIM_OD`/`MI_DIM_ORGANO_UNIDAD`, vistas `VW_MC_*`, amarre H9 detalle, linaje solo `ID_FUENTE`. Lote puntos 2–7 cerrado en linux (`progress/impl_mejoras-kimball-2-7.md`).
 
 ## Plan
 
-1. Working tree limpio: cleanup `python/io`, AGENTS Win-only, docs.
-2. En PC Win: `git pull` → `.\switch-env.ps1 remote` → `wf_main_win` / `init.bat`.
-3. Si OK → `fase-remote-deploy` = done.
+1. En PC Win: `git pull` → `.\switch-env.ps1 remote` → `wf_main_win` / `init.bat` (requiere `client_secret.json` para Sheets).
+2. Si OK → `fase-remote-deploy` = done.
 
 ## Comandos Win
 

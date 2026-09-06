@@ -103,10 +103,64 @@ h2\scripts\reset_and_create.bat</script>
       </parameters>
       <run_configuration>local</run_configuration>
       <name>Stage Excel</name>
-      <description>Excel local input_excel → H2 STG_GS1_* / STG_GS2_* (pl_stage_excel.hpl)</description>
+      <description>Excel legacy CAGR DIC_* → H2 (pl_stage_excel.hpl)</description>
       <type>PIPELINE</type>
       <attributes/>
       <xloc>512</xloc>
+      <yloc>192</yloc>
+      <parallel>N</parallel>
+      <attributes_hac/>
+    </action>
+    <action>
+      <filename/>
+      <work_directory>${PROJECT_HOME}</work_directory>
+      <arguments/>
+      <arg_from_previous>N</arg_from_previous>
+      <set_logfile>N</set_logfile>
+      <logfile/>
+      <logext/>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <loglevel>Basic</loglevel>
+      <exec_per_row>N</exec_per_row>
+      <set_append_logfile>N</set_append_logfile>
+      <insertScript>Y</insertScript>
+      <script>cd /d "%PROJECT_HOME%"
+bash scripts\stage_csep_sheets.sh
+if errorlevel 1 exit /b 1
+</script>
+      <name>Stage CSEP Sheets</name>
+      <description>F2 CSEP Google Sheets → H2 STG_GS1_CSEP_MULTAS + STG_GS1_ETAPAS</description>
+      <type>SHELL</type>
+      <attributes/>
+      <xloc>552</xloc>
+      <yloc>192</yloc>
+      <parallel>N</parallel>
+      <attributes_hac/>
+    </action>
+    <action>
+      <filename/>
+      <work_directory>${PROJECT_HOME}</work_directory>
+      <arguments/>
+      <arg_from_previous>N</arg_from_previous>
+      <set_logfile>N</set_logfile>
+      <logfile/>
+      <logext/>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <loglevel>Basic</loglevel>
+      <exec_per_row>N</exec_per_row>
+      <set_append_logfile>N</set_append_logfile>
+      <insertScript>Y</insertScript>
+      <script>cd /d "%PROJECT_HOME%"
+bash scripts\stage_ods_sheets.sh
+if errorlevel 1 exit /b 1
+</script>
+      <name>Stage ODs Sheets</name>
+      <description>31 Google Sheets F1 → H2 STG_GS2_OD_MULTAS</description>
+      <type>SHELL</type>
+      <attributes/>
+      <xloc>592</xloc>
       <yloc>192</yloc>
       <parallel>N</parallel>
       <attributes_hac/>
@@ -256,6 +310,20 @@ if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
     </hop>
     <hop>
       <from>Stage Excel</from>
+      <to>Stage CSEP Sheets</to>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Stage CSEP Sheets</from>
+      <to>Stage ODs Sheets</to>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Stage ODs Sheets</from>
       <to>Stage Oracle VW</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>

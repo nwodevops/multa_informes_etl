@@ -49,7 +49,7 @@ Módulos: `logica/dwh/homologacion.py`, `logica/dwh/integracion.py`.
 
 - [ ] `FG_CONFORME` en dataframes; reglas R01–R05 aplicadas.
 - [ ] `MI_DQ_HALLAZGO` append (cuarentena blanda: no se eliminan filas).
-- [ ] `QA_AMARRE` con % puente H9 documentado.
+- [ ] `MI_QA_AMARRE` (resumen % puente H9) y `MI_QA_AMARRE_DETALLE` (claves `SOLO_IZQ`/`SOLO_DER` + motivo) cargados en Oracle.
 
 Módulo: `logica/dwh/calidad.py`. Skill: `.agents/skills/auditable-soft-quarantine/`.
 
@@ -57,7 +57,9 @@ Módulo: `logica/dwh/calidad.py`. Skill: `.agents/skills/auditable-soft-quaranti
 
 ## Fase 5 — Modelo dimensional {#fase-5}
 
-- [ ] Seis `DIM_*`, `MI_FACT_MULTA_COERCITIVA`, `MI_DET_ETAPA_MC`.
+- [ ] Ocho `MI_DIM_*` (incluye `MI_DIM_OD`, `MI_DIM_FUENTE_REGISTRO`), `MI_FACT_MULTA_COERCITIVA`, `MI_DET_ETAPA_MC`.
+- [ ] Linaje por `ID_FUENTE` (sin VARCHAR `FUENTE_REGISTRO`); `ID_TIEMPO_FIRMA` poblado.
+- [ ] `MI_DIM_ORGANO_UNIDAD` solo CSEP+ND (~11); no hinchada con siglas de expediente.
 - [ ] Miembro `-1` en dimensiones; ningún hecho con FK huérfana sin `-1`.
 
 Módulo: `logica/dwh/dimensional.py`.
@@ -66,9 +68,9 @@ Módulo: `logica/dwh/dimensional.py`.
 
 ## Fase 6 — Carga Oracle {#fase-6}
 
-- [ ] DDL formal aplicado (`docs/lineamientos/ddl/01`–`03`).
-- [ ] Vistas legacy `VW_FCT_*` eliminadas si existían.
-- [ ] Por cada tabla cargada: log `DW: <tabla>: N filas -> N en BD (OK)`.
+- [ ] DDL formal aplicado (`docs/lineamientos/ddl/01`–`04` + vistas `06`).
+- [ ] Vistas legacy `VW_FCT_*` eliminadas si existían; vistas `VW_MC_*` presentes.
+- [ ] Por cada tabla cargada: log `DW: <tabla>: N filas -> N en BD (OK)` (incluye `MI_QA_*`).
 - [ ] `COUNT(*)` Oracle = filas del DataFrame (excepto `MI_DQ_HALLAZGO`: `>=`).
 
 Módulo: `python/io/cargar_dw.py`. Skill: `.agents/skills/oracle-cargar-dw/`.

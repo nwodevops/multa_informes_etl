@@ -164,7 +164,7 @@ def perfilar_tabla(
             )
 
     # H7 dos versiones multas (solo tablas multas)
-    if clave_lectura in ("GS1", "GS2"):
+    if clave_lectura in ("GS1", "GS2") or str(clave_lectura).startswith("GS2_"):
         hallazgos.append(
             {
                 "ID_CARGA": ID_CARGA,

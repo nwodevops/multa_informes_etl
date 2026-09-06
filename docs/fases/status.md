@@ -10,16 +10,16 @@ Rama de trabajo: `fase-1-lineamiento`.
 ```mermaid
 flowchart TB
   subgraph fuentes [Fuentes de multa]
-    F1["F1 Excel Lambayeque"]
-    F2["F2 Excel CAGR + DIC"]
+    F1["F1 Sheets OD 31"]
+    F2["F2 Sheets CSEP 10 + DIC"]
     F4["F4 MySQL GAPP"]
     F5["F5 Oracle vista MC"]
   end
 
-  subgraph hop [Apache Hop — sin cambios de rol]
+  subgraph hop [Apache Hop]
     WF["wf_main.hwf"]
     RESET["Reset H2"]
-    STG_LOAD["pl_stage_* → STG_*"]
+    STG_LOAD["pl_stage_* / stage_*_sheets → STG_*"]
   end
 
   subgraph h2 [H2 mem:csep — staging efímero]
@@ -27,20 +27,18 @@ flowchart TB
   end
 
   subgraph py [Python logica/dwh/]
-    F2b["Fase 2: perfil + diccionario"]
-    F3b["Fase 3: homolog + integración"]
-    F4b["Fase 4: R01-R05 + amarre H9"]
-    OUT["Salidas en memoria + DQ append"]
+    F2b["Fase 2–7: perfil … indicadores"]
+    OUT["MI_* en memoria"]
   end
 
   subgraph oracle [Oracle BD_CURSOR]
-    ORA["FACT_* DIM_* IND_*"]
+    ORA["MI_* + VW_MC_*"]
   end
 
   fuentes --> WF
   WF --> RESET --> STG_LOAD --> STG
-  STG --> F2b --> F3b --> F4b --> OUT
-  OUT -->|"carga cargar_dw.py"| ORA
+  STG --> F2b --> OUT
+  OUT -->|"cargar_dw.py"| ORA
 ```
 
 ---
@@ -60,29 +58,31 @@ flowchart TB
 
 ---
 
-## Flujo de datos hoy (Fases 1–4)
+## Flujo de datos hoy (Fases 2–7)
 
 ```mermaid
 flowchart LR
   STG["STG_* H2"]
   P2["PROF_RESUMEN<br/>PROF_HALLAZGO<br/>DICCIONARIO"]
   P3["DF_MULTAS<br/>DF_ETAPAS"]
-  P4["FG_CONFORME<br/>MI_DQ_HALLAZGO<br/>QA_AMARRE"]
-  RES["RESULTADO"]
+  P4["FG_CONFORME<br/>MI_DQ_HALLAZGO<br/>MI_QA_AMARRE*"]
+  P5["MI_DIM_* / MI_FACT_*"]
+  P7["MI_INDICADOR_RESULTADO"]
+  ORA["Oracle BD_CURSOR<br/>+ VW_MC_*"]
 
-  STG --> P2 --> P3 --> P4 --> RES
+  STG --> P2 --> P3 --> P4 --> P5 --> P7 --> ORA
 ```
 
-| Salida | Fase | Persiste en disco/Oracle |
+| Salida | Fase | Persiste en Oracle |
 |---|---|---|
-| `PROF_RESUMEN` | 2 | No — memoria + log |
-| `PROF_HALLAZGO` | 2 | No |
-| `DICCIONARIO` | 2 | No |
-| `DF_MULTAS` | 3–4 | No (incluye `FG_CONFORME`) |
-| `DF_ETAPAS` | 3 | No |
-| `MI_DQ_HALLAZGO` | 4 | Append a BD_CURSOR si credenciales OK |
-| `QA_AMARRE` | 4 | No — memoria + log |
-| `RESULTADO` | 2–4 | No — resumen de corrida |
+| `PROF_RESUMEN` / `PROF_HALLAZGO` / `DICCIONARIO` | 2 | No — memoria + log |
+| `DF_MULTAS` / `DF_ETAPAS` | 3–4 | No (incluye `FG_CONFORME`) |
+| `MI_DQ_HALLAZGO` | 4 | Sí |
+| `MI_QA_AMARRE` / `MI_QA_AMARRE_DETALLE` | 4 | Sí |
+| `MI_DIM_*` / `MI_FACT_*` / `MI_DET_ETAPA_MC` | 5–6 | Sí |
+| `MI_INDICADOR_RESULTADO` | 7 | Sí |
+| `VW_MC_*` | 6 | Sí (vistas) |
+| `RESULTADO` | 2–7 | No — resumen de corrida |
 
 ---
 
@@ -95,15 +95,13 @@ Se recrean al inicio: `reset_and_create.sh` (DDL base) + `create_stg.py` (DDL st
 | Tabla | Origen | Quién crea el DDL | Quién carga filas |
 |---|---|---|---|
 | `DEMO_TABLA_EJEMPLO` | Smoke arquetipo | `h2/sql/01_schema.sql` | Insert fijo en DDL |
-| `STG_GS1_MULTAS_COERCITIVAS` | F2 Excel CAGR | `create_stg.py` | `pl_stage_excel.hpl` |
-| `STG_GS1_ETAPAS` | F2 Excel etapas | `create_stg.py` | `pl_stage_excel.hpl` |
-| `STG_GS2_MULTAS_COERCITIVAS` | F1 Excel Lambayeque | `create_stg.py` | `pl_stage_excel.hpl` |
-| `STG_GS1_DIC_TABLAS` | F2 hoja DIC_TABLAS | `create_stg.py` | Pendiente en Hop* |
-| `STG_GS1_DIC_VARIABLES` | F2 hoja DIC_VARIABLES | `create_stg.py` | Pendiente en Hop* |
+| `STG_GS1_CSEP_MULTAS` | F2 Google Sheets CSEP | `create_stg.py` | `pl_stage_csep_sheet.hpl` + `stage_csep_sheets.sh` |
+| `STG_GS1_ETAPAS` | F2 Sheets CSEP etapas | `create_stg.py` | `stage_csep_sheets.sh` |
+| `STG_GS2_OD_MULTAS` | F1 31 Google Sheets OD | `create_stg.py` | `pl_stage_od_sheet.hpl` + `stage_ods_sheets.sh` |
+| `STG_GS1_DIC_TABLAS` | F2 hoja DIC_TABLAS (Excel legacy) | `create_stg.py` | `pl_stage_excel.hpl` |
+| `STG_GS1_DIC_VARIABLES` | F2 hoja DIC_VARIABLES (Excel legacy) | `create_stg.py` | `pl_stage_excel.hpl` |
 | `STG_ORA_VW_MULTA_COERCITIVA` | F5 Oracle SISUD | `create_stg.py` | `pl_stage_oracle.hpl` |
 | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | F4 MySQL GAPP | `create_stg.py` | `pl_stage_mysql.hpl` |
-
-\* DIC: el diccionario también puede leerse desde Excel en Python si STG vacío (`logica/dwh/diccionario.py`).
 
 H2 es **efímero**: al parar el server o al Reset desaparece todo. No es entregable.
 
@@ -114,37 +112,28 @@ DDL staging generado: `h2/sql/02_stg.sql` (gitignore).
 Conexión legada (`metadata/rdbms/oracle_repocsep.json`, variables `DB_ORA_REPO_*`).  
 **Ningún paso de `wf_main.hwf` escribe aquí** tras el refactor a lineamientos Fases 2–3.
 
-### Oracle BD_CURSOR — **no en Fases 1–3; definido para Fase 6+**
+### Oracle BD_CURSOR — **sí, Fases 6–7**
 
-Destino del modelo dimensional según lineamientos (`DB_ORA_DW_*` / esquema `APP`).  
-**La corrida actual no crea ni carga tablas** — `python/main.py` solo deja DataFrames en memoria.
+Destino del modelo dimensional (`DB_ORA_DW_*` / esquema `APP` local o `REPOCSEP` remote).  
+`python/main.py` → `cargar_dw.py` aplica DDL si falta y hace TRUNCATE+INSERT.
 
-Tablas previstas (DDL en [`lineamientos/ddl/`](../lineamientos/ddl/)), **pendientes de implementar**:
-
-| Grupo | Tablas |
+| Grupo | Tablas / vistas |
 |---|---|
-| Dimensiones | `MI_DIM_TIEMPO`, `MI_DIM_ADMINISTRADO`, `MI_DIM_ORGANO_UNIDAD`, `MI_DIM_MATERIA_SUBSECTOR`, `MI_DIM_ESTADO`, `MI_DIM_PARAMETRO_UIT` |
-| Hechos | `MI_FACT_MULTA_COERCITIVA`, `MI_DET_ETAPA_MC` |
-| Calidad | `MI_DQ_HALLAZGO` (Fase 4+) |
-| Indicadores | `MI_INDICADOR_RESULTADO` (Fase 7) |
-
-El módulo [`python/io/cargar_dw.py`](../../python/io/cargar_dw.py) aplica DDL formal, elimina vistas `VW_FCT_*` legacy y carga `DIM_*`/`FACT_*`/`DET_*`/`MI_DQ_HALLAZGO` con TRUNCATE+INSERT.
+| Dimensiones | `MI_DIM_TIEMPO`, `MI_DIM_ADMINISTRADO`, `MI_DIM_ORGANO_UNIDAD` (~11), `MI_DIM_OD`, `MI_DIM_FUENTE_REGISTRO`, `MI_DIM_MATERIA_SUBSECTOR`, `MI_DIM_ESTADO`, `MI_DIM_PARAMETRO_UIT` |
+| Hechos | `MI_FACT_MULTA_COERCITIVA` (`ID_FUENTE`, `ID_TIEMPO_FIRMA`), `MI_DET_ETAPA_MC` |
+| Calidad | `MI_DQ_HALLAZGO`, `MI_QA_AMARRE`, `MI_QA_AMARRE_DETALLE` |
+| Indicadores | `MI_INDICADOR_RESULTADO` (K1–K5) |
+| Vistas reporte | `VW_MC_CSEP`, `VW_MC_OD`, `VW_MC_SISUD`, `VW_MC_GAPPS` |
 
 ```mermaid
 flowchart LR
   subgraph h2now [H2 hoy]
-    STG8["7 tablas STG_* + DEMO"]
+    STG8["STG_* Sheets + F4/F5"]
   end
-  subgraph oranow [Oracle hoy]
-    DQonly["Append MI_DQ_HALLAZGO"]
+  subgraph oranow [BD_CURSOR hoy]
+    MI["MI_* + VW_MC_*"]
   end
-  subgraph orafut [BD_CURSOR futuro Fase 6]
-    DIM["DIM_*"]
-    FACT["FACT_*"]
-  end
-  STG8 --> DQonly
-  DQonly -.-> DIM
-  DQonly -.-> FACT
+  STG8 --> MI
 ```
 
 ---
@@ -153,13 +142,11 @@ flowchart LR
 
 | ID | Fuente | STG H2 | Carga Hop | Notas |
 |---|---|---|:---:|---|
-| F1 | Excel Lambayeque | `STG_GS2_*` | Sí | `pl_stage_excel` |
-| F2 | Excel CAGR multas/etapas | `STG_GS1_*` | Sí | |
-| F2 | DIC_TABLAS / DIC_VARIABLES | `STG_GS1_DIC_*` | Parcial | DDL + `create_stg`; Hop Excel pendiente cablear |
-| F4 | MySQL GAPP | `STG_MYSQL_*` | Sí* | *Requiere credenciales MySQL |
-| F5 | SISUD vista multas | `STG_ORA_VW_*` | Sí* | *Requiere credenciales Oracle |
-
-`create_stg.py` exige credenciales Oracle/MySQL válidas (`require_live_conn`); falla si faltan o son placeholder.
+| F1 | 31 Google Sheets OD | `STG_GS2_OD_MULTAS` | Sí | `stage_ods_sheets.sh` |
+| F2 | 10 Google Sheets CSEP | `STG_GS1_CSEP_MULTAS` / `ETAPAS` | Sí | `stage_csep_sheets.sh` |
+| F2 | DIC (Excel legacy) | `STG_GS1_DIC_*` | Sí | `pl_stage_excel.hpl` |
+| F4 | MySQL GAPP | `STG_MYSQL_*` | Sí | credenciales MySQL |
+| F5 | SISUD vista multas | `STG_ORA_VW_*` | Sí | credenciales Oracle |
 
 ---
 
@@ -167,22 +154,19 @@ flowchart LR
 
 | Antes (medallion TDR) | Ahora (lineamientos) |
 |---|---|
-| `logica/fase1/` → `INT_*`, `QA_*` | `logica/dwh/` → `PROF_*`, `DF_*` |
-| `output/fase1.xlsx` + carga `INT_*` Oracle | Sin Excel ni carga dimensional en corrida |
-| Modelo por universo sin cruce | Integración F1+F2+F4+F5 con `FUENTE_ORIGEN` |
+| `logica/fase1/` → `INT_*`, `QA_*` | `logica/dwh/` → `PROF_*`, `DF_*`, `MI_*` |
+| `output/fase1.xlsx` + carga `INT_*` Oracle | `cargar_dw.py` → `MI_*` + `VW_MC_*` en BD_CURSOR |
+| Modelo por universo sin cruce | Integración F1+F2+F4+F5 con `ID_FUENTE` / amarre H9 medido |
 
 ---
 
 ## Cómo verificar
 
 ```bash
-./h2/scripts/reset_and_create.sh
-.venv/bin/python python/create_stg.py
-# Opcional: wf_main.hwf en Hop para cargar filas
-.venv/bin/python python/main.py
+./init.sh   # HARNESS OK
 ```
 
-Detalle técnico: [`lineamientos/implementacion-fase-2-3.md`](../lineamientos/implementacion-fase-2-3.md).
+Detalle: [`../verification.md`](../verification.md) · modelo: [`../adjuntos/guia-leer-modelo-dimensional.md`](../adjuntos/guia-leer-modelo-dimensional.md).
 
 ---
 

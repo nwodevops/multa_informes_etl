@@ -42,7 +42,7 @@ if not defined HOP_RUN (
         set "HOP_RUN=hop-run"
     )
 )
-set HOP_PROJECT=multa_informes_etl
+for %%I in ("%CD%") do set HOP_PROJECT=%%~nxI
 echo PY=%PY%>> "%RUN_LOG%"
 echo HOP_RUN=%HOP_RUN%>> "%RUN_LOG%"
 echo HOP_PROJECT=%HOP_PROJECT%>> "%RUN_LOG%"
