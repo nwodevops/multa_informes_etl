@@ -126,11 +126,11 @@ h2\scripts\reset_and_create.bat</script>
       <set_append_logfile>N</set_append_logfile>
       <insertScript>Y</insertScript>
       <script>cd /d "%PROJECT_HOME%"
-bash scripts\stage_csep_sheets.sh
+scripts\stage_csep_sheets.cmd
 if errorlevel 1 exit /b 1
 </script>
       <name>Stage CSEP Sheets</name>
-      <description>F2 CSEP Google Sheets → H2 STG_GS1_CSEP_MULTAS + STG_GS1_ETAPAS</description>
+      <description>F2 CSEP Google Sheets → H2 STG_GS1_CSEP_MULTAS + STG_GS1_ETAPAS (stage_csep_sheets.cmd)</description>
       <type>SHELL</type>
       <attributes/>
       <xloc>552</xloc>
@@ -153,11 +153,11 @@ if errorlevel 1 exit /b 1
       <set_append_logfile>N</set_append_logfile>
       <insertScript>Y</insertScript>
       <script>cd /d "%PROJECT_HOME%"
-bash scripts\stage_ods_sheets.sh
+scripts\stage_ods_sheets.cmd
 if errorlevel 1 exit /b 1
 </script>
       <name>Stage ODs Sheets</name>
-      <description>31 Google Sheets F1 → H2 STG_GS2_OD_MULTAS</description>
+      <description>31 Google Sheets F1 → H2 STG_GS2_OD_MULTAS (stage_ods_sheets.cmd)</description>
       <type>SHELL</type>
       <attributes/>
       <xloc>592</xloc>
