@@ -1,4 +1,8 @@
-"""Carga Oracle DW: wipe MI_*/VW_* → DDL canónico → INSERT → enrich 07."""
+"""Carga Oracle DW canónica: wipe MI_*/VW_* → DDL 01+02(+05) → INSERT estrella → enrich 07.
+
+No aplica 03/04/06 (DQ/QA/K y vistas). Esos se calculan en Python en memoria.
+MI_AUD_* lo carga python/audit/ tras esta función.
+"""
 
 from __future__ import annotations
 
@@ -34,37 +38,19 @@ TABLAS_HECHOS = (
     "MI_FACT_MULTA_COERCITIVA",
     "MI_DET_ETAPA_MC",
 )
-TABLAS_QA = (
-    "MI_QA_AMARRE",
-    "MI_QA_AMARRE_DETALLE",
-)
-REQUIRED_CORE = (*TABLAS_DIM, *TABLAS_HECHOS, "MI_DQ_HALLAZGO", *TABLAS_QA)
-# Orden DROP/hijos primero (también usado si quedan MI_% sueltos).
+REQUIRED_CORE = (*TABLAS_DIM, *TABLAS_HECHOS)
+# Hijos primero; el resto de MI_% (AUD, DQ legacy, …) se dropea después.
 DROP_ORDEN = (
-    "MI_INDICADOR_RESULTADO",
     "MI_DET_ETAPA_MC",
     "MI_FACT_MULTA_COERCITIVA",
     *TABLAS_EVIDENCIA,
-    *TABLAS_QA,
-    "MI_DQ_HALLAZGO",
     *TABLAS_DIM,
 )
 INSERT_ORDEN = (
     *TABLAS_DIM,
     *TABLAS_EVIDENCIA,
     "MI_DET_ETAPA_MC",
-    "MI_DQ_HALLAZGO",
-    *TABLAS_QA,
-    "MI_INDICADOR_RESULTADO",
     # MI_FACT_MULTA_COERCITIVA lo llena 07_enrich_sheets_sisud.sql
-)
-IDENTITY_SKIP = frozenset(
-    {
-        "MI_DQ_HALLAZGO",
-        "MI_INDICADOR_RESULTADO",
-        "MI_QA_AMARRE",
-        "MI_QA_AMARRE_DETALLE",
-    }
 )
 
 
@@ -90,7 +76,7 @@ def _bind_schema(cur) -> str:
     cur.execute("SELECT USER FROM DUAL")
     ESQUEMA = str(cur.fetchone()[0])
     if ESQUEMA.upper() != ESQUEMA_DEFAULT.upper():
-        print(f"DW: esquema sesión = {ESQUEMA} (no {ESQUEMA_DEFAULT})")
+        print(f"DW: esquema sesión = {ESQUEMA} (no {ESQUEMA_DEFAULT})", flush=True)
     return ESQUEMA
 
 
@@ -108,29 +94,19 @@ def _model_complete(cur) -> bool:
 
 def _verificar_post_carga(cur, counts: dict[str, int], cv: dict[str, str]) -> None:
     dest = _destino_label(cv)
-    print(f"DW: destino {dest}")
-    for tabla in (*TABLAS_EVIDENCIA, "MI_FACT_MULTA_COERCITIVA", "MI_INDICADOR_RESULTADO"):
+    print(f"DW: destino {dest}", flush=True)
+    for tabla in (*TABLAS_EVIDENCIA, "MI_FACT_MULTA_COERCITIVA", "MI_DET_ETAPA_MC"):
         if tabla not in counts and not _table_exists(cur, tabla):
             continue
         cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.{tabla}")
         n = int(cur.fetchone()[0])
         esp = counts.get(tabla, "?")
-        print(f"DW: POST-CARGA {ESQUEMA}.{tabla} = {n} filas (esperado {esp})")
+        print(f"DW: POST-CARGA {ESQUEMA}.{tabla} = {n} filas (esperado {esp})", flush=True)
     n_c = counts.get("MI_FACT_MC_CSEP", 0)
     n_o = counts.get("MI_FACT_MC_OD", 0)
     n_m = counts.get("MI_FACT_MULTA_COERCITIVA", 0)
     if (n_c + n_o) and n_m != (n_c + n_o):
-        print(f"AVISO enriquecida: {n_m} != CSEP+OD ({n_c}+{n_o})")
-    if "MI_INDICADOR_RESULTADO" in counts:
-        cur.execute(
-            f"SELECT DISTINCT COD_INDICADOR FROM {ESQUEMA}.MI_INDICADOR_RESULTADO ORDER BY 1"
-        )
-        codes = [r[0] for r in cur.fetchall()]
-        print(f"DW: indicadores presentes: {', '.join(codes) or '(ninguno)'}")
-        print(
-            f"DW: verificar en SQL*Plus/SQL Developer con la MISMA conexión ({dest}): "
-            f"SELECT COUNT(*) FROM {ESQUEMA}.MI_INDICADOR_RESULTADO;"
-        )
+        print(f"AVISO enriquecida: {n_m} != CSEP+OD ({n_c}+{n_o})", flush=True)
 
 
 def _split_sql(text: str) -> list[str]:
@@ -194,11 +170,11 @@ def _drop_table(cur, tabla: str) -> None:
     if not _table_exists(cur, tabla):
         return
     cur.execute(f"DROP TABLE {ESQUEMA}.{tabla} CASCADE CONSTRAINTS PURGE")
-    print(f"DW: DROP TABLE {tabla}")
+    print(f"DW: DROP TABLE {tabla}", flush=True)
 
 
 def _drop_model(cur) -> None:
-    """Borra vistas VW_MC_/VW_FCT_ y tablas MI_* del usuario actual."""
+    """Wipe canónico: todas VW_MC_/VW_FCT_ y todas MI_* (incl. AUD/DQ/QA legacy)."""
     cur.execute(
         """
         SELECT view_name FROM user_views
@@ -209,15 +185,13 @@ def _drop_model(cur) -> None:
     for (nombre,) in cur.fetchall():
         try:
             cur.execute(f"DROP VIEW {ESQUEMA}.{nombre}")
-            print(f"DW: DROP VIEW {nombre}")
+            print(f"DW: DROP VIEW {nombre}", flush=True)
         except Exception as exc:
             if "ORA-00942" not in str(exc):
                 raise
-            print(f"AVISO: DROP VIEW {nombre}: {exc}")
+            print(f"AVISO: DROP VIEW {nombre}: {exc}", flush=True)
 
-    cur.execute(
-        "SELECT table_name FROM user_tables WHERE table_name LIKE 'MI_%'"
-    )
+    cur.execute("SELECT table_name FROM user_tables WHERE table_name LIKE 'MI_%'")
     existentes = {r[0] for r in cur.fetchall()}
     for tabla in DROP_ORDEN:
         if tabla in existentes:
@@ -228,23 +202,17 @@ def _drop_model(cur) -> None:
 
 
 def _prepare_schema(cur, root: Path) -> None:
-    """Wipe modelo → CREATE desde DDL 01–04 + vistas 06."""
+    """Wipe total → CREATE solo estrella (01+02). Sin bitácora/KPIs/vistas."""
     ddl_root = root / DDL_DIR
     ts = _user_tablespace(cur)
-    print(f"DW: wipe modelo MI_*/VW_* y recrear DDL (TABLESPACE {ts})...")
+    print(
+        f"DW: wipe canónico MI_*/VW_* → DDL 01+02 (TABLESPACE {ts})...",
+        flush=True,
+    )
     _drop_model(cur)
-    for name in (
-        "01_dimensiones.sql",
-        "02_hechos.sql",
-        "03_bitacora.sql",
-        "04_indicadores.sql",
-    ):
-        print(f"DW: aplicando {name}...")
+    for name in ("01_dimensiones.sql", "02_hechos.sql"):
+        print(f"DW: aplicando {name}...", flush=True)
         _run_ddl_file(cur, ddl_root / name, ts)
-    vistas = ddl_root / "06_vistas.sql"
-    if vistas.is_file():
-        print("DW: aplicando vistas VW_MC_* (06)...")
-        _run_ddl_file(cur, vistas)
 
 
 def _run_enrich_sheets_sisud(cur, root: Path) -> int:
@@ -295,8 +263,18 @@ def _apply_column_comments(cur, root: Path) -> None:
     path = root / DDL_DIR / "05_comentarios.sql"
     if not path.is_file():
         return
-    print("DW: aplicando comentarios de tablas/columnas (05)...")
-    _run_ddl_file(cur, path)
+    print("DW: aplicando comentarios de tablas/columnas (05)...", flush=True)
+    # 05 puede referenciar DQ/vistas; ignorar ORA de objetos inexistentes
+    for stmt in _split_sql(path.read_text(encoding="utf-8")):
+        if stmt.upper().startswith("COMMIT") or not stmt.strip():
+            continue
+        try:
+            cur.execute(stmt)
+        except Exception as exc:
+            msg = str(exc)
+            if any(x in msg for x in ("ORA-00942", "ORA-04043", "ORA-02289")):
+                continue
+            raise
 
 
 def _trunc_varchar(val: str, limit: int) -> str:
@@ -373,17 +351,12 @@ def _coerce_for_oracle(v, data_type: str, varchar_limit: int | None):
 
 
 def _insert_df(cur, tabla: str, df: pd.DataFrame, skip_identity: bool = True) -> int:
-    if df.empty and tabla != "MI_DQ_HALLAZGO":
+    del skip_identity  # API estable; IDs vienen del DF (BY DEFAULT ON NULL).
+    if df.empty:
         cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.{tabla}")
         return int(cur.fetchone()[0])
     meta = _column_meta(cur, tabla)
     ora_cols = list(meta.keys())
-    if skip_identity:
-        ora_cols = [
-            c
-            for c in ora_cols
-            if c not in ("ID_HALLAZGO", "ID_RESULTADO", "ID_AMARRE", "ID_DETALLE")
-        ]
     df_cols = []
     for oc in ora_cols:
         match = None
@@ -416,10 +389,10 @@ def _insert_df(cur, tabla: str, df: pd.DataFrame, skip_identity: bool = True) ->
 
 
 def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict[str, int]:
-    """Wipe + DDL + INSERT del modelo lineamiento. Devuelve COUNT por tabla."""
+    """Wipe canónico + DDL estrella + INSERT + enrich 07. Devuelve COUNT por tabla."""
     root = root or project_root()
     if not tablas:
-        print("AVISO: no hay tablas para cargar a BD_CURSOR.")
+        print("AVISO: no hay tablas para cargar a BD_CURSOR.", flush=True)
         return {}
 
     conn, cv = _connect(root)
@@ -437,16 +410,11 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
                 if df is None:
                     continue
                 n_df = len(df)
-                n_bd = _insert_df(
-                    cur,
-                    tabla,
-                    df,
-                    skip_identity=(tabla in IDENTITY_SKIP),
-                )
+                n_bd = _insert_df(cur, tabla, df, skip_identity=True)
                 conn.commit()
                 counts[tabla] = n_bd
-                ok = "OK" if n_bd == n_df or (tabla == "MI_DQ_HALLAZGO" and n_bd >= n_df) else "REVISAR"
-                print(f"DW: {tabla}: {n_df} filas -> {n_bd} en BD ({ok})")
+                ok = "OK" if n_bd == n_df else "REVISAR"
+                print(f"DW: {tabla}: {n_df} filas -> {n_bd} en BD ({ok})", flush=True)
 
             n_enriq = _run_enrich_sheets_sisud(cur, root)
             counts["MI_FACT_MULTA_COERCITIVA"] = n_enriq

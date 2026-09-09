@@ -162,8 +162,8 @@ cd "${PROJECT_HOME}"
       <description>31 Google Sheets F1 → H2 STG_GS2_OD_MULTAS (pl_stage_od_sheet.hpl + f1_ods_sheets.json)</description>
       <type>SHELL</type>
       <attributes/>
-      <xloc>592</xloc>
-      <yloc>192</yloc>
+      <xloc>608</xloc>
+      <yloc>256</yloc>
       <parallel>N</parallel>
       <attributes_hac/>
     </action>
@@ -308,7 +308,7 @@ PY=python3
       <unconditional>N</unconditional>
       <enabled>Y</enabled>
     </hop>
-        <hop>
+    <hop>
       <from>Stage Oracle VW</from>
       <to>Pipeline demo</to>
       <evaluation>Y</evaluation>

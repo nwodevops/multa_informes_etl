@@ -13,7 +13,7 @@ Referencias: [`../lineamientos/PROPUESTA_ADAPTADA_ETL.md`](../lineamientos/PROPU
 
 ## 0. Fuentes de entrada (inputs)
 
-Tres fuentes de multa activas (**F1, F2, F5**); F4 GAPP fuera de ingestión. Hop extrae cada una a `STG_*` en H2; Python arma **3 facts de evidencia** y Oracle SQL (`07_enrich_sheets_sisud.sql`) llena el **hecho de negocio** enriquecido. Cada fila queda con `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO`. Vistas: `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` / `VW_MC_ENRIQUECIDA`.
+Tres fuentes de multa activas (**F1, F2, F5**); F4 GAPP fuera de ingestión. Hop extrae cada una a `STG_*` en H2; Python arma **3 facts de evidencia** y Oracle SQL (`07_enrich_sheets_sisud.sql`) llena el **hecho de negocio** enriquecido. Cada fila queda con `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO`. Consultar tablas `MI_FACT_*` (sin vistas `VW_MC_*` en destino). Foto cruda: `MI_AUD_*`.
 
 ```mermaid
 flowchart TB
@@ -61,7 +61,7 @@ flowchart TB
 | **F4** | MySQL GAPP | — | **Fuera de ingestión** (semilla `ID_FUENTE=3`) | `GAPPS` |
 | **F5** | Oracle SISUD | `STG_ORA_VW_MULTA_COERCITIVA` | Evidencia `_SISUD`; lookup CUM/CAM al enriquecido | `SISUD_VW` |
 
-**Integración:** evidencia F1/F2/F5 cargada por Python; enriquecido = (CSEP ∪ OD) LEFT JOIN SISUD por `norm(N_RES_MC)+MONTO_UIT` ([manual](../lineamientos/extra/manual-como-se-arma-el-fact.md)). Territorio F1: `ID_OD`. Territorio F2: `ID_ORGANO`. **H9:** `RES_MONTO_Sheets_vs_SISUD` en `MI_QA_AMARRE` / K5.
+**Integración:** evidencia F1/F2/F5 cargada por Python; enriquecido = (CSEP ∪ OD) LEFT JOIN SISUD por `norm(N_RES_MC)+MONTO_UIT` ([manual](../lineamientos/extra/manual-como-se-arma-el-fact.md)). Territorio F1: `ID_OD`. Territorio F2: `ID_ORGANO`. Amarre H9 / K5 se calculan en la corrida (no publicados a Oracle).
 
 ---
 
@@ -73,9 +73,8 @@ flowchart TB
 | **Hechos evidencia** | `MI_FACT_MC_CSEP` / `_OD` / `_SISUD` | Qué se descargó de cada universo |
 | **Hecho negocio** | `MI_FACT_MULTA_COERCITIVA` | Sheets + CUM/CAM (enrich SQL 07) |
 | **Detalle** | `MI_DET_ETAPA_MC` | Etapas del flujo interno (1:N; FK a evidencia CSEP) |
-| **Calidad** | `MI_DQ_HALLAZGO`, `MI_QA_AMARRE`, `MI_QA_AMARRE_DETALLE` | Hallazgos R01–R05; amarre H9 |
-| **Vistas** | `VW_MC_*` | CSEP / OD / SISUD / ENRIQUECIDA |
-| **Indicadores** | `MI_INDICADOR_RESULTADO` | KPIs K1–K5 |
+| **Audit** | `MI_AUD_F1_*` / `F2_*` / `F5_*` | Foto cruda STG 1:1 (fuera de estrella) |
+| **Consultoría (memoria)** | DQ / QA / K | Calculados en Python; **no** se publican a Oracle |
 
 ---
 
@@ -101,9 +100,9 @@ erDiagram
 
 ### Amarre H9 (fuentes de multa)
 
-Las fuentes no comparten llave única con correspondencia total. El cruce se **mide** (`MI_QA_AMARRE` + detalle `MI_QA_AMARRE_DETALLE` + K5), no se fuerza con INNER JOIN.
+Las fuentes no comparten llave única con correspondencia total. El cruce se **mide en la corrida ETL** (amarre H9 + K5 en memoria), no se fuerza con INNER JOIN ni se publica a Oracle.
 
-Claves típicas: `norm(N_RES_MC)+MONTO_UIT` (puente `RES_MONTO_Sheets_vs_SISUD`), además de pares legacy documentados en amarre.
+Clave típica de lookup de negocio (enrich 07): `norm(N_RES_MC)+MONTO_UIT`.
 
 ---
 
@@ -114,24 +113,24 @@ Clave **-1** = miembro *NO ESPECIFICADO*.
 | Tabla | Grano | Uso |
 |---|---|---|
 | **MI_DIM_TIEMPO** | 1 día | Periodo; días hábiles |
-| **MI_DIM_ADMINISTRADO** | 1 administrado | Sujeto fiscalizado (desde nombre F5 / Sheets) |
-| **MI_DIM_ORGANO_UNIDAD** | 1 órgano CSEP | Solo catálogo F2 (10 + ND); no siglas de expediente |
+| **MI_DIM_ADMINISTRADO** | 1 administrado | Sujeto fiscalizado |
+| **MI_DIM_ORGANO_UNIDAD** | 1 órgano CSEP | Solo catálogo F2 (10 + ND) |
 | **MI_DIM_OD** | 1 oficina F1 | Territorio Sheets OD |
-| **MI_DIM_FUENTE_REGISTRO** | 1 universo de origen | `CODIGO` (F1…F5 + legacy `OD_EXCEL`) |
-| **MI_DIM_MATERIA_SUBSECTOR** | 1 materia | Catálogo semilla (`-1` si no hay dato en multa) |
-| **MI_DIM_ESTADO** | 1 estado | Resolución, multa, pago, etapa, descargos |
-| **MI_DIM_PARAMETRO_UIT** | 1 año | Conversión UIT ↔ soles |
+| **MI_DIM_FUENTE_REGISTRO** | 1 universo de origen | `CODIGO` (F1…F5 + legacy) |
+| **MI_DIM_MATERIA_SUBSECTOR** | 1 materia | Semilla (`-1` si no hay dato) |
+| **MI_DIM_ESTADO** | 1 estado | Resolución, multa, pago, … |
+| **MI_DIM_PARAMETRO_UIT** | 1 año | UIT ↔ soles |
 | **MI_FACT_MC_CSEP** | 1 multa F2 | Evidencia Sheets CSEP |
 | **MI_FACT_MC_OD** | 1 multa F1 | Evidencia Sheets OD |
 | **MI_FACT_MC_SISUD** | 1 multa F5 | Evidencia vista SISUD |
-| **MI_FACT_MULTA_COERCITIVA** | 1 multa Sheet + CUM/CAM | Negocio enriquecido (K2–K4; attrs `JEFE`/`UF`/…) |
-| **MI_DET_ETAPA_MC** | 1 etapa | Drill-down del flujo interno (F2; FK a evidencia CSEP) |
-| **MI_DQ_HALLAZGO** | 1 defecto | Auditoría R01–R05; alimenta K5 |
-| **MI_QA_AMARRE** | 1 puente | % match H9 agregado |
-| **MI_QA_AMARRE_DETALLE** | 1 clave sin match | Pares SOLO_IZQ / SOLO_DER + motivo |
-| **MI_INDICADOR_RESULTADO** | 1 métrica | KPIs K1–K5 |
+| **MI_FACT_MULTA_COERCITIVA** | 1 multa Sheet + CUM/CAM | Negocio enriquecido |
+| **MI_DET_ETAPA_MC** | 1 etapa | Drill-down F2 (FK a evidencia CSEP) |
+| **MI_AUD_F1_OD_MULTAS** | 1 fila STG F1 | Foto cruda (fuera de estrella) |
+| **MI_AUD_F2_CSEP_MULTAS** | 1 fila STG F2 | Foto cruda |
+| **MI_AUD_F2_CSEP_ETAPAS** | 1 fila STG F2-ET | Foto cruda etapas |
+| **MI_AUD_F5_SISUD_VW** | 1 fila STG F5 | Foto cruda |
 
-Degeneradas en el hecho: `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE`, y attrs operativos F2 (`JEFE`, `UF`, `ETA_REG_*`, `ESTADO_*_TXT`, …). Linaje de universo solo vía `ID_FUENTE`.
+Degeneradas en el hecho: `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE`, attrs F2 (`JEFE`, `UF`, …). Linaje solo vía `ID_FUENTE`.
 
 ### Semillas `MI_DIM_FUENTE_REGISTRO`
 
@@ -175,7 +174,9 @@ flowchart TB
 
 ---
 
-## 5. KPIs (`MI_INDICADOR_RESULTADO`)
+## 5. KPIs (corrida ETL, no Oracle)
+
+Se calculan en `logica/dwh/indicadores.py` y quedan en memoria / `RESULTADO`. **No** hay tabla `MI_INDICADOR_RESULTADO` en el destino.
 
 | Código | Nombre | Métricas |
 |---|---|---|
@@ -183,15 +184,16 @@ flowchart TB
 | **K2** | Oportunidad del ciclo | `PROM_DIAS_NOTIF_FIRMA` |
 | **K3** | Efectividad cobranza | `RATIO_COBRANZA_SOLES`, `RATIO_COBRANZA_UIT` |
 | **K4** | Verificación post-MC | `TASA_VERIF_POST_MC` |
-| **K5** | Calidad del dato | `PCT_CONFORME`, `PCT_AMARRE` (puentes de multa) |
+| **K5** | Calidad del dato | `PCT_CONFORME`, `PCT_AMARRE` |
 
 ---
 
 ## 6. Orden de carga
 
-`MI_DIM_*` → `MI_FACT_MULTA_COERCITIVA` → `MI_DET_ETAPA_MC` → `MI_DQ_HALLAZGO` → `MI_QA_AMARRE*` → `MI_INDICADOR_RESULTADO` → vistas `06_vistas.sql`.
+Wipe canónico (todas `MI_*` / `VW_*`) → DDL `01`+`02` (+`05`) → INSERT dims + 3 facts evidencia + DET → enrich `07` → `MI_AUD_*`.
 
-DDL: [`01_dimensiones.sql`](../lineamientos/ddl/01_dimensiones.sql) → [`02_hechos.sql`](../lineamientos/ddl/02_hechos.sql) → [`03_bitacora.sql`](../lineamientos/ddl/03_bitacora.sql) → [`04_indicadores.sql`](../lineamientos/ddl/04_indicadores.sql) → [`06_vistas.sql`](../lineamientos/ddl/06_vistas.sql).
+DDL runtime: [`01_dimensiones.sql`](../lineamientos/ddl/01_dimensiones.sql) → [`02_hechos.sql`](../lineamientos/ddl/02_hechos.sql) → [`07_enrich_sheets_sisud.sql`](../lineamientos/ddl/07_enrich_sheets_sisud.sql).  
+`03`/`04`/`06` = histórico TDR; no los aplica `cargar_dw`. Audit: [`ddl/audit/`](../lineamientos/ddl/audit/).
 
 ---
 
@@ -213,12 +215,10 @@ Tras `./init.sh` en esquema `APP` (orientativo; cambia por corrida):
 | `MI_FACT_MC_OD` | **~281** |
 | `MI_FACT_MC_SISUD` | **~534** |
 | `MI_FACT_MULTA_COERCITIVA` | **~1 271** (= CSEP+OD) |
-| · `CAGR` | ~986 |
-| · `SISUD_VW` | ~530 |
-| · `OD_SHEETS` | ~281 |
 | `MI_DET_ETAPA_MC` | ~2 070 |
-| `MI_DQ_HALLAZGO` | ~207 |
-| `MI_QA_AMARRE_DETALLE` | ~3 078 |
-| `MI_INDICADOR_RESULTADO` | ~691 |
+| `MI_AUD_F2_CSEP_MULTAS` | ≈ STG F2 |
+| `MI_AUD_F2_CSEP_ETAPAS` | ≈ STG F2 etapas |
+| `MI_AUD_F1_OD_MULTAS` | ≈ STG F1 |
+| `MI_AUD_F5_SISUD_VW` | ≈ STG F5 |
 
 F2 por unidad (ej.): CMIN ~387, CHID ~365, CRES ~173, CIND ~31, CAGR ~16, CELE ~14 (otras unidades pueden ir en 0).
