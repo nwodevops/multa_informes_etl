@@ -1,15 +1,19 @@
 # CHECKPOINTS — estado final correcto
 
 Criterios unificados para marcar una feature como `done` en [`feature_list.json`](feature_list.json).  
-Verificación ejecutable: [`./init.sh`](init.sh) + checklist de la fase.
+Verificación ejecutable: [`./init.sh`](init.sh) (Linux) / `init.bat` (Windows) + checklist de la fase.
 
-Referencia canónica: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md).
+Referencia canónica: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md).  
+Contrato runtime: [`python/CONTRATO.md`](python/CONTRATO.md).
+
+**Oracle canónico (runtime):** dims + 3 facts evidencia + DET + `MI_FACT_MULTA_COERCITIVA` (enrich `07`) + `MI_DQ_HALLAZGO` + `MI_AUD_*`.  
+**No se publican:** `MI_QA_*`, `MI_INDICADOR_*` (K1–K5 solo memoria), vistas `VW_MC_*` / `VW_FCT_*`.
 
 ---
 
 ## Global (todas las fases)
 
-- [ ] `./init.sh` termina con código 0 y mensaje `HARNESS OK`.
+- [ ] `./init.sh` termina con código 0 y mensaje `HARNESS OK` (Linux local).
 - [ ] Ningún password real en archivos trackeados (`project-config.json`, `environments/*.json`).
 - [ ] Log de Hop/Python sin literales `${VAR}` (variable no resuelta).
 - [ ] Un solo `.py` en `logica/` (auto-descubierto por `python/main.py`).
@@ -21,7 +25,7 @@ Referencia canónica: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/linea
 
 - [ ] `./h2/scripts/reset_and_create.sh` levanta H2 en puerto 9092.
 - [ ] `.venv/bin/python python/create_stg.py` crea tablas `STG_*` desde `inputs.yaml`.
-- [ ] `workflows/wf_main.hwf` ejecutable en Hop GUI (proyecto `etl_cursor` o nombre de carpeta).
+- [ ] `workflows/wf_main.hwf` ejecutable en Hop GUI (proyecto = nombre de carpeta).
 - [ ] `python/main.py` invocable desde Hop o shell.
 
 ---
@@ -48,8 +52,8 @@ Módulos: `logica/dwh/homologacion.py`, `logica/dwh/integracion.py`.
 ## Fase 4 — Calidad {#fase-4}
 
 - [ ] `FG_CONFORME` en dataframes; reglas R01–R05 aplicadas.
-- [ ] `MI_DQ_HALLAZGO` append (cuarentena blanda: no se eliminan filas).
-- [ ] `MI_QA_AMARRE` (resumen % puente H9) y `MI_QA_AMARRE_DETALLE` (claves `SOLO_IZQ`/`SOLO_DER` + motivo) cargados en Oracle; puente Sheets↔SISUD: `RES_MONTO_Sheets_vs_SISUD`.
+- [ ] `MI_DQ_HALLAZGO` **publicado en Oracle** (cuarentena blanda: no se eliminan filas).
+- [ ] `MI_QA_AMARRE` + `MI_QA_AMARRE_DETALLE` calculados en la corrida (memoria / log); **no** se publican a Oracle. Puente Sheets↔SISUD: `RES_MONTO_Sheets_vs_SISUD`.
 
 Módulo: `logica/dwh/calidad.py`. Skill: `.agents/skills/auditable-soft-quarantine/`.
 
@@ -69,31 +73,30 @@ Módulo: `logica/dwh/dimensional.py`. Manual: `docs/lineamientos/extra/manual-co
 
 ## Fase 6 — Carga Oracle {#fase-6}
 
-- [ ] DDL formal aplicado (`docs/lineamientos/ddl/01`–`04` + vistas `06` + enrich `07`).
-- [ ] Vistas legacy `VW_FCT_*` eliminadas si existían; vistas `VW_MC_CSEP|OD|SISUD|ENRIQUECIDA` presentes.
+- [ ] Wipe canónico `MI_*` / `VW_*` → DDL `01`+`02` + `MI_DQ_HALLAZGO` (03 filtrado) (+`05`) → INSERT → enrich `07` → `MI_AUD_*`.
+- [ ] **Sin** `04_indicadores` / `06_vistas` en runtime; sin vistas `VW_MC_*` en destino.
 - [ ] Tras insert evidencia: `07_enrich_sheets_sisud.sql` → enriquecida COUNT = CSEP + OD.
-- [ ] Por cada tabla cargada: log `DW: <tabla>: N filas -> N en BD (OK)` (incluye `MI_QA_*`).
-- [ ] `COUNT(*)` Oracle = filas del DataFrame (excepto `MI_DQ_HALLAZGO`: `>=`).
+- [ ] Log `DW: <tabla>: N filas -> N en BD (OK)` para dims/facts/DET/DQ.
+- [ ] `MI_AUD_*` alineados a STG (F1/F2/F5); `python/verify_dw.py` OK.
 
-Módulo: `python/io/cargar_dw.py`. Skill: `.agents/skills/oracle-cargar-dw/`.
+Módulo: `python/io/cargar_dw.py` + `python/audit/cargar_aud.py`. Skill: `.agents/skills/oracle-cargar-dw/`.
 
 ---
 
 ## Fase 7 — Indicadores {#fase-7}
 
-- [ ] Tabla `MI_INDICADOR_RESULTADO` con DDL `04_indicadores.sql`.
-- [ ] Presencia de códigos K1, K2, K3, K4, K5.
-- [ ] Segunda corrida con mismo staging → mismos `VALOR` / `NUMERADOR` / `DENOMINADOR`.
-- [ ] Conteo típico de referencia: cientos de filas (depende del entorno; K1 solo `N_MULTAS`).
+- [ ] K1–K5 calculados en `logica/dwh/indicadores.py` y visibles como salida `MI_INDICADOR_RESULTADO` **en el log** (memoria de corrida).
+- [ ] **No** hay tabla `MI_INDICADOR_RESULTADO` en Oracle tras la carga.
+- [ ] Segunda corrida con mismo staging → mismos valores en memoria / `RESULTADO`.
 
 Módulo: `logica/dwh/indicadores.py`. Doc: `docs/lineamientos/implementacion-fase-7.md`.
 
-Consulta Oracle:
+Consulta de calidad en Oracle (bitácora publicada):
 
 ```sql
-SELECT COD_INDICADOR, METRICA, COUNT(*)
-FROM APP.MI_INDICADOR_RESULTADO
-GROUP BY COD_INDICADOR, METRICA
+SELECT REGLA_CODIGO, SEVERIDAD, COUNT(*)
+FROM APP.MI_DQ_HALLAZGO
+GROUP BY REGLA_CODIGO, SEVERIDAD
 ORDER BY 1, 2;
 ```
 

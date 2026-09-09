@@ -175,9 +175,14 @@ if errorlevel 1 (
     call :fail "no hay salida MI_FACT_MC_SISUD en el log"
     exit /b 1
 )
+findstr /C:"Salida MI_DQ_HALLAZGO" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida MI_DQ_HALLAZGO en el log"
+    exit /b 1
+)
 findstr /C:"Salida MI_INDICADOR_RESULTADO" "%LOG%" >nul 2>&1
 if errorlevel 1 (
-    call :fail "no hay MI_INDICADOR_RESULTADO en el log"
+    call :fail "no hay MI_INDICADOR_RESULTADO en el log (memoria de corrida)"
     exit /b 1
 )
 findstr /C:"Salida DF_INFORMES" "%LOG%" >nul 2>&1
@@ -207,14 +212,14 @@ if errorlevel 1 (
     call :warn "carga DW sin lineas (OK); revisar credenciales oracle_dw"
 )
 
-call :step "Verificacion Oracle K1-K5"
-"%PY%" python\verify_oracle_k.py >> "%RUN_LOG%" 2>&1
+call :step "Verificacion Oracle canónica (verify_dw.py)"
+"%PY%" python\verify_dw.py >> "%RUN_LOG%" 2>&1
 if errorlevel 1 (
-    call :fail "Verificacion Oracle K1-K5 fallo"
+    call :fail "Verificacion Oracle (verify_dw.py) fallo"
     exit /b 1
 )
-findstr /C:"MI_INDICADOR_RESULTADO:" "%RUN_LOG%"
-findstr /C:"Indicadores K1-K5" "%RUN_LOG%"
+findstr /C:"MI_DQ_HALLAZGO" "%RUN_LOG%"
+findstr /C:"QA/K en Oracle" "%RUN_LOG%"
 
 (
   echo.

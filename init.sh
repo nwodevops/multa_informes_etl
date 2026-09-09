@@ -96,7 +96,8 @@ grep -q "Salida MI_DIM_" "$LOG" || fail "no hay salida MI_DIM_* en el log"
 grep -q "Salida MI_FACT_MC_CSEP" "$LOG" || fail "no hay salida MI_FACT_MC_CSEP en el log"
 grep -q "Salida MI_FACT_MC_OD" "$LOG" || fail "no hay salida MI_FACT_MC_OD en el log"
 grep -q "Salida MI_FACT_MC_SISUD" "$LOG" || fail "no hay salida MI_FACT_MC_SISUD en el log"
-grep -q "Salida MI_INDICADOR_RESULTADO" "$LOG" || fail "no hay MI_INDICADOR_RESULTADO en el log"
+grep -q "Salida MI_DQ_HALLAZGO" "$LOG" || fail "no hay salida MI_DQ_HALLAZGO en el log"
+grep -q "Salida MI_INDICADOR_RESULTADO" "$LOG" || fail "no hay MI_INDICADOR_RESULTADO en el log (memoria de corrida)"
 if grep -q "Salida DF_INFORMES" "$LOG"; then
   fail "log contiene DF_INFORMES (F3 fuera de alcance)"
 fi
@@ -109,6 +110,9 @@ if grep -q "DW:" "$LOG"; then
     fail "carga DW con tablas en REVISAR (conteo Oracle != DataFrame)"
   fi
   grep "DW:.*(OK)" "$LOG" || warn "carga DW sin líneas (OK); revisar credenciales oracle_dw"
+  grep -q "DW: POST-CARGA .*MI_DQ_HALLAZGO" "$LOG" || grep -q "MI_DQ_HALLAZGO:" "$LOG" \
+    || warn "no se vio POST-CARGA/INSERT de MI_DQ_HALLAZGO en log"
+  grep -q "AUD:" "$LOG" || warn "no se vieron líneas AUD: (foto cruda MI_AUD_*)"
 else
   fail "sin líneas DW: en log (carga Oracle obligatoria)"
 fi
@@ -117,7 +121,7 @@ if grep -q '\${[A-Za-z0-9_]\+}' "$LOG"; then
   fail "log contiene variables Hop sin resolver (\${VAR})"
 fi
 
-step "Verificación Oracle opcional (K1–K5)"
+step "Verificación Oracle canónica (estrella + DQ + AUD; sin VW/QA/K)"
 "$PY" - <<'PY'
 import sys
 from pathlib import Path
@@ -138,90 +142,140 @@ except Exception:
 dsn = oracledb.makedsn(cv["host"], int(cv["port"] or "1521"), service_name=cv["database"])
 with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as conn:
     with conn.cursor() as cur:
-        cur.execute("SELECT COUNT(*) FROM APP.MI_INDICADOR_RESULTADO")
-        n, = cur.fetchone()
-        print(f"MI_INDICADOR_RESULTADO: {n} filas en Oracle")
-        cur.execute(
-            "SELECT DISTINCT COD_INDICADOR FROM APP.MI_INDICADOR_RESULTADO ORDER BY 1"
-        )
-        codes = {r[0] for r in cur.fetchall()}
-        missing = sorted({"K1", "K2", "K3", "K4", "K5"} - codes)
-        if missing:
-            sys.exit(f"faltan indicadores en Oracle: {missing}")
-        print("Indicadores K1–K5 presentes")
-        cur.execute(
-            """
-            SELECT COUNT(*) FROM all_tables
-            WHERE owner = 'APP' AND table_name = 'MI_FACT_INFORME_SUPERVISION'
-            """
-        )
-        n_inf, = cur.fetchone()
-        if n_inf:
-            sys.exit("APP.MI_FACT_INFORME_SUPERVISION aún existe (F3 debe estar droppeada)")
+        cur.execute("SELECT USER FROM DUAL")
+        esq = str(cur.fetchone()[0])
+        print(f"Esquema sesión: {esq}")
+
+        def exists_table(name: str) -> bool:
+            cur.execute(
+                "SELECT COUNT(*) FROM user_tables WHERE table_name = :1",
+                [name.upper()],
+            )
+            return int(cur.fetchone()[0]) > 0
+
+        def exists_view(name: str) -> bool:
+            cur.execute(
+                "SELECT COUNT(*) FROM user_views WHERE view_name = :1",
+                [name.upper()],
+            )
+            return int(cur.fetchone()[0]) > 0
+
+        def count(name: str) -> int:
+            cur.execute(f"SELECT COUNT(*) FROM {esq}.{name}")
+            return int(cur.fetchone()[0])
+
+        # F3 fuera de alcance
+        if exists_table("MI_FACT_INFORME_SUPERVISION"):
+            sys.exit("MI_FACT_INFORME_SUPERVISION aún existe (F3 debe estar droppeada)")
         print("MI_FACT_INFORME_SUPERVISION: inexistente")
+
         cur.execute(
             """
-            SELECT COUNT(*) FROM all_tab_columns
-            WHERE owner = 'APP' AND table_name = 'MI_FACT_MULTA_COERCITIVA'
+            SELECT COUNT(*) FROM user_tab_columns
+            WHERE table_name = 'MI_FACT_MULTA_COERCITIVA'
               AND column_name = 'ID_INFORME'
             """
         )
-        n_col, = cur.fetchone()
-        if n_col:
+        if cur.fetchone()[0]:
             sys.exit("MI_FACT_MULTA_COERCITIVA.ID_INFORME aún existe (F3 debe estar droppeada)")
         print("ID_INFORME: inexistente en MI_FACT_MULTA_COERCITIVA")
+
         cur.execute(
             """
-            SELECT COUNT(*) FROM all_tab_columns
-            WHERE owner = 'APP' AND table_name = 'MI_FACT_MULTA_COERCITIVA'
+            SELECT COUNT(*) FROM user_tab_columns
+            WHERE table_name = 'MI_FACT_MULTA_COERCITIVA'
               AND column_name = 'FUENTE_REGISTRO'
             """
         )
         if cur.fetchone()[0]:
             sys.exit("MI_FACT_MULTA_COERCITIVA.FUENTE_REGISTRO aún existe (debe deprecarse)")
         print("FUENTE_REGISTRO VARCHAR: inexistente")
+
         cur.execute(
             """
-            SELECT COUNT(*) FROM all_tab_columns
-            WHERE owner = 'APP' AND table_name = 'MI_FACT_MULTA_COERCITIVA'
+            SELECT COUNT(*) FROM user_tab_columns
+            WHERE table_name = 'MI_FACT_MULTA_COERCITIVA'
               AND column_name = 'ID_TIEMPO_FIRMA'
             """
         )
         if not cur.fetchone()[0]:
             sys.exit("falta MI_FACT_MULTA_COERCITIVA.ID_TIEMPO_FIRMA")
         print("ID_TIEMPO_FIRMA: presente")
+
+        # Canónico publicado
+        for t in (
+            "MI_FACT_MC_CSEP",
+            "MI_FACT_MC_OD",
+            "MI_FACT_MC_SISUD",
+            "MI_FACT_MULTA_COERCITIVA",
+            "MI_DET_ETAPA_MC",
+            "MI_DQ_HALLAZGO",
+            "MI_AUD_F1_OD_MULTAS",
+            "MI_AUD_F2_CSEP_MULTAS",
+            "MI_AUD_F2_CSEP_ETAPAS",
+            "MI_AUD_F5_SISUD_VW",
+        ):
+            if not exists_table(t):
+                sys.exit(f"falta tabla canónica {t}")
+        print("Tablas canónicas (facts/DET/DQ/AUD): OK")
+
+        # Prohibidas en destino
+        for t in ("MI_QA_AMARRE", "MI_QA_AMARRE_DETALLE", "MI_INDICADOR_RESULTADO"):
+            if exists_table(t):
+                sys.exit(f"{t} no debe publicarse en Oracle (solo memoria de corrida)")
+        print("QA/K en Oracle: ausentes (OK)")
+
         cur.execute(
             """
-            SELECT 'CSEP' AS U, COUNT(*) FROM APP.MI_FACT_MC_CSEP
-            UNION ALL
-            SELECT 'OD', COUNT(*) FROM APP.MI_FACT_MC_OD
-            UNION ALL
-            SELECT 'SISUD', COUNT(*) FROM APP.MI_FACT_MC_SISUD
-            UNION ALL
-            SELECT 'ENRIQUECIDA', COUNT(*) FROM APP.MI_FACT_MULTA_COERCITIVA
+            SELECT view_name FROM user_views
+            WHERE view_name LIKE 'VW_MC_%' OR view_name LIKE 'VW_FCT_%'
+            ORDER BY 1
             """
         )
-        by_tbl = {r[0]: int(r[1]) for r in cur.fetchall()}
-        print(f"Conteos evidencia+enriquecida: {by_tbl}")
+        vistas = [r[0] for r in cur.fetchall()]
+        if vistas:
+            sys.exit(f"vistas VW_* no deben existir tras wipe: {', '.join(vistas)}")
+        print("Vistas VW_MC_/VW_FCT_: ninguna (OK)")
+
+        by_tbl = {
+            "CSEP": count("MI_FACT_MC_CSEP"),
+            "OD": count("MI_FACT_MC_OD"),
+            "SISUD": count("MI_FACT_MC_SISUD"),
+            "ENRIQUECIDA": count("MI_FACT_MULTA_COERCITIVA"),
+            "DET": count("MI_DET_ETAPA_MC"),
+            "DQ": count("MI_DQ_HALLAZGO"),
+            "AUD_F1": count("MI_AUD_F1_OD_MULTAS"),
+            "AUD_F2": count("MI_AUD_F2_CSEP_MULTAS"),
+            "AUD_ET": count("MI_AUD_F2_CSEP_ETAPAS"),
+            "AUD_F5": count("MI_AUD_F5_SISUD_VW"),
+        }
+        print(f"Conteos canónicos: {by_tbl}")
         expected_min = {"CSEP": 200, "OD": 50, "SISUD": 50}
         for cod, mn in expected_min.items():
             n = by_tbl.get(cod, 0)
             if n < mn:
                 sys.exit(f"conteo {cod}={n} bajo mínimo esperado {mn} (posible fallo de staging)")
-        n_enriq = by_tbl.get("ENRIQUECIDA", 0)
-        n_sheets = by_tbl.get("CSEP", 0) + by_tbl.get("OD", 0)
+        n_enriq = by_tbl["ENRIQUECIDA"]
+        n_sheets = by_tbl["CSEP"] + by_tbl["OD"]
         if n_enriq != n_sheets:
             sys.exit(f"enriquecida={n_enriq} debe igualar CSEP+OD={n_sheets}")
-        # Caso negocio: resolución 0153 + 64 UIT → 2 filas con CUM/CAM si hay match SISUD
+        if by_tbl["AUD_F2"] != by_tbl["CSEP"]:
+            sys.exit(f"AUD_F2={by_tbl['AUD_F2']} debe igualar CSEP={by_tbl['CSEP']}")
+        if by_tbl["AUD_F1"] != by_tbl["OD"]:
+            sys.exit(f"AUD_F1={by_tbl['AUD_F1']} debe igualar OD={by_tbl['OD']}")
+        if by_tbl["AUD_F5"] != by_tbl["SISUD"]:
+            sys.exit(f"AUD_F5={by_tbl['AUD_F5']} debe igualar SISUD={by_tbl['SISUD']}")
+        print(f"MI_DQ_HALLAZGO: {by_tbl['DQ']} filas (R01–R05; 0 es válido si no hay hallazgos)")
+
         cur.execute(
             """
             SELECT COUNT(*),
                    SUM(CASE WHEN CUM IS NOT NULL AND CAM IS NOT NULL THEN 1 ELSE 0 END)
-            FROM APP.MI_FACT_MULTA_COERCITIVA
+            FROM {esq}.MI_FACT_MULTA_COERCITIVA
             WHERE REGEXP_REPLACE(UPPER(REPLACE(TRIM(N_RES_MC), ' ', '')), '^0+([0-9]+)', '\\1')
                   LIKE '153-2026-OEFA/DSEM'
               AND MONTO_UIT = 64
-            """
+            """.format(esq=esq)
         )
         n0153, n_con_cum = cur.fetchone()
         n0153 = int(n0153 or 0)
@@ -229,34 +283,11 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
         print(f"Caso 0153/64: {n0153} filas enriquecida, {n_con_cum} con CUM+CAM")
         if n0153 < 2:
             sys.exit(f"caso 0153/64: esperado >=2 filas enriquecida, hay {n0153}")
-        cur.execute("SELECT COUNT(*) FROM APP.MI_DIM_ORGANO_UNIDAD")
-        n_org, = cur.fetchone()
+
+        n_org = count("MI_DIM_ORGANO_UNIDAD")
         if n_org > 20:
             sys.exit(f"MI_DIM_ORGANO_UNIDAD={n_org} (esperado ~11 CSEP+ND)")
         print(f"MI_DIM_ORGANO_UNIDAD: {n_org}")
-        for v in ("VW_MC_CSEP", "VW_MC_OD", "VW_MC_SISUD", "VW_MC_ENRIQUECIDA"):
-            cur.execute(
-                "SELECT COUNT(*) FROM all_views WHERE owner='APP' AND view_name=:1",
-                [v],
-            )
-            if not cur.fetchone()[0]:
-                sys.exit(f"falta vista APP.{v}")
-        print("Vistas VW_MC_*: OK")
-        cur.execute("SELECT COUNT(*) FROM APP.MI_QA_AMARRE_DETALLE")
-        n_det, = cur.fetchone()
-        print(f"MI_QA_AMARRE_DETALLE: {n_det} filas")
-        if n_det < 1:
-            sys.exit("MI_QA_AMARRE_DETALLE vacío (esperado claves sin match H9)")
-        cur.execute("SELECT COUNT(*) FROM APP.MI_QA_AMARRE")
-        n_am, = cur.fetchone()
-        print(f"MI_QA_AMARRE: {n_am} filas")
-        if n_am < 1:
-            sys.exit("MI_QA_AMARRE vacío (esperado resumen de puentes H9)")
-        cur.execute(
-            "SELECT COUNT(*) FROM APP.MI_QA_AMARRE WHERE PUENTE = 'RES_MONTO_Sheets_vs_SISUD'"
-        )
-        if not cur.fetchone()[0]:
-            sys.exit("falta puente RES_MONTO_Sheets_vs_SISUD en MI_QA_AMARRE")
 PY
 
 echo ""

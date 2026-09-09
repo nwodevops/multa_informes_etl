@@ -1,4 +1,4 @@
-# Sesión activa — rama `windows` (exclusiva Win)
+# Sesión activa — rama `linux` (harness / desarrollo local)
 
 ## Feature activa
 
@@ -6,31 +6,25 @@
 |---|---|
 | ID | `fase-remote-deploy` |
 | Status | `in_progress` |
-| Criterio | `wf_main_win` / `init.bat` → Success + POST-CARGA ≈ 990/281/534/1271 + `MI_AUD_*` = STG + `MI_DQ_HALLAZGO`; sin VW/QA/K en Oracle |
+| Criterio Win | `wf_main_win` / `init.bat` → Success + POST-CARGA + `MI_AUD_*` + `MI_DQ_HALLAZGO`; sin VW/QA/K |
 
 ## Hecho reciente
 
-- `dw-wipe-canonico-aud` = **done**: wipe `MI_*`/`VW_*`, DDL `01`+`02`+`MI_DQ_HALLAZGO`(+`05`), enrich `07`, audit `MI_AUD_*`.
-- `MI_DQ_HALLAZGO` restaurado en Oracle (R01–R05). QA/K siguen solo en memoria.
-
-## Homologación
-
-- Código canónico en `linux` y `windows` (merge + push).
-- Trabajo de lógica/DW preferir rama `linux`; `windows` para corrida remota.
+- Harness alineado al DW canónico: `init.sh` / `init.bat` / `CHECKPOINTS.md` / `docs/verification.md`.
+- Oracle: estrella + `MI_DQ_HALLAZGO` + `MI_AUD_*`. QA/K solo memoria.
 
 ## Plan
 
-1. En PC Win: `git pull` → `.\switch-env.ps1 remote` → `wf_main_win` / `init.bat` (`client_secret.json`).
-2. Confirmar POST-CARGA: CSEP/OD/SISUD/enriquecida + AUD + `MI_DQ_HALLAZGO`.
-3. Si OK → `fase-remote-deploy` = done.
+1. Local (`linux`): `./switch-env.sh local` → `./init.sh` o Hop `wf_main.hwf` → `HARNESS OK`.
+2. Remoto Win: `git pull` en `windows` → `.\switch-env.ps1 remote` → `init.bat` / `wf_main_win`.
+3. Si Win OK → `fase-remote-deploy` = done; merge/homologar ramas.
 
-## Comandos Win
+## Comandos Linux
 
-```powershell
-cd D:\Eder\workspace_etl_oefa\multa_informes_etl
-git checkout windows
-git pull
-.\switch-env.ps1 remote
-init.bat
-# o Hop: wf_main_win.hwf
+```bash
+git checkout linux
+./switch-env.sh local
+./init.sh
+# o Hop: wf_main.hwf
+.venv/bin/python python/verify_dw.py
 ```

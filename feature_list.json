@@ -1,13 +1,13 @@
 {
   "project": "datawarehouse_multa_etl",
   "lineamiento": "docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md",
-  "branch_trabajo": "windows",
-  "entorno": "windows-exclusive",
+  "branch_trabajo": "linux",
+  "entorno": "linux-local + windows-remote",
   "reglas": {
     "una_feature_activa": "Como máximo un item con status in_progress",
-    "verificacion": "Windows: .\\switch-env.ps1 remote + init.bat o wf_main_win.hwf → Success; Linux: ./switch-env.sh local|remote + wf_main.hwf → Success",
+    "verificacion": "Linux: ./switch-env.sh local + ./init.sh o wf_main.hwf → HARNESS OK / Success; Windows: .\\switch-env.ps1 remote + init.bat o wf_main_win.hwf → Success + verify_dw.py",
     "trazabilidad": "Implementador escribe progress/impl_<id>.md; revisor progress/review_<id>.md",
-    "rama": "windows = ejecución Win remota; linux = harness/desarrollo Linux; feature_list compartido entre ambas"
+    "rama": "linux = harness/desarrollo local; windows = ejecución remota; feature_list compartido; homologar con merge"
   },
   "features": [
     {
