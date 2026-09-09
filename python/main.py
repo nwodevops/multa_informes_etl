@@ -4,8 +4,9 @@
 Lineamientos PROPUESTA_ADAPTADA_ETL.md — Fases 2–7:
   1. SETUP   : root + variables de project-config.json
   2. ENTRADA : io/leer_h2.py -> DataFrames (nombres = claves de LECTURAS)
-  3. LOGICA  : único .py en logica/ -> PROF_*, DICCIONARIO, DF_*, DIM_*, FACT_*, IND_*
-  4. SALIDA  : logs de conteo; carga TRUNCATE+INSERT a BD_CURSOR (Fases 6–7)
+  3. LOGICA  : único .py en logica/ -> PROF_*, DICCIONARIO, DF_*, DIM_*, FACT_*
+  4. SALIDA  : wipe canónico Oracle (dims/facts/DET + enrich 07) + MI_AUD_*
+               DQ/QA/K se calculan en memoria (no se publican a Oracle)
 
 Contrato: python/CONTRATO.md
 Uso: .venv/bin/python python/main.py
@@ -106,17 +107,24 @@ def main() -> int:
     for nombre, df in salidas.items():
         print(f"Salida {nombre}: {len(df)} filas x {len(df.columns)} columnas")
 
+    # Solo estrella a Oracle (DQ/QA/K quedan en memoria / RESULTADO).
     tablas_dw = {
         k: v
         for k, v in salidas.items()
-        if k.startswith(("DIM_", "FACT_", "DET_", "MI_DIM_", "MI_FACT_", "MI_DET_", "MI_QA_"))
-        or k in ("DQ_HALLAZGO", "MI_DQ_HALLAZGO", "INDICADOR_RESULTADO", "MI_INDICADOR_RESULTADO")
+        if k.startswith(("DIM_", "FACT_", "DET_", "MI_DIM_", "MI_FACT_", "MI_DET_"))
+        and not k.startswith(("MI_DQ_", "MI_QA_", "MI_INDICADOR_"))
     }
     if tablas_dw:
         cargar = _load("cargar_dw", HERE / "io" / "cargar_dw.py")
         cargar.cargar_dw(tablas_dw, root)
 
-    print("Listo (H2 -> logica Fases 2-7, modelo e indicadores en BD_CURSOR si credenciales OK).")
+        aud = _load("cargar_aud", HERE / "audit" / "cargar_aud.py")
+        aud.cargar_aud(datos, root)
+
+    print(
+        "Listo (H2 -> logica -> Oracle canónico dims/facts/DET/enrich + MI_AUD_*). "
+        "DQ/QA/K solo en memoria de corrida."
+    )
     return 0
 
 

@@ -19,19 +19,20 @@ El warehouse integra en un solo modelo Oracle (tablas `MI_*`) las multas coercit
 - ¿Cuántas multas hay por unidad CSEP, oficina OD o periodo?
 - ¿Quién es el **jefe** / qué **UF** / en qué **etapa** está el proyecto? (campos del Sheet F2 en el DW)
 - ¿Cuánto se cobró (UIT / soles) y cómo avanza el ciclo (notificación → firma → vencimiento / pago)?
-- ¿Qué tan bien “amarra” Sheet con SISUD? (calidad / amarre H9 y KPI K5)
 
-El modelo sigue un diseño **Kimball** con evidencia + negocio:
+El modelo sigue un diseño **Kimball** (evidencia + negocio):
 
 - **Evidencia:** `MI_FACT_MC_CSEP` / `_OD` / `_SISUD` → lo descargado de cada fuente
 - **Negocio enriquecido:** `MI_FACT_MULTA_COERCITIVA` → **Sheet manda**; CUM/CAM de SISUD a la derecha (resolución + monto)
 - **Dimensiones:** fuente, órgano/unidad CSEP, oficina OD, administrado, estado, tiempo, UIT, etc.
 - **Detalle F2:** etapas en `MI_DET_ETAPA_MC`
-- **Calidad y KPIs:** `MI_DQ_HALLAZGO`, `MI_QA_AMARRE` / `_DETALLE`, `MI_INDICADOR_RESULTADO` (K1–K5)
+- **Audit (foto cruda):** `MI_AUD_F1_OD_MULTAS` / `MI_AUD_F2_CSEP_MULTAS` / `MI_AUD_F2_CSEP_ETAPAS` / `MI_AUD_F5_SISUD_VW` → columnas 1:1 del origen (fuera de la estrella)
 
-> Alcance: **solo Multas**. Los informes de supervisión (F3) **no forman parte** de este DW.
+> Alcance: **solo Multas**. Los informes de supervisión (F3) **no forman parte** de este DW.  
+> No hay vistas `VW_MC_*` en el destino: se consulta **directo** `MI_FACT_*`.  
+> Calidad/KPIs (DQ, amarre H9, K1–K5) se calculan en la corrida ETL; **no** se publican como tablas en Oracle.
 
-Esquema típico: `APP` (local) o `REPOCSEP` (remoto).
+Esquema típico: `APP` (local / Docker) o `REPOCSEP` (remoto).
 
 ## Inputs (de dónde nacen los datos)
 
@@ -46,78 +47,68 @@ El ETL (Apache Hop + Python) carga primero a staging (`STG_*`) y luego construye
 
 Puntos importantes sobre inputs:
 
-1. **F1 y F2 ya no dependen de Excel local como fuente principal**; se leen desde Google Sheets (se requiere `client_secret.json` y compartir cada sheet con la cuenta de servicio).
-2. El Excel CAGR queda como **legacy** (p. ej. diccionario); los Excel OD de medidas administrativas tampoco son input operativo.
-3. En el DW el linaje se guarda con **`ID_FUENTE`** (dimensión `MI_DIM_FUENTE_REGISTRO`). No se debe sumar F1+F2+F5 como un solo universo: son coberturas distintas (a veces solapadas) y mezclarlas infla conteos y confunde territorios CSEP vs OD. El amarre entre fuentes se mide con `MI_QA_AMARRE` / K5, no con un total único.
+1. **F1 y F2** se leen desde Google Sheets (`client_secret.json` + compartir sheets con la cuenta de servicio).
+2. El Excel CAGR queda como **legacy** (p. ej. diccionario).
+3. Linaje en el DW: **`ID_FUENTE`** → `MI_DIM_FUENTE_REGISTRO`. **No** sumar F1+F2+F5 como un solo censo.
 
-Inventario detallado: `docs/inputs/README.md` · manifiesto: `inputs.yaml`.
+Inventario: `docs/inputs/README.md` · manifiesto: `inputs.yaml`.
 
-## Vistas de reporte por universo (`VW_MC_*`)
+## Tablas de consulta por universo
 
-Hay **tres facts de evidencia** (`MI_FACT_MC_CSEP` / `_OD` / `_SISUD`) y un fact de **negocio enriquecido**
-(`MI_FACT_MULTA_COERCITIVA` = Sheets enriquecidos con CUM/CAM de SISUD por resolución+monto, en SQL Oracle).
+| Tabla | Para qué sirve |
+|---|---|
+| **`MI_FACT_MC_CSEP`** | Evidencia **10 Sheets CSEP** |
+| **`MI_FACT_MC_OD`** | Evidencia **Sheets OD** |
+| **`MI_FACT_MC_SISUD`** | Evidencia **vista SISUD** |
+| **`MI_FACT_MULTA_COERCITIVA`** | Negocio: planillas + CUM/CAM; attrs F2 (`JEFE`, `UF`, …) |
+| **`MI_AUD_*`** | Auditoría: foto cruda 1:1 del staging |
 
-| Vista | Tabla base | Para qué sirve |
-|---|---|---|
-| **`VW_MC_CSEP`** | `MI_FACT_MC_CSEP` | Evidencia **10 Sheets CSEP** |
-| **`VW_MC_OD`** | `MI_FACT_MC_OD` | Evidencia **Sheets OD** |
-| **`VW_MC_SISUD`** | `MI_FACT_MC_SISUD` | Evidencia **vista SISUD** |
-| **`VW_MC_ENRIQUECIDA`** | `MI_FACT_MULTA_COERCITIVA` | Negocio: planillas + CUM/CAM (lookup SISUD); attrs F2 (`JEFE`, `UF`, etapas, …) |
-
-**Regla:** evidencia = qué se descargó; enriquecido = lo que pide negocio (Sheet manda; sin filas solo-SISUD). No sumar CSEP+OD+SISUD como un solo censo. Conteos: enriquecida ≈ CSEP + OD.
-
-Ejemplo de consulta de negocio (jefe Homero Mejía):
+**Regla:** evidencia = qué se descargó; enriquecido = lo que pide negocio (Sheet manda; sin filas solo-SISUD). Conteos: enriquecida ≈ CSEP + OD.
 
 ```sql
 SELECT COD_MA, N_RES_MC, JEFE, UF, ETA_REG_PROY_MC, CUM, CAM, MONTO_UIT
-FROM APP.VW_MC_ENRIQUECIDA
+FROM APP.MI_FACT_MULTA_COERCITIVA
 WHERE UPPER(JEFE) LIKE '%MEJIA%';
 ```
 
-Manual de cómo se arma el fact: `docs/lineamientos/extra/manual-como-se-arma-el-fact.md`
+Manual del fact: `docs/lineamientos/extra/manual-como-se-arma-el-fact.md`
 
-## Dimensiones (`MI_DIM_*`) — para qué sirve cada una
-
-Las dimensiones son los “cortes” del hecho. Se unen al hecho por `ID_*`:
+## Dimensiones (`MI_DIM_*`)
 
 | Dimensión | Responde a… | Cómo se usa |
 |---|---|---|
-| **`MI_DIM_FUENTE_REGISTRO`** | ¿De qué universo vino la fila? (F1/F2/F5; GAPPS histórico) | Linaje (`ID_FUENTE`). Base de las vistas `VW_MC_*`. |
-| **`MI_DIM_ORGANO_UNIDAD`** | ¿Qué unidad CSEP? (CMIN, CRES, …) | Territorio **F2**. Solo las 10 unidades del catálogo (+ ND). |
-| **`MI_DIM_OD`** | ¿Qué oficina desconcentrada? (Ica, Puno, …) | Territorio **F1**. Cortar multas OD por `COD_OD`. |
-| **`MI_DIM_ADMINISTRADO`** | ¿Quién es el administrado? | Filtrar/agrupar por sujeto fiscalizado. |
-| **`MI_DIM_ESTADO`** | ¿En qué estado? (resolución / multa / pago) | Misma tabla, varios roles vía `ID_ESTADO_*` en el hecho. |
-| **`MI_DIM_TIEMPO`** | ¿En qué día/mes/trimestre/año? | Calendario; p. ej. firmas vía `ID_TIEMPO_FIRMA`. |
-| **`MI_DIM_PARAMETRO_UIT`** | ¿Qué valor UIT aplica ese año? | Contexto de montos / recálculo en soles. |
-| **`MI_DIM_MATERIA_SUBSECTOR`** | ¿Qué materia / subsector? | Corte temático; a menudo `-1` si no hay dato. |
+| **`MI_DIM_FUENTE_REGISTRO`** | ¿De qué universo vino la fila? | Linaje (`ID_FUENTE`); acotar CSEP / OD / SISUD |
+| **`MI_DIM_ORGANO_UNIDAD`** | ¿Qué unidad CSEP? | Territorio **F2** (10 + ND) |
+| **`MI_DIM_OD`** | ¿Qué oficina desconcentrada? | Territorio **F1** |
+| **`MI_DIM_ADMINISTRADO`** | ¿Quién es el administrado? | Filtrar/agrupar |
+| **`MI_DIM_ESTADO`** | ¿En qué estado? | Roles vía `ID_ESTADO_*` |
+| **`MI_DIM_TIEMPO`** | ¿Día/mes/trimestre/año? | p. ej. `ID_TIEMPO_FIRMA` |
+| **`MI_DIM_PARAMETRO_UIT`** | ¿UIT del año? | Contexto de montos |
+| **`MI_DIM_MATERIA_SUBSECTOR`** | ¿Materia / subsector? | A menudo `-1` |
 
-**Notas rápidas:**
-- `ID_* = -1` = “NO ESPECIFICADO” (el hecho existe; esa etiqueta no se resolvió).
-- No usar `MI_DIM_ORGANO_UNIDAD` para ODs ni `MI_DIM_OD` para unidades CSEP: son territorios distintos.
+- `ID_* = -1` = “NO ESPECIFICADO”.
+- No mezclar órgano CSEP con OD.
 
-## Cómo se usa el Data Warehouse
+## Cómo se usa
 
-Para **analizar**, se consulta Oracle sobre `MI_*` / vistas `VW_MC_*` (no el staging `STG_*`).
-
-Método recomendado:
+Consultar Oracle sobre **`MI_DIM_*` / `MI_FACT_*` / `MI_AUD_*`** (no `STG_*`, no vistas).
 
 1. Definir el grano (multas).
-2. **Acotar por fuente** con la vista `VW_MC_*` del universo correspondiente.
-3. Cortar por territorio: unidad CSEP (`MI_DIM_ORGANO_UNIDAD`) u oficina OD (`MI_DIM_OD`).
-4. Medir: conteos, `MONTO_UIT` / `MONTO_S`, plazos `DIAS_*`, flags de pago/verificación.
-5. Si hay diferencias entre sistemas: revisar amarre (`MI_QA_AMARRE_DETALLE`) y KPI **K5**, sin forzar cruces que “hagan cuadrar” artificialmente.
+2. Acotar por fuente: tabla evidencia o `ID_FUENTE` / `CODIGO`.
+3. Cortar por territorio: CSEP → `MI_DIM_ORGANO_UNIDAD`; OD → `MI_DIM_OD`.
+4. Medir: conteos, `MONTO_UIT` / `MONTO_S`, `DIAS_*`, flags.
 
-Ejemplos rápidos:
+Ejemplos:
 
-- Multas CSEP por unidad → `VW_MC_CSEP` + `MI_DIM_ORGANO_UNIDAD`
-- Multas OD por oficina → `VW_MC_OD` + `MI_DIM_OD`
-- KPIs ya calculados → `MI_INDICADOR_RESULTADO` (K1 cobertura, K2 tiempos, K3 cobranza, K4 verificación, K5 amarre)
+- Multas CSEP por unidad → `MI_FACT_MC_CSEP` + `MI_DIM_ORGANO_UNIDAD`
+- Multas OD por oficina → `MI_FACT_MC_OD` + `MI_DIM_OD`
+- Negocio (jefe / CUM) → `MI_FACT_MULTA_COERCITIVA`
 
-Guía de lectura del modelo: `docs/adjuntos/guia-leer-modelo-dimensional.md`  
-Cómo se arma el fact enriquecido: `docs/lineamientos/extra/manual-como-se-arma-el-fact.md`  
-Manual breve (Word, 2 págs.): `docs/adjuntos/Manual_uso_datawarehouse_multas.docx`
+Guía: `docs/adjuntos/guia-leer-modelo-dimensional.md`  
+Modelo: `docs/adjuntos/modelo-kimball.md`  
+Manual Word: `docs/adjuntos/Manual_uso_datawarehouse_multas.docx`
 
-Quedo atento/a a comentarios o a una sesión corta de recorrido sobre las vistas `VW_MC_*` y los catálogos de Sheets.
+Quedo atento/a a comentarios o a una sesión corta de recorrido sobre las tablas `MI_FACT_*` y los catálogos de Sheets.
 
 Saludos cordiales,  
 [Nombre]
@@ -126,6 +117,7 @@ Saludos cordiales,
 
 ## Notas internas (no enviar)
 
-- Adjuntar opcionalmente el Word `Manual_uso_datawarehouse_multas.docx`.
-- Si el destinatario es solo negocio: se puede omitir la mención a `STG_*` / Hop.
-- Si piden acceso técnico: indicar esquema Oracle (`REPOCSEP` / `APP`) y que el ETL se dispara con `init.bat` (Windows) o `./init.sh` (Linux).
+- Adjuntar opcionalmente el Word `Manual_uso_datawarehouse_multas.docx` (revisar si aún menciona `VW_MC_*`).
+- Destinatario solo negocio: omitir `STG_*` / Hop / `MI_AUD_*`.
+- Acceso técnico: esquema `REPOCSEP` / `APP`; ETL con `./init.sh` (Linux) o `init.bat` / `wf_main_win` (Windows).
+- Cada corrida: wipe canónico de `MI_*` y republicación (dims + facts + AUD).

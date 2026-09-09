@@ -71,10 +71,11 @@ Prefijo de tablas: **`MI_`**. Esquema típico: `APP` (local) o `REPOCSEP` (remot
 
    MI_FACT_MC_CSEP ─< MI_DET_ETAPA_MC          (etapas internas 1:N, solo F2; también ID_FUENTE)
 
-   Calidad / KPIs (no son la estrella, pero viven junto al modelo):
-   · MI_DQ_HALLAZGO            defectos de datos (R01–R05)
-   · MI_QA_AMARRE / _DETALLE   amarre H9 (p. ej. RES_MONTO_Sheets_vs_SISUD)
-   · MI_INDICADOR_RESULTADO    KPIs K1–K5 ya calculados
+   Audit (foto cruda STG, fuera de estrella):
+   · MI_AUD_F1_OD_MULTAS / MI_AUD_F2_CSEP_MULTAS / MI_AUD_F2_CSEP_ETAPAS / MI_AUD_F5_SISUD_VW
+
+   Calidad / KPIs: se calculan en la corrida Python (memoria / RESULTADO).
+   No se publican a Oracle (no hay MI_DQ_*, MI_QA_*, MI_INDICADOR_* en destino).
 ```
 
 Cómo se arma el enriquecido (lookup): [`../lineamientos/extra/manual-como-se-arma-el-fact.md`](../lineamientos/extra/manual-como-se-arma-el-fact.md).
@@ -85,9 +86,9 @@ Cómo se arma el enriquecido (lookup): [`../lineamientos/extra/manual-como-se-ar
 |---|---|---|
 | Fuentes (Sheets, Oracle SISUD) | Origen crudo | Solo si depuras el ETL |
 | Staging `STG_*` (H2, temporal) | Copia 1:1 de cada fuente | No; desaparece al reiniciar H2 |
-| Modelo `MI_*` (Oracle) | Evidencia + estrella enriquecida + calidad + KPIs | **Sí — aquí consultas** |
+| Modelo `MI_*` (Oracle) | Dims + facts evidencia + enriquecido + `MI_AUD_*` | **Sí — aquí consultas** |
 
-El ETL (Hop + Python) es el “traductor”. Tú, como lector del modelo, trabajas sobre **`MI_*`**.
+El ETL (Hop + Python) es el “traductor”. Tú, como lector del modelo, trabajas sobre **`MI_DIM_*` / `MI_FACT_*`** (y `MI_AUD_*` si auditas la foto cruda).
 
 ---
 
@@ -99,10 +100,11 @@ Hay **tres facts de evidencia** (auditoría de lo bajado) y **uno de negocio**:
 
 | Tabla | Una fila es… | Preguntas típicas |
 |---|---|---|
-| `MI_FACT_MC_CSEP` | Una multa del Sheet F2 | Evidencia CSEP / `VW_MC_CSEP` |
-| `MI_FACT_MC_OD` | Una multa del Sheet F1 | Evidencia OD / `VW_MC_OD` |
-| `MI_FACT_MC_SISUD` | Una multa de la vista SISUD | Evidencia F5 / `VW_MC_SISUD` |
-| `MI_FACT_MULTA_COERCITIVA` | Una multa Sheet (F1∪F2) + CUM/CAM si hay match SISUD | **Reportes de negocio** / `VW_MC_ENRIQUECIDA` |
+| `MI_FACT_MC_CSEP` | Una multa del Sheet F2 | Evidencia CSEP |
+| `MI_FACT_MC_OD` | Una multa del Sheet F1 | Evidencia OD |
+| `MI_FACT_MC_SISUD` | Una multa de la vista SISUD | Evidencia F5 |
+| `MI_FACT_MULTA_COERCITIVA` | Una multa Sheet (F1∪F2) + CUM/CAM si hay match SISUD | **Reportes de negocio** |
+| `MI_AUD_F*` | Foto cruda 1:1 del STG | Auditoría fuente (fuera de estrella) |
 
 Regla de negocio (Sheet←SISUD): el enriquecido **no** añade filas solo-SISUD; crece en vertical con más Sheets y en horizontal con CUM/CAM.
 
@@ -110,7 +112,7 @@ Columnas útiles para orientarte:
 
 - **Identidad / cruce:** `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE`, `N_RES_MC`
 - **Gestión F2 (attrs operativos):** `JEFE`, `UF`, `N_PROY_MC`, `ETA_REG_PROY_MC`, `ETA_REG_MC`, `RESULT_PROY_MC`, `ESTADO_MC_TXT`, `ESTADO_PAGO_TXT` (NULL en OD/SISUD si no aplica)
-- **De qué fuente vino la fila:** `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO` (usar vistas `VW_MC_*` por universo)
+- **De qué fuente vino la fila:** `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO` (filtrar por `CODIGO` o por tabla evidencia)
 - **Territorio:** `ID_ORGANO` (unidades CSEP) y `ID_OD` (oficinas OD)
 - **Calendario firma:** `ID_TIEMPO_FIRMA` → `MI_DIM_TIEMPO` (además de `F_FIRMA_RES_MC` DATE)
 - **Montos:** `MONTO_UIT`, `MONTO_S`, `MONTO_S_CALC` (recalculado con UIT)
@@ -141,14 +143,17 @@ Columnas útiles para orientarte:
 | 4 | `SISUD_VW` | Oracle SISUD | F5 | `STG_ORA_*` |
 | 5 | `OD_EXCEL` | Excel OD (legacy) | F1 | no se carga; el ETL normaliza a `OD_SHEETS` |
 
-### Detalle y calidad
+### Detalle y audit
 
 | Tabla | Una fila es… | Cuándo mirarla |
 |---|---|---|
-| `MI_DET_ETAPA_MC` | Una etapa del flujo interno de un proyecto MC | Drill-down de F2 (elaboración, revisión, …); `ID_FUENTE` = CAGR |
-| `MI_DQ_HALLAZGO` | Un defecto detectado en un registro | Auditar calidad; no “borra” la multa |
-| `MI_QA_AMARRE` / `MI_QA_AMARRE_DETALLE` | Resumen y claves que no amarran | Auditoría H9 / CSEP (además de K5) |
-| `MI_INDICADOR_RESULTADO` | Un KPI ya agregado (K1–K5) | Tableros / respuesta rápida sin recalcular |
+| `MI_DET_ETAPA_MC` | Una etapa del flujo interno de un proyecto MC | Drill-down de F2; `ID_FUENTE` = CAGR |
+| `MI_AUD_F1_OD_MULTAS` | Una fila cruda del Sheet OD | Auditoría 1:1 vs origen F1 |
+| `MI_AUD_F2_CSEP_MULTAS` | Una fila cruda del Sheet CSEP | Auditoría 1:1 vs origen F2 |
+| `MI_AUD_F2_CSEP_ETAPAS` | Una fila cruda de etapas CSEP | Auditoría 1:1 vs hoja etapas F2 |
+| `MI_AUD_F5_SISUD_VW` | Una fila cruda de la vista SISUD | Auditoría 1:1 vs origen F5 |
+
+> DQ / QA amarre / KPIs K1–K5 se calculan en la corrida ETL (memoria). **No** hay tablas `MI_DQ_*` / `MI_QA_*` / `MI_INDICADOR_*` en Oracle.
 
 ### Clave especial: `-1`
 
@@ -163,12 +168,12 @@ Es la duda más frecuente al abrir el modelo:
 
 | Pregunta | Tabla / FK | Cómo filtrar |
 |---|---|---|
-| ¿Unidad sectorial CSEP? (Minería, Residuos, …) | `MI_DIM_ORGANO_UNIDAD` vía `ID_ORGANO` | Vista `VW_MC_CSEP` o `fu.CODIGO = 'CAGR'` |
-| ¿Oficina desconcentrada OD? (Ica, Puno, …) | `MI_DIM_OD` vía `ID_OD` | Vista `VW_MC_OD` |
+| ¿Unidad sectorial CSEP? (Minería, Residuos, …) | `MI_DIM_ORGANO_UNIDAD` vía `ID_ORGANO` | `MI_FACT_MC_CSEP` o `fu.CODIGO = 'CAGR'` |
+| ¿Oficina desconcentrada OD? (Ica, Puno, …) | `MI_DIM_OD` vía `ID_OD` | `MI_FACT_MC_OD` |
 
 Una multa F2 suele tener órgano CSEP y `ID_OD = -1`.  
 Una multa F1 suele tener OD y `ID_ORGANO` no resuelto (o solo por expediente).  
-Por eso **acota siempre por fuente** (`ID_FUENTE` / vistas `VW_MC_*`) cuando compares mundos.
+Por eso **acota siempre por fuente** (`ID_FUENTE` / tablas `MI_FACT_MC_*`) cuando compares mundos.
 
 > **Nota:** `MI_DIM_ORGANO_UNIDAD` tiene **solo** las 10 unidades CSEP (+ ND). No se hincha con siglas de expediente. Filas sin `COORD`/`COD_UNIDAD` reconocido quedan en `ID_ORGANO = -1`.
 
@@ -178,26 +183,26 @@ Por eso **acota siempre por fuente** (`ID_FUENTE` / vistas `VW_MC_*`) cuando com
 
 ### Paso a paso
 
-1. **Define el grano:** evidencia → `MI_FACT_MC_*` / `VW_MC_CSEP|OD|SISUD`; negocio enriquecido → `MI_FACT_MULTA_COERCITIVA` / `VW_MC_ENRIQUECIDA`.
+1. **Define el grano:** evidencia → `MI_FACT_MC_CSEP|_OD|_SISUD`; negocio → `MI_FACT_MULTA_COERCITIVA`.
 2. **Acota la fuente:** no sumar CSEP+OD+SISUD como un solo censo.
 3. **Elige el corte territorial:** unidad CSEP → `MI_DIM_ORGANO_UNIDAD`; OD → `MI_DIM_OD`.
 4. **Elige la medida:** `COUNT(*)`, `SUM(MONTO_UIT)`, `AVG(DIAS_NOTIF_A_FIRMA)`, etc.
-5. Si el número “no cuadra” entre sistemas: mira **`MI_QA_AMARRE`** (puente `RES_MONTO_Sheets_vs_SISUD`) / detalle y KPI K5.
+5. Si el número “no cuadra” entre sistemas: compara evidencia (`MI_FACT_MC_*`) vs `MI_AUD_*` (foto cruda) y el enriquecido; el amarre H9 se calcula en la corrida (no queda tabla en Oracle).
 
-### Vistas por universo (disciplina de reporte)
+### Conteos por universo (disciplina de reporte)
 
 ```sql
-SELECT COUNT(*) FROM APP.VW_MC_CSEP;        -- evidencia F2
-SELECT COUNT(*) FROM APP.VW_MC_OD;          -- evidencia F1
-SELECT COUNT(*) FROM APP.VW_MC_SISUD;       -- evidencia F5
-SELECT COUNT(*) FROM APP.VW_MC_ENRIQUECIDA; -- negocio (= CSEP + OD)
+SELECT COUNT(*) FROM APP.MI_FACT_MC_CSEP;           -- evidencia F2
+SELECT COUNT(*) FROM APP.MI_FACT_MC_OD;             -- evidencia F1
+SELECT COUNT(*) FROM APP.MI_FACT_MC_SISUD;          -- evidencia F5
+SELECT COUNT(*) FROM APP.MI_FACT_MULTA_COERCITIVA;  -- negocio (= CSEP + OD)
 ```
 
 Filtrar por jefe (F2 en el enriquecido):
 
 ```sql
 SELECT COD_MA, N_RES_MC, JEFE, UF, ETA_REG_PROY_MC, CUM, CAM, MONTO_UIT
-FROM APP.VW_MC_ENRIQUECIDA
+FROM APP.MI_FACT_MULTA_COERCITIVA
 WHERE UPPER(JEFE) LIKE '%MEJIA%'
 FETCH FIRST 50 ROWS ONLY;
 ```
@@ -228,7 +233,7 @@ SELECT
     o.DESCRIPCION,
     COUNT(*) AS n_multas,
     SUM(v.MONTO_UIT) AS suma_uit
-FROM APP.VW_MC_CSEP v
+FROM APP.MI_FACT_MC_CSEP v
 LEFT JOIN APP.MI_DIM_ORGANO_UNIDAD o
   ON o.ID_ORGANO = v.ID_ORGANO
 GROUP BY o.SIGLA, o.DESCRIPCION
@@ -245,13 +250,11 @@ WHERE t.ANIO = 2024 AND t.TRIMESTRE = 3
 GROUP BY t.ANIO, t.TRIMESTRE;
 ```
 
-No-amarre H9 (detalle):
+Comparar foto cruda audit vs evidencia (mismo universo F2):
 
 ```sql
-SELECT PUENTE, LADO, CLAVE, MOTIVO
-FROM APP.MI_QA_AMARRE_DETALLE
-WHERE PUENTE = 'RES_MONTO_Sheets_vs_SISUD'
-FETCH FIRST 100 ROWS ONLY;
+SELECT COUNT(*) AS n_aud FROM APP.MI_AUD_F2_CSEP_MULTAS;
+SELECT COUNT(*) AS n_fact FROM APP.MI_FACT_MC_CSEP;
 ```
 
 Buscar una multa concreta (negocio):
@@ -271,7 +274,7 @@ SELECT
     d.COD_OD,
     d.NOMBRE,
     COUNT(*) AS n_multas
-FROM APP.VW_MC_OD v
+FROM APP.MI_FACT_MC_OD v
 LEFT JOIN APP.MI_DIM_OD d
   ON d.ID_OD = v.ID_OD
 GROUP BY d.COD_OD, d.NOMBRE
@@ -287,9 +290,9 @@ WHERE e.COD_PROY_MC = :cod_proy
 ORDER BY e.NRO_ETAPA;
 ```
 
-### Si solo quieres el KPI ya cocinado
+### KPIs (solo en corrida ETL)
 
-Mira `MI_INDICADOR_RESULTADO` (códigos K1…K5) antes de reinventar el cálculo en SQL.
+Los códigos K1…K5 se calculan en Python durante la corrida (`RESULTADO` / logs). **No** consultar `MI_INDICADOR_RESULTADO` en Oracle (ya no se publica).
 
 | Código | Idea |
 |---|---|
@@ -303,11 +306,11 @@ Mira `MI_INDICADOR_RESULTADO` (códigos K1…K5) antes de reinventar el cálculo
 
 ## 7. De dónde “nacen” los datos (vista rápida)
 
-| `CODIGO` (dim fuente) | Origen | Staging Hop | Vista reporte |
+| `CODIGO` (dim fuente) | Origen | Staging Hop | Tabla evidencia |
 |---|---|---|---|
-| `OD_SHEETS` | 31 Google Sheets OD | `STG_GS2_OD_MULTAS` | `VW_MC_OD` |
-| `CAGR` | 10 Google Sheets CSEP | `STG_GS1_CSEP_MULTAS` (+ etapas) | `VW_MC_CSEP` |
-| `SISUD_VW` | Vista Oracle SISUD | `STG_ORA_*` | `VW_MC_SISUD` |
+| `OD_SHEETS` | 31 Google Sheets OD | `STG_GS2_OD_MULTAS` | `MI_FACT_MC_OD` |
+| `CAGR` | 10 Google Sheets CSEP | `STG_GS1_CSEP_MULTAS` (+ etapas) | `MI_FACT_MC_CSEP` |
+| `SISUD_VW` | Vista Oracle SISUD | `STG_ORA_*` | `MI_FACT_MC_SISUD` |
 
 Inventario de campos crudos: carpeta [`../lineamientos/extra/fuentes_datos/`](../lineamientos/extra/fuentes_datos/).
 
@@ -323,16 +326,14 @@ Cifras orientativas tras `./init.sh` (esquema `APP`). Cambian con cada corrida.
 | `MI_FACT_MC_OD` | ~281 |
 | `MI_FACT_MC_SISUD` | ~534 |
 | `MI_FACT_MULTA_COERCITIVA` | ~1 271 (= CSEP+OD) |
-| · `CAGR` (F2) | ~986 |
-| · `SISUD_VW` (F5) | ~530 |
-| · `OD_SHEETS` (F1) | ~281 |
 | `MI_DET_ETAPA_MC` | ~2 070 |
+| `MI_AUD_F2_CSEP_MULTAS` | ≈ CSEP STG |
+| `MI_AUD_F2_CSEP_ETAPAS` | ≈ etapas STG |
+| `MI_AUD_F1_OD_MULTAS` | ≈ OD STG |
+| `MI_AUD_F5_SISUD_VW` | ≈ SISUD STG |
 | `MI_DIM_FUENTE_REGISTRO` | 6 (semilla) |
 | `MI_DIM_OD` | 33 |
 | `MI_DIM_ORGANO_UNIDAD` | ~11 (10 CSEP + ND) |
-| `MI_QA_AMARRE_DETALLE` | ~3 078 (claves sin match) |
-| `MI_DQ_HALLAZGO` | ~200 |
-| `MI_INDICADOR_RESULTADO` | ~690 |
 
 Detalle y diagramas: [`modelo-kimball.md`](modelo-kimball.md) §7.
 
@@ -340,22 +341,23 @@ Detalle y diagramas: [`modelo-kimball.md`](modelo-kimball.md) §7.
 
 ## 9. Errores típicos y anti-patrones (no hacer)
 
-1. **Sumar F1+F2+F5** sin acotar por `VW_MC_*` / `ID_FUENTE` → doble conteo.
+1. **Sumar F1+F2+F5** sin acotar por `MI_FACT_MC_*` / `ID_FUENTE` → doble conteo.
 2. **Usar `ID_ORGANO` para ODs** (o al revés) → territorio incorrecto.
-3. **INNER JOIN entre fuentes “para que cuadre”** → el diseño mide amarre (H9 / `MI_QA_AMARRE_DETALLE` / K5).
+3. **INNER JOIN entre fuentes “para que cuadre”** → el diseño no fuerza cruce; compara evidencia / AUD.
 4. **Ignorar `-1`** → “faltan” atribuciones que son “no especificado”.
-5. **Creer que staging `STG_*` es el DW** → destino analítico = `MI_*` / `VW_MC_*`.
+5. **Creer que staging `STG_*` es el DW** → destino = `MI_DIM_*` / `MI_FACT_*` (+ `MI_AUD_*`).
 6. **Volver a meter F3 (informes)** en este DW → fuera de alcance.
-7. **Fusionar OD y órgano en una sola dim** → son territorios distintos (F1 vs F2).
+7. **Buscar vistas `VW_MC_*` o tablas DQ/QA/K en Oracle** → deprecadas / no publicadas.
+8. **Fusionar OD y órgano en una sola dim** → territorios distintos (F1 vs F2).
 
 ---
 
 ## 10. Orden sugerido para estudiar el modelo
 
 1. Este documento (mapa mental).
-2. [`modelo-kimball.md`](modelo-kimball.md) — diagrama de estrella, KPIs y volúmenes.
-3. DDL [`../lineamientos/ddl/`](../lineamientos/ddl/) — dims, hechos, bitácora, vistas `06_vistas.sql`.
+2. [`modelo-kimball.md`](modelo-kimball.md) — diagrama de estrella y volúmenes.
+3. DDL runtime [`../lineamientos/ddl/`](../lineamientos/ddl/) — `01` dims, `02` hechos, `07` enrich; audit en [`../lineamientos/ddl/audit/`](../lineamientos/ddl/audit/).
 4. [`../lineamientos/ANEXO_MAPEO_CAMPOS.md`](../lineamientos/ANEXO_MAPEO_CAMPOS.md) — origen campo a campo.
-5. Corrida real: `VW_MC_*`, `MI_QA_AMARRE_DETALLE`, conteos por `SIGLA` / `COD_OD`.
+5. Corrida real: `MI_FACT_*`, `MI_AUD_*`; conteos por `SIGLA` / `COD_OD`.
 
-Con eso ya puedes **navegar** el warehouse sin haber visto Kimball antes: hecho en el centro, dimensiones para cortar, fuente etiquetada, y calidad aparte.
+Con eso ya puedes **navegar** el warehouse sin haber visto Kimball antes: hecho en el centro, dimensiones para cortar, fuente etiquetada; audit aparte para foto cruda.
