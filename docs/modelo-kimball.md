@@ -1,7 +1,7 @@
 # Modelo Kimball (Oracle DW)
 
 Estrella dimensional que vive en Oracle (`DB_ORA_DW_*` en [`environments/remote.json`](../environments/remote.json)).  
-Flujo ETL: [`vista-general.md`](vista-general.md). Mapeo campos: [`lineamientos/ANEXO_MAPEO_CAMPOS.md`](lineamientos/ANEXO_MAPEO_CAMPOS.md).
+Flujo ETL: [`arquitectura.md`](arquitectura.md) · inputs: [`inputs/README.md`](inputs/README.md). Mapeo campos: [`lineamientos/ANEXO_MAPEO_CAMPOS.md`](lineamientos/ANEXO_MAPEO_CAMPOS.md).
 
 ## Estrella
 

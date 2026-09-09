@@ -1,6 +1,6 @@
 # Propuesta Adaptada — DWH OEFA sobre tu arquitectura real (Apache Hop + H2 + Python + Oracle BD_CURSOR)
 
-> **Diseño vigente (no inventar sobre este doc histórico):** fuentes activas **F1 Sheets OD + F2 Sheets CSEP (+etapas) + F5 SISUD**. **F3 OUT**. **F4 MySQL fuera de ingestión** (solo semilla `ID_FUENTE=GAPPS` en dim). Python materializa **3 facts de evidencia** (`MI_FACT_MC_CSEP` / `_OD` / `_SISUD`); Oracle `ddl/07_enrich_sheets_sisud.sql` arma `MI_FACT_MULTA_COERCITIVA` = (CSEP∪OD) LEFT JOIN SISUD. Vistas: `VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA`. Manual: [`extra/manual-como-se-arma-el-fact.md`](extra/manual-como-se-arma-el-fact.md) · Guía: [`../adjuntos/guia-leer-modelo-dimensional.md`](../adjuntos/guia-leer-modelo-dimensional.md).
+> **Diseño vigente (no inventar sobre este doc histórico):** fuentes activas **F1 Sheets OD + F2 Sheets CSEP (+etapas) + F5 SISUD**. **F3 OUT**. **F4 MySQL fuera de ingestión** (solo semilla `ID_FUENTE=GAPPS` en dim). Python materializa **3 facts de evidencia** (`MI_FACT_MC_CSEP` / `_OD` / `_SISUD`); Oracle `ddl/07_enrich_sheets_sisud.sql` arma `MI_FACT_MULTA_COERCITIVA` = (CSEP∪OD) LEFT JOIN SISUD. Vistas: `VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA`. Manual: [`extra/manual-como-se-arma-el-fact.md`](extra/manual-como-se-arma-el-fact.md) · Guía: [`../modelo-kimball.md`](../modelo-kimball.md).
 
 **Evaluación de la efectividad de las estrategias de promoción del cumplimiento**
 *(multas coercitivas)*
@@ -13,7 +13,7 @@
 | **Cambio respecto a la consolidada** | No se introduce SQL Server ni un motor nuevo; se reutilizan Apache Hop, H2 en memoria y Oracle BD_CURSOR tal como ya existen |
 | **Alcance de este documento** | Planteamiento técnico y plan de implementación por fases (diseño conceptual; partes del texto inicial son históricas) |
 | **Documentos complementarios** | `ddl/` (scripts de creación de tablas) · [`ANEXO_MAPEO_CAMPOS.md`](ANEXO_MAPEO_CAMPOS.md) (mapeo campo a campo fuente → modelo) |
-| **Estado implementado (repo)** | Fases 2–7; 3 facts evidencia + enrich 07; linaje `ID_FUENTE`; vistas `VW_MC_*` (+ `VW_MC_ENRIQUECIDA`); amarre `MI_QA_AMARRE`(+`_DETALLE`); sin MySQL en pipeline. Guía: [`../adjuntos/guia-leer-modelo-dimensional.md`](../adjuntos/guia-leer-modelo-dimensional.md) |
+| **Estado implementado (repo)** | Fases 2–7; 3 facts evidencia + enrich 07; linaje `ID_FUENTE`; vistas `VW_MC_*` (+ `VW_MC_ENRIQUECIDA`); amarre `MI_QA_AMARRE`(+`_DETALLE`); sin MySQL en pipeline. Guía: [`../modelo-kimball.md`](../modelo-kimball.md) |
 
 ---
 

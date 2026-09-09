@@ -5,7 +5,7 @@ Cómo está armado este ETL hoy, con foco en qué hace exactamente la capa de l�
 
 Estado: capa lógica alineada a [`lineamientos/PROPUESTA_ADAPTADA_ETL.md`](lineamientos/PROPUESTA_ADAPTADA_ETL.md)
 **Fases 2–7** (`logica/dwh/` → perfilamiento … indicadores) y carga Oracle vía `python/io/cargar_dw.py`
-(`MI_*`, vistas `VW_MC_*`, QA amarre). Guía del modelo: [`adjuntos/guia-leer-modelo-dimensional.md`](adjuntos/guia-leer-modelo-dimensional.md).
+(`MI_*`, vistas `VW_MC_*`, QA amarre). Guía del modelo: [`modelo-kimball.md`](modelo-kimball.md).
 TDR: [`TDR REQ 3629-2026.pdf`](TDR%20REQ%203629-2026.pdf).
 
 ## Vista general

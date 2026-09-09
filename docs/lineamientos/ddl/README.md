@@ -3,7 +3,7 @@
 Scripts de creación según `PROPUESTA_ADAPTADA_ETL.md`. Runtime: wipe + DDL + INSERT en
 `python/io/cargar_dw.py` (estrella + bitácora `MI_DQ_HALLAZGO`).
 
-Guía de lectura: [`../../adjuntos/guia-leer-modelo-dimensional.md`](../../adjuntos/guia-leer-modelo-dimensional.md).  
+Guía de lectura: [`../../modelo-kimball.md`](../../modelo-kimball.md).  
 Audit 1:1: [`audit/README.md`](audit/README.md).
 
 ## Runtime (obligatorio)

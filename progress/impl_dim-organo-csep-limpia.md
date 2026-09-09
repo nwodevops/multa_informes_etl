@@ -10,7 +10,7 @@
 ## Archivos
 
 - `logica/dwh/dimensional.py`
-- `docs/adjuntos/guia-leer-modelo-dimensional.md`
+- `docs/modelo-kimball.md`
 - `docs/adjuntos/modelo-kimball.md`
 - `docs/lineamientos/ANEXO_MAPEO_CAMPOS.md`
 - `feature_list.json`

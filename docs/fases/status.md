@@ -3,7 +3,7 @@
 Resumen alineado a [`lineamientos/PROPUESTA_ADAPTADA_ETL.md`](../lineamientos/PROPUESTA_ADAPTADA_ETL.md) (sección 6) y al diseño vigente.  
 Rama de trabajo: `fase-1-lineamiento`.  
 Manual del fact: [`../lineamientos/extra/manual-como-se-arma-el-fact.md`](../lineamientos/extra/manual-como-se-arma-el-fact.md).  
-Guía modelo: [`../adjuntos/guia-leer-modelo-dimensional.md`](../adjuntos/guia-leer-modelo-dimensional.md).
+Guía modelo: [`../modelo-kimball.md`](../modelo-kimball.md).
 
 ---
 
@@ -178,7 +178,7 @@ flowchart LR
 ./init.sh   # HARNESS OK
 ```
 
-Detalle: [`../verification.md`](../verification.md) · modelo: [`../adjuntos/guia-leer-modelo-dimensional.md`](../adjuntos/guia-leer-modelo-dimensional.md).
+Detalle: [`../verification.md`](../verification.md) · modelo: [`../modelo-kimball.md`](../modelo-kimball.md).
 
 ---
 

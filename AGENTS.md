@@ -7,9 +7,9 @@ Requerimiento: [`docs/TDR REQ 3629-2026.pdf`](docs/TDR%20REQ%203629-2026.pdf).
 | Doc | Para qué |
 |---|---|
 | [`docs/README.md`](docs/README.md) | Índice docs |
-| [`docs/vista-general.md`](docs/vista-general.md) | Fuentes → STG → Python → DW |
 | [`docs/modelo-kimball.md`](docs/modelo-kimball.md) | Estrella `MI_DIM_*` / `MI_FACT_*` |
 | [`docs/arquitectura.md`](docs/arquitectura.md) | Detalle Hop + H2 + Python |
+| [`docs/inputs/README.md`](docs/inputs/README.md) | Fuentes vigentes F1/F2/F5 |
 | [`docs/fases/status.md`](docs/fases/status.md) | Semáforo fases 1–7 |
 | [`docs/verification.md`](docs/verification.md) | Cómo demostrar que funciona |
 
@@ -37,7 +37,7 @@ Requerimiento: [`docs/TDR REQ 3629-2026.pdf`](docs/TDR%20REQ%203629-2026.pdf).
 - [`.agents/skills/oracle-cargar-dw/SKILL.md`](.agents/skills/oracle-cargar-dw/SKILL.md)
 
 Lineamiento canónico: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md).  
-Modelo vigente: [`docs/adjuntos/guia-leer-modelo-dimensional.md`](docs/adjuntos/guia-leer-modelo-dimensional.md). Status: [`docs/fases/status.md`](docs/fases/status.md). DDL DW: [`docs/lineamientos/ddl/`](docs/lineamientos/ddl/).
+Modelo vigente: [`docs/modelo-kimball.md`](docs/modelo-kimball.md). Manual fact: [`docs/lineamientos/extra/manual-como-se-arma-el-fact.md`](docs/lineamientos/extra/manual-como-se-arma-el-fact.md). Status: [`docs/fases/status.md`](docs/fases/status.md). DDL DW: [`docs/lineamientos/ddl/`](docs/lineamientos/ddl/).
 
 ## Inicio rápido (Windows)
 
@@ -65,7 +65,7 @@ Prerrequisitos Win:
 
 Flujo: `inputs.yaml` → Hop `STG_*` (F1/F2/F5) → `python/main.py` → 3 facts evidencia + dims/QA/K → `cargar_dw.py` (wipe `MI_*`/`VW_*` + DDL + INSERT; esquema = **USER** Oracle) → SQL **`07_enrich_sheets_sisud.sql`** → `MI_FACT_MULTA_COERCITIVA`.
 
-**Diseño vigente:** evidencia `MI_FACT_MC_CSEP|_OD|_SISUD` + negocio enriquecido (Sheet manda, CUM/CAM de SISUD). F3/F4 fuera de ingestión. Guía: [`docs/adjuntos/guia-leer-modelo-dimensional.md`](docs/adjuntos/guia-leer-modelo-dimensional.md). Manual: [`docs/lineamientos/extra/manual-como-se-arma-el-fact.md`](docs/lineamientos/extra/manual-como-se-arma-el-fact.md).
+**Diseño vigente:** evidencia `MI_FACT_MC_CSEP|_OD|_SISUD` + negocio enriquecido (Sheet manda, CUM/CAM de SISUD). F3/F4 fuera de ingestión. Guía: [`docs/modelo-kimball.md`](docs/modelo-kimball.md). Manual: [`docs/lineamientos/extra/manual-como-se-arma-el-fact.md`](docs/lineamientos/extra/manual-como-se-arma-el-fact.md).
 
 ## Python (esta rama)
 

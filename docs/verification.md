@@ -27,7 +27,7 @@ Debe terminar con **`HARNESS OK`**. El script:
 Windows remoto: `.\switch-env.ps1 remote` + `init.bat` / `wf_main_win.hwf` → `python\verify_dw.py`.
 
 Criterios: [`CHECKPOINTS.md`](../CHECKPOINTS.md).  
-Modelo: [`adjuntos/guia-leer-modelo-dimensional.md`](adjuntos/guia-leer-modelo-dimensional.md).
+Modelo: [`modelo-kimball.md`](modelo-kimball.md).
 
 ## Manual — Hop GUI
 

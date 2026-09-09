@@ -20,7 +20,7 @@ Este repo (`datawarehouse_multa_etl`) **extiende** ese arquetipo con lógica OEF
 
 - Fuentes: **F1** Sheets OD, **F2** Sheets CSEP, **F5** SISUD (sin F3/F4 en ingestión).
 - Oracle: 3 facts evidencia + enrich `07` → `MI_FACT_MULTA_COERCITIVA` / `VW_MC_ENRIQUECIDA`.
-- Guía: [`docs/adjuntos/guia-leer-modelo-dimensional.md`](docs/adjuntos/guia-leer-modelo-dimensional.md).
+- Guía: [`docs/modelo-kimball.md`](docs/modelo-kimball.md).
 
 ## Uso (desde arquetipo histórico)
 

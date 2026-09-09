@@ -1,7 +1,7 @@
 # Fases 2–7 — criterios de avance
 
 Referencia canónica: `docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`.  
-Estado del modelo: `docs/adjuntos/guia-leer-modelo-dimensional.md`.  
+Estado del modelo: `docs/modelo-kimball.md`.  
 Manual enrich: `docs/lineamientos/extra/manual-como-se-arma-el-fact.md`.
 
 Fuentes activas: **F1 + F2 (+etapas) + F5**. F3 OUT. F4 fuera de ingestión (semilla `GAPPS`).

@@ -148,7 +148,7 @@
       "status": "done",
       "passes": true,
       "criterio": "Dim órgano sembrada desde f2_csep_sheets.json (+ ND); hechos F2 resuelven ID_ORGANO por COORD/COD_UNIDAD; siglas de expediente no hinchan la dim; reportes CAGR filtrables; ./init.sh HARNESS OK",
-      "doc": "docs/adjuntos/guia-leer-modelo-dimensional.md",
+      "doc": "docs/modelo-kimball.md",
       "evidencia": "progress/impl_dim-organo-csep-limpia.md"
     },
     {
@@ -167,7 +167,7 @@
       "status": "done",
       "passes": true,
       "criterio": "MI_QA_AMARRE + MI_QA_AMARRE_DETALLE con claves SOLO_IZQ/SOLO_DER y motivo; K5 sigue agregado; documentado; ./init.sh HARNESS OK",
-      "doc": "docs/adjuntos/guia-leer-modelo-dimensional.md",
+      "doc": "docs/modelo-kimball.md",
       "evidencia": "progress/impl_mejoras-kimball-2-7.md"
     },
     {
@@ -185,7 +185,7 @@
       "status": "done",
       "passes": true,
       "criterio": "Columna FK en hecho desde F_FIRMA_RES_MC; cortes Q/año sin EXTRACT; ./init.sh HARNESS OK",
-      "doc": "docs/adjuntos/guia-leer-modelo-dimensional.md",
+      "doc": "docs/modelo-kimball.md",
       "evidencia": "progress/impl_mejoras-kimball-2-7.md"
     },
     {

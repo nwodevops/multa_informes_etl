@@ -140,7 +140,7 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 ## 2026-09-06 — docs alineados al DW post backlog 2–7
 
 - Actualizados verification, CHECKPOINTS, arquitectura, fase1-3/status, ddl/README, implementacion-fase-4/5-6/7, inputs, fuentes_datos, ANEXO, PROPUESTA (fila estado), CONTRATO, LEEME, skills.
-- Punto de verdad de lectura: docs/adjuntos/guia-leer-modelo-dimensional.md
+- Punto de verdad de lectura: docs/modelo-kimball.md
 
 ## 2026-09-08 — facts evidencia + enrich Maggi
 

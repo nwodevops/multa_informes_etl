@@ -1,7 +1,7 @@
 # Implementación lineamientos — Fases 5 y 6
 
 Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) secciones 3 y 6.  
-Mapa mental: [`../adjuntos/guia-leer-modelo-dimensional.md`](../adjuntos/guia-leer-modelo-dimensional.md).  
+Mapa mental: [`../modelo-kimball.md`](../modelo-kimball.md).  
 Cómo se arma el enriquecido: [`extra/manual-como-se-arma-el-fact.md`](extra/manual-como-se-arma-el-fact.md).
 
 ## Código

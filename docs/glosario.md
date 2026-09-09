@@ -1,7 +1,6 @@
 # Glosario
 
-Nombres cortos que usa este ETL. Diseño vigente: [`adjuntos/guia-leer-modelo-dimensional.md`](adjuntos/guia-leer-modelo-dimensional.md) · Manual fact: [`lineamientos/extra/manual-como-se-arma-el-fact.md`](lineamientos/extra/manual-como-se-arma-el-fact.md).  
-Nota histórica (fase 1 medallion): [`antes-durante-fase1.md`](antes-durante-fase1.md).
+Nombres cortos que usa este ETL. Diseño vigente: [`modelo-kimball.md`](modelo-kimball.md) · Manual fact: [`lineamientos/extra/manual-como-se-arma-el-fact.md`](lineamientos/extra/manual-como-se-arma-el-fact.md).  
 
 El `_` al final (`STG_`, `MI_`) significa “todas las tablas de esa capa”.
 
