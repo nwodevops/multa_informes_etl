@@ -6,16 +6,17 @@
 |---|---|
 | ID | `fase-remote-deploy` |
 | Status | `in_progress` |
-| Criterio | `wf_main_win` / `init.bat` → Success + POST-CARGA ≈ 990/281/534/1271 + `MI_AUD_*` = STG; sin VW/DQ/QA/K en Oracle |
+| Criterio | `wf_main_win` / `init.bat` → Success + POST-CARGA ≈ 990/281/534/1271 + `MI_AUD_*` = STG + `MI_DQ_HALLAZGO`; sin VW/QA/K en Oracle |
 
-## Hecho reciente (ambas ramas)
+## Hecho reciente
 
-- `dw-wipe-canonico-aud` = **done** (validado en linux): wipe `MI_*`/`VW_*`, DDL solo `01`+`02`(+`05`), enrich `07`, audit `MI_AUD_*`; DQ/QA/K no se publican.
+- `dw-wipe-canonico-aud` = **done**: wipe `MI_*`/`VW_*`, DDL `01`+`02`+`MI_DQ_HALLAZGO`(+`05`), enrich `07`, audit `MI_AUD_*`.
+- `MI_DQ_HALLAZGO` restaurado en Oracle (R01–R05). QA/K siguen solo en memoria.
 
 ## Plan
 
 1. En PC Win: `git pull` → `.\switch-env.ps1 remote` → `wf_main_win` / `init.bat` (`client_secret.json`).
-2. Confirmar POST-CARGA: CSEP 990, OD 281, SISUD 534, enriquecida 1271; AUD = STG.
+2. Confirmar POST-CARGA: CSEP/OD/SISUD/enriquecida + AUD + `MI_DQ_HALLAZGO`.
 3. Si OK → `fase-remote-deploy` = done.
 
 ## Comandos Win
