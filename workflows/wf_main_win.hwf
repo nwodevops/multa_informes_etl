@@ -235,6 +235,7 @@ if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
       <set_append_logfile>N</set_append_logfile>
       <insertScript>Y</insertScript>
       <script>cd /d "%PROJECT_HOME%"
+set PYTHONUNBUFFERED=1
 set PY=python
 if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
 "%PY%" python\main.py</script>

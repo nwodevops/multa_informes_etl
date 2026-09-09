@@ -240,6 +240,7 @@ PY=python3
       <insertScript>Y</insertScript>
       <script>set -e
 cd "${PROJECT_HOME}"
+export PYTHONUNBUFFERED=1
 PY=python3
 [ -x .venv/bin/python ] &amp;&amp; PY=.venv/bin/python
 "$PY" python/main.py

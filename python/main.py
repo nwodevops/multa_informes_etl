@@ -123,6 +123,9 @@ def main() -> int:
 if __name__ == "__main__":
     try:
         raise SystemExit(main())
-    except (FileNotFoundError, ValueError, KeyError) as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
+    except (FileNotFoundError, ValueError, KeyError, RuntimeError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr, flush=True)
+        raise SystemExit(1)
+    except Exception as exc:
+        print(f"ERROR no controlado: {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
         raise SystemExit(1)

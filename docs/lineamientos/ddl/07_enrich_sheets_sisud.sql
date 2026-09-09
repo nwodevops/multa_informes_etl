@@ -1,13 +1,13 @@
 --------------------------------------------------------------------------------
 -- 07_enrich_sheets_sisud.sql
--- Tras TRUNCATE+INSERT de MI_FACT_MC_CSEP / _OD / _SISUD:
+-- Tras DELETE+INSERT de MI_FACT_MC_CSEP / _OD / _SISUD:
 -- arma MI_FACT_MULTA_COERCITIVA = (CSEP ∪ OD) LEFT JOIN SISUD
 -- clave: resolución normalizada (sin ceros a la izquierda del correlativo) + MONTO_UIT.
 -- Empates SISUD: primera fila por CUM/CAM (ROW_NUMBER).
--- Idempotente: TRUNCATE hecho enriquecido + INSERT.
+-- Idempotente: DELETE hecho enriquecido + INSERT (DML → rollback si falla INSERT).
 --------------------------------------------------------------------------------
 
-TRUNCATE TABLE MI_FACT_MULTA_COERCITIVA;
+DELETE FROM MI_FACT_MULTA_COERCITIVA;
 
 INSERT INTO MI_FACT_MULTA_COERCITIVA (
     COD_MA, COD_PROY_MC, NUMERO_EXPEDIENTE, EXP_RES_MC, N_RES_MC,
@@ -35,7 +35,7 @@ norm AS (
         CASE
             WHEN s.N_RES_MC IS NULL OR TRIM(s.N_RES_MC) IS NULL THEN NULL
             WHEN s.MONTO_UIT IS NULL THEN NULL
-            ELSE REGEXP_REPLACE(UPPER(REPLACE(TRIM(s.N_RES_MC), ' ', '')), '^0+([0-9]+)', '\1')
+            ELSE REGEXP_REPLACE(UPPER(REPLACE(TRIM(s.N_RES_MC), ' ', '')), '^0+', '')
                  || '|' || TO_CHAR(ROUND(s.MONTO_UIT, 4), 'FM999999990.0000')
         END AS CLAVE_JOIN
     FROM (
@@ -52,7 +52,7 @@ sisud_dedup AS (
             CASE
                 WHEN t.N_RES_MC IS NULL OR TRIM(t.N_RES_MC) IS NULL THEN NULL
                 WHEN t.MONTO_UIT IS NULL THEN NULL
-                ELSE REGEXP_REPLACE(UPPER(REPLACE(TRIM(t.N_RES_MC), ' ', '')), '^0+([0-9]+)', '\1')
+                ELSE REGEXP_REPLACE(UPPER(REPLACE(TRIM(t.N_RES_MC), ' ', '')), '^0+', '')
                      || '|' || TO_CHAR(ROUND(t.MONTO_UIT, 4), 'FM999999990.0000')
             END AS CLAVE_JOIN,
             ROW_NUMBER() OVER (
@@ -60,14 +60,14 @@ sisud_dedup AS (
                     CASE
                         WHEN t.N_RES_MC IS NULL OR TRIM(t.N_RES_MC) IS NULL THEN NULL
                         WHEN t.MONTO_UIT IS NULL THEN NULL
-                        ELSE REGEXP_REPLACE(UPPER(REPLACE(TRIM(t.N_RES_MC), ' ', '')), '^0+([0-9]+)', '\1')
+                        ELSE REGEXP_REPLACE(UPPER(REPLACE(TRIM(t.N_RES_MC), ' ', '')), '^0+', '')
                              || '|' || TO_CHAR(ROUND(t.MONTO_UIT, 4), 'FM999999990.0000')
                     END
                 ORDER BY t.CUM NULLS LAST, t.CAM NULLS LAST, t.ID_MC
             ) AS RN
         FROM MI_FACT_MC_SISUD t
-    )
-    WHERE RN = 1 AND CLAVE_JOIN IS NOT NULL
+    ) z
+    WHERE z.RN = 1 AND z.CLAVE_JOIN IS NOT NULL
 )
 SELECT
     n.COD_MA,

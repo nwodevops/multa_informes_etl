@@ -248,23 +248,44 @@ def _prepare_schema(cur, root: Path) -> None:
 
 
 def _run_enrich_sheets_sisud(cur, root: Path) -> int:
-    """TRUNCATE+INSERT hecho enriquecido (07_enrich_sheets_sisud.sql)."""
-    path = root / DDL_DIR / "07_enrich_sheets_sisud.sql"
+    """DELETE+INSERT hecho enriquecido (07_enrich_sheets_sisud.sql)."""
+    path = (root / DDL_DIR / "07_enrich_sheets_sisud.sql").resolve()
+    print(f"DW: enrich busca {path}", flush=True)
     if not path.is_file():
-        raise FileNotFoundError(path)
+        ddl_dir = path.parent
+        listing = sorted(p.name for p in ddl_dir.glob("*")) if ddl_dir.is_dir() else []
+        raise FileNotFoundError(
+            f"falta {path} (en {ddl_dir}: {', '.join(listing) or 'vacío/inexistente'})"
+        )
     if not all(_table_exists(cur, t) for t in TABLAS_EVIDENCIA):
         raise RuntimeError("faltan facts evidencia para enrich Sheets←SISUD")
     if not _table_exists(cur, "MI_FACT_MULTA_COERCITIVA"):
         raise RuntimeError("falta MI_FACT_MULTA_COERCITIVA")
-    print("DW: aplicando enrich Sheets←SISUD (07)...")
-    for stmt in _split_sql(path.read_text(encoding="utf-8")):
-        u = stmt.upper().strip()
-        if u.startswith("COMMIT") or not u:
-            continue
-        cur.execute(stmt)
+    print("DW: aplicando enrich Sheets←SISUD (07)...", flush=True)
+    try:
+        for stmt in _split_sql(path.read_text(encoding="utf-8")):
+            u = stmt.upper().strip()
+            if u.startswith("COMMIT") or not u:
+                continue
+            cur.execute(stmt)
+    except Exception as exc:
+        print(f"ERROR enrich 07: {exc}", flush=True)
+        raise RuntimeError(f"falló enrich Sheets←SISUD (07): {exc}") from exc
     cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.MI_FACT_MULTA_COERCITIVA")
     n = int(cur.fetchone()[0])
-    print(f"DW: MI_FACT_MULTA_COERCITIVA (enriquecida): {n} filas")
+    cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.MI_FACT_MC_CSEP")
+    n_c = int(cur.fetchone()[0])
+    cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.MI_FACT_MC_OD")
+    n_o = int(cur.fetchone()[0])
+    print(
+        f"DW: MI_FACT_MULTA_COERCITIVA (enriquecida): {n} filas "
+        f"(esperado CSEP+OD={n_c}+{n_o}={n_c + n_o})",
+        flush=True,
+    )
+    if (n_c + n_o) > 0 and n == 0:
+        raise RuntimeError(
+            "enrich 07 dejó MI_FACT_MULTA_COERCITIVA vacía pese a CSEP/OD con filas"
+        )
     return n
 
 
