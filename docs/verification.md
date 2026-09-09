@@ -22,7 +22,7 @@ Debe terminar con **`HARNESS OK`**. El script:
    - sin VARCHAR `FUENTE_REGISTRO` en el hecho; `ID_TIEMPO_FIRMA` presente
    - conteos mínimos por fuente (`CAGR` / `OD_SHEETS` / `SISUD_VW`)
    - `MI_DIM_ORGANO_UNIDAD` ≤ 20 (~11 CSEP+ND)
-   - vistas `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` / `VW_MC_GAPPS`
+   - vistas `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD`
    - `MI_QA_AMARRE` y `MI_QA_AMARRE_DETALLE` con filas
 
 Criterios detallados: [`CHECKPOINTS.md`](../CHECKPOINTS.md).  
@@ -49,7 +49,6 @@ Si el log Hop dice N filas pero tu cliente SQL muestra 0, casi siempre estás en
 SELECT COUNT(*) FROM APP.VW_MC_CSEP;
 SELECT COUNT(*) FROM APP.VW_MC_OD;
 SELECT COUNT(*) FROM APP.VW_MC_SISUD;
-SELECT COUNT(*) FROM APP.VW_MC_GAPPS;
 
 SELECT fu.CODIGO, COUNT(*)
 FROM APP.MI_FACT_MULTA_COERCITIVA f
@@ -64,7 +63,7 @@ SELECT PUENTE, LADO, COUNT(*) FROM APP.MI_QA_AMARRE_DETALLE
 GROUP BY PUENTE, LADO ORDER BY 1, 2;
 ```
 
-Volúmenes de referencia (corrida local típica): hecho ~1801; CAGR ~986; SISUD ~530; OD ~281; GAPPS ~4; órgano 11; QA detalle ~3k.
+Volúmenes de referencia (corrida local típica): hecho ~1801; CAGR ~986; SISUD ~530; OD ~281; órgano 11; QA detalle ~3k.
 
 ## Manual — reproducibilidad
 

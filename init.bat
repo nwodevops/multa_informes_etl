@@ -104,25 +104,20 @@ if /I "%HOP_RUN%"=="hop-run" (
 call "%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_excel.hpl" -r local >> "%RUN_LOG%" 2>&1
 :after_excel
 
-call :step "Staging Oracle / MySQL (Hop directo)"
+call :step "Staging Oracle SISUD (Hop directo)"
 if /I "%HOP_RUN%"=="hop-run" (
     where hop-run >nul 2>&1
     if errorlevel 1 (
-        call :fail "hop-run no encontrado; requerido para staging Oracle/MySQL"
+        call :fail "hop-run no encontrado; requerido para staging Oracle"
         exit /b 1
     )
 ) else if not exist "%HOP_RUN%" (
-    call :fail "hop-run no encontrado (%HOP_RUN%); requerido para staging Oracle/MySQL"
+    call :fail "hop-run no encontrado (%HOP_RUN%); requerido para staging Oracle"
     exit /b 1
 )
 call "%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_oracle.hpl" -r local >> "%RUN_LOG%" 2>&1
 if errorlevel 1 (
     call :fail "pl_stage_oracle.hpl failed"
-    exit /b 1
-)
-call "%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_mysql.hpl" -r local >> "%RUN_LOG%" 2>&1
-if errorlevel 1 (
-    call :fail "pl_stage_mysql.hpl failed"
     exit /b 1
 )
 

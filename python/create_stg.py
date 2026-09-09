@@ -19,12 +19,11 @@ if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 
 from config import load_sources, load_vars, project_root, require_live_conn  # noqa: E402
-from introspect import excel, mysql, oracle, sheets  # noqa: E402
+from introspect import excel, oracle, sheets  # noqa: E402
 from introspect.h2_ddl import apply_h2, create_table_sql, write_script  # noqa: E402
 
 HANDLERS = {
     "oracle": oracle.introspect,
-    "mysql": mysql.introspect,
     "sheets": sheets.introspect,
     "excel": excel.introspect,
 }
@@ -57,9 +56,9 @@ def main(argv: list[str] | None = None) -> int:
             raise SystemExit(
                 f"{stg}: type {typ!r} desconocido. Usa: {', '.join(HANDLERS)}"
             )
-        if typ in ("oracle", "mysql", "sheets"):
+        if typ in ("oracle", "sheets"):
             conn_name = src.get("connection") or (
-                "oracle_sisud" if typ == "oracle" else "mysql" if typ == "mysql" else None
+                "oracle_sisud" if typ == "oracle" else None
             )
             if conn_name:
                 require_live_conn(conn_name, variables)

@@ -40,7 +40,7 @@ flowchart LR
 |---|---|
 | **H2** | Workbench de la corrida (puerto 9092): solo `STG_*`. No es el entregable. |
 | **BD_CURSOR** | Oracle destino (puerto 1524, `APP`): `INT_*` + `QA_*`. Ahí está la fase 1. |
-| **LECTURAS** | Nombres de los DataFrames que lee Python desde H2 (`GS1`, `ORA`, `MYSQL`…). |
+| **LECTURAS** | Nombres de los DataFrames que lee Python desde H2 (`GS1`, `GS2`, `ORA`, `ETAPAS`…). |
 | **RESULTADO** | Portada del Excel: copia de `QA_CORRIDA`. |
 
 ## Fuentes (nombres cortos)

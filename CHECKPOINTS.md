@@ -29,7 +29,7 @@ Referencia canónica: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/linea
 ## Fase 2 — Perfilamiento y diccionario {#fase-2}
 
 - [ ] Salidas `PROF_RESUMEN`, `PROF_HALLAZGO`, `DICCIONARIO` con filas > 0.
-- [ ] Campos de las fuentes de multa (F1, F2, F4, F5) documentados; evidencia H1–H9 en hallazgos.
+- [ ] Campos de las fuentes de multa (F1, F2, F5) documentados; evidencia H1–H9 en hallazgos.
 
 Módulo: `logica/dwh/perfilamiento.py`, `logica/dwh/diccionario.py`.
 

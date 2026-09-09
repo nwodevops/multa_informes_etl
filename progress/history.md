@@ -112,3 +112,19 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 
 - Actualizados verification, CHECKPOINTS, arquitectura, fase1-3/status, ddl/README, implementacion-fase-4/5-6/7, inputs, fuentes_datos, ANEXO, PROPUESTA (fila estado), CONTRATO, LEEME, skills.
 - Punto de verdad de lectura: docs/adjuntos/guia-leer-modelo-dimensional.md
+
+## 2026-09-08 — facts evidencia + enrich Maggi
+
+**Feature:** `facts-evidencia-enrich-sql` → `done`
+
+- 3 facts evidencia + `07_enrich_sheets_sisud.sql`; caso 0153/64 con CUM/CAM tras backup SISUD 534 filas.
+- Evidencia: `progress/impl_facts-evidencia-enrich-sql.md`
+
+**Siguiente:** `fact-attrs-operativos-sheet` (P0 JEFE/UF/etapas).
+
+## 2026-09-08 — attrs operativos Sheet (inicio)
+
+**Feature:** `fact-attrs-operativos-sheet` → `in_progress`
+
+- DDL + COLS + dimensional + 07 + `_ensure_fact_attrs_operativos`.
+- Pendiente: corrida `wf_main` / `./init.sh` y check JEFE=MEJIA, HOMERO.

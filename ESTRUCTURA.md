@@ -52,9 +52,9 @@ etl_cursor/
 ├── metadata/                            # Metadatos que lee Apache Hop
 │   ├── rdbms/
 │   │   ├── h2.json                      #   Conexión H2 (variables DB_H2_*)
-│   │   ├── oracle_sisud.json            #   Oracle oefabd SISUD, fuente (variables DB_ORA_SISUD_*)
-│   │   ├── oracle_BD_CURSOR.json         #   Oracle BD_CURSOR, destino (variables DB_ORA_REPO_*)
-│   │   └── mysql.json                   #   Conexión MySQL (variables DB_MYSQL_*)
+│   │   ├── oracle_sisud.json            #   Oracle SISUD, fuente (variables DB_ORA_SISUD_*)
+│   │   ├── oracle_BD_CURSOR.json         #   Oracle legado (variables DB_ORA_REPO_*)
+│   │   └── oracle_dw.json               #   Oracle DW destino (variables DB_ORA_DW_*)
 │   ├── pipeline-run-configuration/
 │   │   └── local.json                   #   Run config "local" para pipelines
 │   └── workflow-run-configuration/
@@ -63,7 +63,7 @@ etl_cursor/
 ├── python/                              # Dos capas: STG/DDL y post-staging (ver python/LEEME.md)
 │   ├── LEEME.md                         #   Mapa de capas
 │   ├── create_stg.py                    #   ENTRY STG: introspect → CREATE TABLE STG_* (no extrae filas)
-│   ├── main.py                          #   ENTRY lógica: leer_h2 → unico .py → escritores
+│   ├── main.py                          #   ENTRY lógica: leer_h2 → unico .py → cargar_dw
 │   ├── config.py                        #   Compartido: project-config.json + inputs.yaml
 │   ├── h2_conn.py                       #   Compartido: JDBC H2 (CREATE y SELECT)
 │   ├── CONTRATO.md                      #   Contrato entrada/salida de la lógica
@@ -73,29 +73,25 @@ etl_cursor/
 │   │   ├── h2_ddl.py                    #     mapeo tipos + CREATE + apply JDBC
 │   │   ├── excel.py
 │   │   ├── oracle.py
-│   │   ├── mysql.py
 │   │   └── sheets.py
 │   └── io/                              #   CAPA post-staging: I/O (no introspect)
 │       ├── leer_h2.py                   #     ENTRADA: H2 STG_* → DataFrames (dict LECTURAS)
-│       ├── escribir_excel.py            #     SALIDA default: output/resultado.xlsx
-│       ├── escribir_mysql.py            #     SALIDA default: MySQL
-│       └── escribir_oracle.py           #     SALIDA legado: Oracle BD_CURSOR
+│       └── cargar_dw.py                 #     SALIDA: Oracle DW MI_*
 │
 ├── logica/                              # Zona de pegado (fuera de python/): un solo .py
 │   ├── LEEME.md
-│   └── ejemplo_demo.py
+│   └── ejecutar.py
 │
 ├── workflows/
 │   ├── wf_create_stg.hwf                # Diseño: Reset H2 → Python STG → Success (H2 vivo)
-│   └── wf_main.hwf                      # Corrida: Reset H2 → Python STG → Excel + Oracle + MySQL → demo → Run Python
+│   └── wf_main.hwf                      # Corrida: Reset H2 → Python STG → Sheets/Excel/Oracle → Run Python
 │
 ├── pipelines/
 │   ├── pl_demo.hpl                      # Pipeline demo: H2 DEMO_TABLA_EJEMPLO → Dummy
-│   ├── pl_stage_excel.hpl               # Excel input_excel → H2 STG_GS1_* / STG_GS2_* (todo String)
+│   ├── pl_stage_excel.hpl               # Excel legacy DIC → H2
 │   ├── pl_stage_oracle.hpl              # SISUD.VW_MULTA_COERCITIVA → STG_ORA_VW_MULTA_COERCITIVA
-│   └── pl_stage_mysql.hpl               # gappsdb.T_MVC_MULTACOERCITIVA_MC → STG_MYSQL_T_MVC_MULTACOERCITIVA
 │
-├── input_excel/                         # Excel local (*.xlsx gitignored): CAGR + Lambayeque
+├── input_excel/                         # Excel local legacy (DIC / CAGR)
 │
 └── output/
     └── .gitkeep                         # Salidas generadas (xlsx, csv, logs)
@@ -117,14 +113,14 @@ Start → Reset H2 clean (SHELL: ./h2/scripts/reset_and_create.sh)
 Start → Reset H2 clean (SHELL: ./h2/scripts/reset_and_create.sh)
      → Python create STG (.venv/bin/python python/create_stg.py)
      → Stage Excel (pl_stage_excel.hpl)
-     → Stage Oracle VW / MySQL (pl_stage_oracle.hpl, pl_stage_mysql.hpl)
+     → Stage Oracle VW (pl_stage_oracle.hpl)
      → Pipeline demo (pl_demo.hpl) → Run Python (python/main.py) → Success
 ```
 
 - **Reset H2 clean**: detiene el server H2, lo levanta y aplica `h2/sql/00_reset.sql` + `h2/sql/01_schema.sql`. H2 es **in-memory** (`mem:csep`): se limpia sola al parar el server, por eso el DDL se aplica por TCP después del start. El reset **no** ejecuta `02_stg.sql`.
 - **Python create STG**: lee `inputs.yaml`, introspecta Oracle/MySQL/Sheets/Excel, escribe `h2/sql/02_stg.sql` y aplica `CREATE TABLE STG_*` en H2.
 - **Stage Excel**: `pl_stage_excel.hpl` lee `input_excel/*.xlsx` (todo String) y carga `STG_GS1_*` / `STG_GS2_*` (truncate).
-- **Stage Oracle VW / MySQL**: TableInput 1:1 hacia `STG_ORA_VW_MULTA_COERCITIVA`, `STG_MYSQL_T_MVC_MULTACOERCITIVA` (truncate).
+- **Stage Oracle VW**: TableInput 1:1 hacia `STG_ORA_VW_MULTA_COERCITIVA` (truncate).
 - **Pipeline demo**: lee `PUBLIC.DEMO_TABLA_EJEMPLO` (creada en `01_schema.sql`) por la conexión `h2`. Es un smoke test: funciona sin BDs externas. Los extract `pl_stage_*` se cablean **después** de Python.
 - **Run Python**: ejecuta `python/main.py` → lee H2 (`python/io/leer_h2.py`), corre la lógica (el único `.py` en `logica/`, zona de pegado), escribe `output/resultado.xlsx` y carga Oracle DW vía `cargar_dw.py` (conexión obligatoria).
 

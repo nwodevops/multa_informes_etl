@@ -12,7 +12,7 @@
 
 ## 1. ¿Qué problema resuelve este warehouse?
 
-OEFA registra **multas coercitivas** en varios sistemas y planillas (Google Sheets de oficinas y de unidades CSEP, MySQL GAPP, Oracle SISUD). Cada uno habla un “idioma” distinto (columnas, códigos, estados).
+OEFA registra **multas coercitivas** en varios sistemas y planillas (Google Sheets de oficinas y de unidades CSEP, y Oracle SISUD). Cada uno habla un “idioma” distinto (columnas, códigos, estados).
 
 El **data warehouse** reúne esas filas en un solo lugar (Oracle, tablas `MI_*`) con reglas claras, para poder preguntar cosas de negocio sin pelearse con cuatro fuentes a la vez:
 
@@ -56,7 +56,7 @@ Prefijo de tablas: **`MI_`**. Esquema típico: `APP` (local) o `REPOCSEP` (remot
                     ┌─ MI_DIM_ADMINISTRADO     (quién)
                     ├─ MI_DIM_ORGANO_UNIDAD    (unidad CSEP: CMIN, CRES, …)
                     ├─ MI_DIM_OD               (oficina desconcentrada F1)
-                    ├─ MI_DIM_FUENTE_REGISTRO  (universo F1/F2/F4/F5)
+                    ├─ MI_DIM_FUENTE_REGISTRO  (universo F1/F2/F5 (+ semilla histórica GAPPS))
                     ├─ MI_DIM_MATERIA_SUBSECTOR
    MI_FACT_MULTA ───┼─ MI_DIM_ESTADO           (resolución / multa / pago — misma tabla, roles distintos)
    COERCITIVA       ├─ MI_DIM_PARAMETRO_UIT    (valor UIT del año)
@@ -107,7 +107,7 @@ Columnas útiles para orientarte:
 | `MI_DIM_ORGANO_UNIDAD` | ¿Qué unidad CSEP? (`SIGLA`, `DESCRIPCION`) | Solo las 10 del catálogo `f2_csep_sheets.json` (+ ND). Lookup hecho: `COORD` / `COD_UNIDAD` (o último token de expediente si es CSEP) |
 | `MI_DIM_OD` | ¿Qué oficina desconcentrada? | F1 Sheets OD (`COD_OD`) |
 | `MI_DIM_ADMINISTRADO` | ¿Quién es el administrado? | Sobre todo nombres de F5 |
-| `MI_DIM_ESTADO` | ¿En qué estado? (varios roles) | Textos homologados de F1/F2/F4/F5 |
+| `MI_DIM_ESTADO` | ¿En qué estado? (varios roles) | Textos homologados de F1/F2/F5 |
 | `MI_DIM_PARAMETRO_UIT` | ¿Cuánto valía la UIT ese año? | Catálogo MEF en el ETL |
 | `MI_DIM_MATERIA_SUBSECTOR` | ¿Qué materia? | Semilla; a menudo `-1` si no hay dato |
 | `MI_DIM_TIEMPO` | Calendario día a día | Generada; FK role-playing `ID_TIEMPO_FIRMA` |
@@ -119,7 +119,7 @@ Columnas útiles para orientarte:
 | −1 | `ND` | NO ESPECIFICADO | ND | — |
 | 1 | `OD_SHEETS` | Sheets OD | F1 | `STG_GS2_OD_MULTAS` |
 | 2 | `CAGR` | Sheets CSEP | F2 | `STG_GS1_CSEP_MULTAS` |
-| 3 | `GAPPS` | MySQL GAPP | F4 | `STG_MYSQL_*` |
+| 3 | `GAPPS` | MySQL GAPP (histórico) | F4 | fuera de ingestión |
 | 4 | `SISUD_VW` | Oracle SISUD | F5 | `STG_ORA_*` |
 | 5 | `OD_EXCEL` | Excel OD (legacy) | F1 | no se carga; el ETL normaliza a `OD_SHEETS` |
 
@@ -160,11 +160,11 @@ Por eso **acota siempre por fuente** (`ID_FUENTE` / vistas `VW_MC_*`) cuando com
 
 ### Paso a paso
 
-1. **Define el grano:** “quiero multas” → `MI_FACT_MULTA_COERCITIVA` (o una vista `VW_MC_*`).
-2. **Acota la fuente:** preferir `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` / `VW_MC_GAPPS` (evita sumar 1801 filas “como un solo universo”).
+1. **Define el grano:** evidencia → `MI_FACT_MC_*` / `VW_MC_CSEP|OD|SISUD`; negocio enriquecido → `MI_FACT_MULTA_COERCITIVA` / `VW_MC_ENRIQUECIDA`.
+2. **Acota la fuente:** no sumar CSEP+OD+SISUD como un solo censo.
 3. **Elige el corte territorial:** unidad CSEP → `MI_DIM_ORGANO_UNIDAD`; OD → `MI_DIM_OD`.
 4. **Elige la medida:** `COUNT(*)`, `SUM(MONTO_UIT)`, `AVG(DIAS_NOTIF_A_FIRMA)`, etc.
-5. Si el número “no cuadra” entre sistemas: mira **`MI_QA_AMARRE`** / **`MI_QA_AMARRE_DETALLE`** y KPI K5 — no fuerces INNER JOIN.
+5. Si el número “no cuadra” entre sistemas: mira **`MI_QA_AMARRE`** (puente `RES_MONTO_Sheets_vs_SISUD`) / detalle y KPI K5.
 
 ### Vistas por universo (disciplina de reporte)
 
@@ -172,7 +172,6 @@ Por eso **acota siempre por fuente** (`ID_FUENTE` / vistas `VW_MC_*`) cuando com
 SELECT COUNT(*) FROM APP.VW_MC_CSEP;   -- solo F2
 SELECT COUNT(*) FROM APP.VW_MC_OD;     -- solo F1
 SELECT COUNT(*) FROM APP.VW_MC_SISUD;  -- solo F5
-SELECT COUNT(*) FROM APP.VW_MC_GAPPS;  -- solo F4
 ```
 
 ### Patrón SQL (esqueleto)
@@ -223,7 +222,7 @@ No-amarre H9 (detalle):
 ```sql
 SELECT PUENTE, LADO, CLAVE, MOTIVO
 FROM APP.MI_QA_AMARRE_DETALLE
-WHERE PUENTE = 'CUM_SISUD_vs_GAPP'
+WHERE PUENTE = 'COD_MA_vs_CUM_SISUD'
 FETCH FIRST 100 ROWS ONLY;
 ```
 
@@ -280,7 +279,6 @@ Mira `MI_INDICADOR_RESULTADO` (códigos K1…K5) antes de reinventar el cálculo
 |---|---|---|---|
 | `OD_SHEETS` | 31 Google Sheets OD | `STG_GS2_OD_MULTAS` | `VW_MC_OD` |
 | `CAGR` | 10 Google Sheets CSEP | `STG_GS1_CSEP_MULTAS` (+ etapas) | `VW_MC_CSEP` |
-| `GAPPS` | MySQL GAPP | `STG_MYSQL_*` | `VW_MC_GAPPS` |
 | `SISUD_VW` | Vista Oracle SISUD | `STG_ORA_*` | `VW_MC_SISUD` |
 
 Inventario de campos crudos: carpeta [`../lineamientos/extra/fuentes_datos/`](../lineamientos/extra/fuentes_datos/).
@@ -297,7 +295,6 @@ Cifras orientativas tras `./init.sh` (esquema `APP`). Cambian con cada corrida.
 | · `CAGR` (F2) | ~986 |
 | · `SISUD_VW` (F5) | ~530 |
 | · `OD_SHEETS` (F1) | ~281 |
-| · `GAPPS` (F4) | ~4 |
 | `MI_DET_ETAPA_MC` | ~2 070 |
 | `MI_DIM_FUENTE_REGISTRO` | 6 (semilla) |
 | `MI_DIM_OD` | 33 |
@@ -312,7 +309,7 @@ Detalle y diagramas: [`modelo-kimball.md`](modelo-kimball.md) §7.
 
 ## 9. Errores típicos y anti-patrones (no hacer)
 
-1. **Sumar F1+F2+F4+F5** sin acotar por `VW_MC_*` / `ID_FUENTE` → doble conteo.
+1. **Sumar F1+F2+F5** sin acotar por `VW_MC_*` / `ID_FUENTE` → doble conteo.
 2. **Usar `ID_ORGANO` para ODs** (o al revés) → territorio incorrecto.
 3. **INNER JOIN entre fuentes “para que cuadre”** → el diseño mide amarre (H9 / `MI_QA_AMARRE_DETALLE` / K5).
 4. **Ignorar `-1`** → “faltan” atribuciones que son “no especificado”.

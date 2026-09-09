@@ -8,7 +8,7 @@ import pandas as pd
 
 from .catalogos import MI_DIM_PARAMETRO_UIT
 from .constantes import ID_CARGA
-from .homologacion import vacio
+from .homologacion import clave_join_res_monto, vacio
 
 REGLAS = {
     "R01": "Completitud de campos clave (COD_MA, expediente, CUM/CAM)",
@@ -19,6 +19,8 @@ REGLAS = {
 }
 
 MAX_HALLAZGOS = 5000
+
+_FUENTES_SHEET = ("OD_SHEETS", "OD_EXCEL", "LAM_OD", "CAGR")
 
 
 def _hallazgo(
@@ -83,11 +85,14 @@ def _validar_multas(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
     conforme = pd.Series([True] * n, index=df.index)
     hallazgos: list[dict] = []
 
-    def add(regla, i, row, campo, valor, sev="CRITICA", obs=""):
+    def add(regla, i, row, campo, valor, sev="CRITICA", obs="", afecta_conforme=None):
         nonlocal hallazgos
         if len(hallazgos) >= MAX_HALLAZGOS:
             return
-        conforme.at[i] = False
+        if afecta_conforme is None:
+            afecta_conforme = sev == "CRITICA"
+        if afecta_conforme:
+            conforme.at[i] = False
         hallazgos.append(
             _hallazgo(
                 regla,
@@ -105,10 +110,21 @@ def _validar_multas(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
         fuente = str(row.get("FUENTE_ORIGEN", ""))
         rid = _registro_id(row)
 
-        if fuente in ("OD_SHEETS", "OD_EXCEL", "LAM_OD", "CAGR"):
+        if fuente in _FUENTES_SHEET:
             if vacio(row.get("COD_MA")):
                 add("R01", i, row, "COD_MA", row.get("COD_MA"))
-        elif fuente in ("GAPPS", "SISUD_VW"):
+            if vacio(row.get("CUM")) and vacio(row.get("CAM")):
+                add(
+                    "R01",
+                    i,
+                    row,
+                    "CUM/CAM",
+                    "",
+                    "ADVERTENCIA",
+                    obs="sin match SISUD (resolucion+monto)",
+                    afecta_conforme=False,
+                )
+        elif fuente == "SISUD_VW":
             if vacio(row.get("CUM")) and vacio(row.get("CAM")):
                 add("R01", i, row, "CUM/CAM", "")
         if vacio(rid):
@@ -168,13 +184,26 @@ def _validar_multas(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
     return conforme, hallazgos
 
 
-def _amarre(df_multas: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+def _claves_res_monto(df: pd.DataFrame) -> pd.Series:
+    if df is None or df.empty:
+        return pd.Series(dtype=object)
+    return pd.Series(
+        [
+            clave_join_res_monto(r.get("N_RES_MC"), r.get("MONTO_UIT"))
+            for _, r in df.iterrows()
+        ],
+        dtype=object,
+    ).dropna()
+
+
+def _amarre(
+    df_multas: pd.DataFrame,
+    df_sisud: pd.DataFrame | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Resumen QA_AMARRE + detalle de claves sin match (MI_QA_AMARRE_DETALLE)."""
     puentes: list[tuple[str, pd.Series, pd.Series, str]] = []
     if not df_multas.empty:
-        excel = df_multas[df_multas["FUENTE_ORIGEN"].isin(["OD_SHEETS", "OD_EXCEL", "LAM_OD", "CAGR"])]
-        sisud = df_multas[df_multas["FUENTE_ORIGEN"] == "SISUD_VW"]
-        gapp = df_multas[df_multas["FUENTE_ORIGEN"] == "GAPPS"]
+        excel = df_multas[df_multas["FUENTE_ORIGEN"].isin(list(_FUENTES_SHEET))]
         if "COD_MA" in excel.columns and "NUMERO_EXPEDIENTE" in excel.columns:
             puentes.append(
                 (
@@ -184,22 +213,16 @@ def _amarre(df_multas: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
                     "COD_MA sin expediente / expediente sin COD_MA en Sheets",
                 )
             )
-        if not excel.empty and not sisud.empty and "COD_MA" in excel.columns and "CUM" in sisud.columns:
+        sisud = df_sisud if df_sisud is not None else pd.DataFrame()
+        if sisud.empty and "FUENTE_ORIGEN" in df_multas.columns:
+            sisud = df_multas[df_multas["FUENTE_ORIGEN"] == "SISUD_VW"]
+        if not excel.empty and sisud is not None and not sisud.empty:
             puentes.append(
                 (
-                    "COD_MA_vs_CUM_SISUD",
-                    excel["COD_MA"].dropna().astype(str).str.strip(),
-                    sisud["CUM"].dropna().astype(str).str.strip(),
-                    "COD_MA Sheets sin CUM SISUD / CUM SISUD sin COD_MA Sheets",
-                )
-            )
-        if not sisud.empty and not gapp.empty and "CUM" in sisud.columns and "CUM" in gapp.columns:
-            puentes.append(
-                (
-                    "CUM_SISUD_vs_GAPP",
-                    sisud["CUM"].dropna().astype(str).str.strip(),
-                    gapp["CUM"].dropna().astype(str).str.strip(),
-                    "CUM solo en SISUD o solo en GAPP",
+                    "RES_MONTO_Sheets_vs_SISUD",
+                    _claves_res_monto(excel),
+                    _claves_res_monto(sisud),
+                    "clave resolucion+monto Sheets sin SISUD / SISUD sin Sheets",
                 )
             )
 
@@ -207,8 +230,8 @@ def _amarre(df_multas: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     det: list[dict] = []
     max_det = MAX_HALLAZGOS
     for puente, izq, der, motivo_base in puentes:
-        set_i = set(izq.unique()) - {""}
-        set_d = set(der.unique()) - {""}
+        set_i = set(izq.astype(str).unique()) - {""}
+        set_d = set(der.astype(str).unique()) - {""}
         match = set_i & set_d
         n_i, n_d, n_m = len(set_i), len(set_d), len(match)
         pct = round(100.0 * n_m / n_i, 2) if n_i else 0.0
@@ -256,6 +279,7 @@ def _amarre(df_multas: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
 
 def aplicar_calidad(
     df_multas: pd.DataFrame,
+    df_sisud: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Marca conformidad, arma MI_DQ_HALLAZGO, QA_AMARRE y detalle. No elimina filas."""
     multas = df_multas.copy()
@@ -285,5 +309,5 @@ def aplicar_calidad(
         "RESUELTO_POR",
     ]
     dq = pd.DataFrame(hallazgos) if hallazgos else pd.DataFrame(columns=dq_cols)
-    amarre, amarre_det = _amarre(multas)
+    amarre, amarre_det = _amarre(multas, df_sisud)
     return multas, dq, amarre, amarre_det

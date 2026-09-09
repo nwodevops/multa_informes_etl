@@ -13,7 +13,7 @@ Referencias: [`../lineamientos/PROPUESTA_ADAPTADA_ETL.md`](../lineamientos/PROPU
 
 ## 0. Fuentes de entrada (inputs)
 
-Cuatro fuentes de multa (**F1, F2, F4, F5**) declaradas en `inputs.yaml`. Hop extrae cada una a `STG_*` en H2; Python integra hacia el modelo dimensional. Cada fila del hecho queda etiquetada con `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO`. Reportes por universo: vistas `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` / `VW_MC_GAPPS`.
+Tres fuentes de multa activas (**F1, F2, F5**); F4 GAPP fuera de ingestión declaradas en `inputs.yaml`. Hop extrae cada una a `STG_*` en H2; Python integra hacia el modelo dimensional. Cada fila del hecho queda etiquetada con `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO`. Reportes por universo: vistas `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD`.
 
 ```mermaid
 flowchart TB
@@ -39,7 +39,7 @@ flowchart TB
     SV["STG_ORA_VW_MULTA_COERCITIVA"]
   end
   subgraph python [Python logica/dwh]
-    DF_M["DF_MULTAS F1+F2+F4+F5"]
+    DF_M["DF_MULTAS F1+F2+F5"]
     DF_E["DF_ETAPAS F2-ET"]
   end
   subgraph destino [Destino Kimball]
@@ -64,10 +64,10 @@ flowchart TB
 | **F2** | Sheets CSEP (10 unidades) | `STG_GS1_CSEP_MULTAS` | Hecho + `ID_ORGANO` | `CAGR` |
 | **F2-ET** | Sheets CSEP etapas | `STG_GS1_ETAPAS` | Detalle etapas | `CAGR` |
 | **F2-DIC** | Diccionario (Excel legacy) | `STG_GS1_DIC_*` | Perfilamiento | — |
-| **F4** | MySQL GAPP | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | Conciliación CUM/CAM | `GAPPS` |
+| **F4** | MySQL GAPP | — | **Fuera de ingestión** (semilla `ID_FUENTE=3`) | `GAPPS` |
 | **F5** | Oracle SISUD | `STG_ORA_VW_MULTA_COERCITIVA` | Expediente, resolución, CUM/CAM | `SISUD_VW` |
 
-**Integración:** F1+F2+F4+F5 en `DF_MULTAS` → hecho con `ID_FUENTE` (+ `ID_TIEMPO_FIRMA` role-playing). Territorio F1: `ID_OD` → `MI_DIM_OD`. Territorio F2: `ID_ORGANO` → `MI_DIM_ORGANO_UNIDAD` (`DESCRIPCION` desde catálogo). **H9:** amarre medido en `MI_QA_AMARRE` / `MI_QA_AMARRE_DETALLE` / K5. No hay hecho informe ni `ID_INFORME`.
+**Integración:** F1+F2+F5 en `DF_MULTAS` → hecho con `ID_FUENTE` (+ `ID_TIEMPO_FIRMA` role-playing). Territorio F1: `ID_OD` → `MI_DIM_OD`. Territorio F2: `ID_ORGANO` → `MI_DIM_ORGANO_UNIDAD` (`DESCRIPCION` desde catálogo). **H9:** amarre medido en `MI_QA_AMARRE` / `MI_QA_AMARRE_DETALLE` / K5. No hay hecho informe ni `ID_INFORME`.
 
 ---
 
@@ -79,7 +79,7 @@ flowchart TB
 | **Hechos** | 1 × `MI_FACT_MULTA_COERCITIVA` | Evento medible: multa coercitiva |
 | **Detalle** | `MI_DET_ETAPA_MC` | Etapas del flujo interno (1:N con multa) |
 | **Calidad** | `MI_DQ_HALLAZGO`, `MI_QA_AMARRE`, `MI_QA_AMARRE_DETALLE` | Hallazgos R01–R05; amarre H9 resumen + claves sin match |
-| **Vistas** | `VW_MC_*` | Universos CSEP / OD / SISUD / GAPPS (no sumar 1801 “como uno”) |
+| **Vistas** | `VW_MC_*` | Universos CSEP / OD / SISUD (no sumar 1801 “como uno”) |
 | **Indicadores** | `MI_INDICADOR_RESULTADO` | KPIs K1–K5 |
 
 ---
@@ -142,7 +142,7 @@ Degeneradas en el hecho: `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE` (linaje de 
 | −1 | `ND` | NO ESPECIFICADO | ND |
 | 1 | `OD_SHEETS` | Sheets OD | F1 |
 | 2 | `CAGR` | Sheets CSEP | F2 |
-| 3 | `GAPPS` | MySQL GAPP | F4 |
+| 3 | `GAPPS` | MySQL GAPP (histórico) | F4 |
 | 4 | `SISUD_VW` | Oracle SISUD | F5 |
 | 5 | `OD_EXCEL` | Excel OD (legacy) | F1 |
 
@@ -215,7 +215,6 @@ Tras `./init.sh` en esquema `APP` (orientativo; cambia por corrida):
 | · `CAGR` | ~986 |
 | · `SISUD_VW` | ~530 |
 | · `OD_SHEETS` | ~281 |
-| · `GAPPS` | ~4 |
 | `MI_DET_ETAPA_MC` | ~2 070 |
 | `MI_DQ_HALLAZGO` | ~207 |
 | `MI_QA_AMARRE_DETALLE` | ~3 078 |

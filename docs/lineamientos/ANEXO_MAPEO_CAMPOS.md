@@ -17,7 +17,7 @@
 | F1 | **31 Google Sheets** OD (`f1_ods_sheets.json`) | hoja `5) Multas Coercitivas` → `STG_GS2_OD_MULTAS` (+ `COD_OD`) | 32 |
 | F2 | **10 Google Sheets** CSEP (`f2_csep_sheets.json`) | hoja `1) Multas coercitivas` → `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | 48 (32 comunes F1 + 16 propias) |
 | F2-ET | Mismos sheets F2 | hoja `2) Etapas` → `STG_GS1_ETAPAS` | 12 |
-| F4 | MySQL gapps | `T_MVC_MULTACOERCITIVA_MC` → `STG_MYSQL_*` | 17 |
+| F4 | MySQL gapps | **fuera de ingestión** (semilla histórica) | — |
 | F5 | Oracle SISUD | `VW_MULTA_COERCITIVA` → `STG_ORA_*` | 13 |
 
 | `CODIGO` (`MI_DIM_FUENTE_REGISTRO`) | Significado |
@@ -217,7 +217,6 @@ registro no conforme, con `REGISTRO_ID` igual a la clave natural del registro af
 | `VW_MC_CSEP` | `CAGR` |
 | `VW_MC_OD` | `OD_SHEETS` |
 | `VW_MC_SISUD` | `SISUD_VW` |
-| `VW_MC_GAPPS` | `GAPPS` |
 
 ---
 

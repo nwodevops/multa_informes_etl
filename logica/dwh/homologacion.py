@@ -96,6 +96,28 @@ def parse_monto(val):
         return None
 
 
+def normalizar_resolucion(val) -> str | None:
+    """Homologa N_RES_MC / RESOLUCION para join Sheet↔SISUD (0153 ≡ 00153)."""
+    if vacio(val):
+        return None
+    s = re.sub(r"\s+", "", str(val).strip().upper())
+    if not s:
+        return None
+    m = re.match(r"^0*(\d+)(.*)$", s)
+    if m:
+        return f"{m.group(1)}{m.group(2)}"
+    return s
+
+
+def clave_join_res_monto(n_res, monto_uit) -> str | None:
+    """Clave estable resolución normalizada + MONTO_UIT (4 decimales)."""
+    nr = normalizar_resolucion(n_res)
+    m = parse_monto(monto_uit)
+    if nr is None or m is None:
+        return None
+    return f"{nr}|{m:.4f}"
+
+
 def homologar_si_no(val) -> str | None:
     if vacio(val):
         return None

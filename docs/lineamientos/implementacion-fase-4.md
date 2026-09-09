@@ -28,7 +28,7 @@ Las filas no conformes se marcan con `FG_CONFORME = N` pero **no se eliminan**.
 | `MI_QA_AMARRE` | Resumen por puente (`N_IZQ`, `N_DER`, `N_MATCH`, `PCT_MATCH_IZQ`) |
 | `MI_QA_AMARRE_DETALLE` | Claves sin match (`LADO` = `SOLO_IZQ` / `SOLO_DER`, `CLAVE`, `MOTIVO`) |
 
-Puentes típicos: `COD_MA_vs_EXPEDIENTE_excel`, `COD_MA_vs_CUM_SISUD`, `CUM_SISUD_vs_GAPP`.  
+Puentes típicos: `COD_MA_vs_EXPEDIENTE_excel`, `COD_MA_vs_CUM_SISUD`, `COD_MA_vs_CUM_SISUD`.  
 K5 sigue siendo el agregado; el detalle es lo que pide auditoría/CSEP en la práctica.
 
 ## Criterio de avance

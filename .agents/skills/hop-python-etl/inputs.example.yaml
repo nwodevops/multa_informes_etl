@@ -1,5 +1,6 @@
 # Manifiesto de fuentes — copiar a inputs.yaml en la raíz del proyecto.
 # Python (create_stg.py) solo DDL STG_*; Hop extrae filas.
+# Types: oracle | sheets | excel (sin mysql).
 # Sheets/Excel: types varchar (#N/A). Ver reference.md
 
 sources:
@@ -7,11 +8,6 @@ sources:
     type: oracle
     connection: oracle_sisud
     object: SISUD.VW_EJEMPLO
-
-  - stg_table: STG_MYSQL_EJEMPLO
-    type: mysql
-    connection: mysql
-    object: gappsdb.T_EJEMPLO
 
   - stg_table: STG_GS1_EJEMPLO
     type: sheets

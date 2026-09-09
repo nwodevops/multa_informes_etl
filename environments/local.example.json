@@ -119,36 +119,6 @@
       "name": "DB_ORA_DW_PASSWORD",
       "value": "<PASSWORD>",
       "description": "Password Oracle DW LOCAL"
-    },
-    {
-      "name": "DB_MYSQL_URL",
-      "value": "jdbc:mysql://localhost:3307/gappsdb",
-      "description": "JDBC URL MySQL LOCAL"
-    },
-    {
-      "name": "DB_MYSQL_HOST",
-      "value": "localhost",
-      "description": "Host MySQL LOCAL"
-    },
-    {
-      "name": "DB_MYSQL_PORT",
-      "value": "3307",
-      "description": "Puerto MySQL LOCAL"
-    },
-    {
-      "name": "DB_MYSQL_DATABASE",
-      "value": "gappsdb",
-      "description": "Database MySQL LOCAL"
-    },
-    {
-      "name": "DB_MYSQL_USERNAME",
-      "value": "gapps",
-      "description": "Usuario MySQL LOCAL"
-    },
-    {
-      "name": "DB_MYSQL_PASSWORD",
-      "value": "<PASSWORD>",
-      "description": "Password MySQL LOCAL"
     }
   ]
 }

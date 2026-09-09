@@ -140,7 +140,7 @@
       "title": "Vistas Oracle de multas por universo (ID_FUENTE)",
       "status": "done",
       "passes": true,
-      "criterio": "Vistas VW_MC_CSEP|OD|SISUD|GAPPS vía MI_DIM_FUENTE_REGISTRO; no sumar universos por defecto; ./init.sh HARNESS OK",
+      "criterio": "Vistas VW_MC_CSEP|OD|SISUD vía MI_DIM_FUENTE_REGISTRO (F1+F2+F5; sin VW_MC_GAPPS); no sumar universos por defecto; ./init.sh HARNESS OK",
       "doc": "docs/lineamientos/ddl/06_vistas.sql",
       "evidencia": "progress/impl_mejoras-kimball-2-7.md"
     },
@@ -179,6 +179,38 @@
       "criterio": "init.sh falla si CAGR/OD/SISUD bajo mínimos; docs contrato f1/f2 JSON y SLA reintentos",
       "doc": "docs/inputs/README.md",
       "evidencia": "progress/impl_mejoras-kimball-2-7.md"
+    },
+    {
+      "id": "fix-montos-f1-f2",
+      "title": "Mapear MULTA_UIT/MULTA_S → MONTO_UIT/MONTO_S (+ UIT 2026)",
+      "status": "done",
+      "passes": true,
+      "criterio": "ACTA CMIN 0153-2026-OEFA/DSEM con MONTO_UIT=64 y MONTO_S≈352000 en FACT; UIT 2026 en catálogo; ./init.sh HARNESS OK",
+      "doc": "logica/dwh/integracion.py"
+    },
+    {
+      "id": "quitar-f4-gapps",
+      "title": "Quitar F4 MySQL GAPP (T_MVC_MULTACOERCITIVA_MC) del DW end-to-end",
+      "status": "done",
+      "passes": true,
+      "criterio": "Sin STG_MYSQL en inputs/Hop; sin VW_MC_GAPPS; sin puente CUM_SISUD_vs_GAPP; seed ID_FUENTE=3 conservado; universos F1+F2+F5; HARNESS OK",
+      "doc": "docs/inputs/README.md"
+    },
+    {
+      "id": "facts-evidencia-enrich-sql",
+      "title": "3 facts evidencia (CSEP/OD/SISUD) + enrich SQL Oracle (resolución+monto)",
+      "status": "done",
+      "passes": true,
+      "criterio": "MI_FACT_MC_CSEP/OD/SISUD cargados; MI_FACT_MULTA_COERCITIVA = 07_enrich; 0153/64 → 2 filas con CUM/CAM; puente RES_MONTO; ./init.sh HARNESS OK",
+      "doc": "docs/lineamientos/extra/manual-como-se-arma-el-fact.md",
+      "evidencia": "progress/impl_facts-evidencia-enrich-sql.md"
+    },
+    {
+      "id": "fact-attrs-operativos-sheet",
+      "title": "Atributos operativos Sheet (JEFE, UF, etapas, resultado, estados texto) en facts CSEP + enriquecida",
+      "status": "in_progress",
+      "criterio": "P0 en MI_FACT_MC_CSEP/OD/SISUD + MI_FACT_MULTA_COERCITIVA; caso 0153 → JEFE=MEJIA, HOMERO; VW_MC_* exponen cols; ./init.sh HARNESS OK",
+      "doc": "docs/lineamientos/ddl/02_hechos.sql"
     }
   ]
 }

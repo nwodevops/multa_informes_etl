@@ -68,8 +68,8 @@ Verificación = log de Hop + conteos en stdout Python. No hay suite de tests.
 Fuente única: `project-config.json` → `config.variables`. Entorno: `./switch-env.sh local|remote`.
 
 - `DB_H2_*` — staging TCP `localhost:9092/mem:csep`
-- `DB_ORA_SISUD_*` / `DB_MYSQL_*` — fuentes
-- `DB_ORA_DW_*` — destino dimensional (Oracle BD_CURSOR)
+- `DB_ORA_SISUD_*` — fuente SISUD
+- `DB_ORA_DW_*` — destino dimensional (Oracle)
 
 `${VAR}` literal en log = variable no definida o proyecto Hop equivocado.
 

@@ -7,14 +7,14 @@ Divulgación progresiva desde [`AGENTS.md`](../../AGENTS.md). Requerimiento: [`d
 - Apache Hop 2.19.0 en `~/apps/hop` (GUI: `~/apps/hop/hop-gui.sh`).
 - Java 21 en PATH.
 - Python: venv en `.venv/` (PEP 668). Instalar deps: `python/requirements.txt`.
-- Fuentes locales de prueba: `../data_for_etl/docker-compose.yml` (Oracle XE + MySQL 8).
+- Fuentes locales de prueba: Oracle XE (SISUD / DW); **sin MySQL** en este ETL.
 
 ## Workflows
 
 | Workflow | Uso |
 |---|---|
 | `workflows/wf_create_stg.hwf` | Diseño: Reset H2 → Python STG → H2 vivo en 9092 |
-| `workflows/wf_main.hwf` | Corrida: Reset → STG → stage Excel/Oracle/MySQL → Python |
+| `workflows/wf_main.hwf` | Corrida: Reset → STG → stage Sheets/Excel/Oracle → Python |
 
 Smoke sin Hop: [`./init.sh`](../../init.sh) o manualmente:
 
@@ -49,7 +49,6 @@ Smoke sin Hop: [`./init.sh`](../../init.sh) o manualmente:
 | `oracle_sisud` | `DB_ORA_SISUD_*` | Fuente SISUD (solo F5 `VW_MULTA_COERCITIVA`; sandbox local: `localhost:1525/CSEP`) |
 | `oracle_dw` | `DB_ORA_DW_*` | Destino DW (carga Fase 6–7; local: `localhost:1524/BD_CURSOR`) |
 | `oracle_BD_CURSOR` | `DB_ORA_REPO_*` | Legado |
-| `mysql` | `DB_MYSQL_*` | Fuente GAPP |
 
 ## Secretos
 

@@ -1,4 +1,8 @@
-"""Fase 3 — integración F1+F2+F4+F5 (DF_MULTAS) y F2-ET (DF_ETAPAS)."""
+"""Fase 3 — integración por universo: F2 CSEP, F1 OD, F5 SISUD + etapas.
+
+Tres dataframes de evidencia (sin merge enriquecido). el hecho enriquecido se arma en Oracle SQL
+después de cargar MI_FACT_MC_CSEP / _OD / _SISUD.
+"""
 
 from __future__ import annotations
 
@@ -7,13 +11,18 @@ import pandas as pd
 from .constantes import F1_OD_LECTURAS, FUENTE_REGISTRO, ID_CARGA
 from .homologacion import aplicar_homologacion
 
-# Columnas canónicas pre-FACT_MULTA (ANEXO_MAPEO_CAMPOS.md)
 COLS_MULTAS = [
     "ID_CARGA",
     "FUENTE_ORIGEN",
     "COD_OD",
     "COD_MA",
     "COD_PROY_MC",
+    "JEFE",
+    "UF",
+    "N_PROY_MC",
+    "ETA_REG_PROY_MC",
+    "ETA_REG_MC",
+    "RESULT_PROY_MC",
     "NUMERO_EXPEDIENTE",
     "EXP_RES_MC",
     "N_RES_MC",
@@ -90,6 +99,8 @@ def _integrar_gs2(gs2: pd.DataFrame, cod_od: str | None = None) -> pd.DataFrame:
         "AMERIT_MC": "AMERITA_MC",
         "REQ_VERIF_CAMPO": "REQUIERE_VERIF_CAMPO",
         "EXP_INF_INCUMP": "NUMERO_EXPEDIENTE",
+        "MULTA_UIT": "MONTO_UIT",
+        "MULTA_S": "MONTO_S",
     }
     h = _renombrar(h, m)
     if cod_od:
@@ -113,11 +124,12 @@ def _integrar_gs1(gs1: pd.DataFrame) -> pd.DataFrame:
         "REQ_VERIF_CAMPO": "REQUIERE_VERIF_CAMPO",
         "EXP_INF_INCUMP": "NUMERO_EXPEDIENTE",
         "ADM": "ADMINISTRADO",
+        "MULTA_UIT": "MONTO_UIT",
+        "MULTA_S": "MONTO_S",
     }
     h = _renombrar(h, m)
     if "COORD" in gs1.columns:
         h["COORD"] = gs1["COORD"].values
-    # Si COORD vacío, rellenar con COD_UNIDAD del catálogo F2 (inyectado en STG).
     if "COD_UNIDAD" in gs1.columns:
         coord = h["COORD"] if "COORD" in h.columns else pd.Series(pd.NA, index=h.index)
         empty = coord.isna() | (coord.astype("string").str.strip() == "")
@@ -126,6 +138,8 @@ def _integrar_gs1(gs1: pd.DataFrame) -> pd.DataFrame:
 
 
 def _integrar_ora(ora: pd.DataFrame) -> pd.DataFrame:
+    if ora is None or ora.empty:
+        return _a_canonico(pd.DataFrame(), COLS_MULTAS)
     h = aplicar_homologacion(ora, FUENTE_REGISTRO["ORA"])
     m = {
         "RESOLUCION": "N_RES_MC",
@@ -135,24 +149,6 @@ def _integrar_ora(ora: pd.DataFrame) -> pd.DataFrame:
         "ADMINISTRADO": "ADMINISTRADO",
     }
     h = _renombrar(h, m)
-    return _a_canonico(h, COLS_MULTAS)
-
-
-def _integrar_mysql(mysql: pd.DataFrame) -> pd.DataFrame:
-    h = aplicar_homologacion(mysql, FUENTE_REGISTRO["MYSQL"])
-    m = {
-        "TX_IDCUM": "CUM",
-        "TX_IDCAM": "CAM",
-        "NU_MONTOMCUIT": "MONTO_UIT",
-        "NU_MONTOMCS": "MONTO_S",
-        "FG_ESTADOMULTA": "ESTADO_MULTA",
-        "TX_EXP_SIGED_DOC": "NUMERO_REGISTRO_SIGED",
-        "FE_F_VERIF_POST_MC": "F_VERIF_POST_MC",
-        "TX_DOC_VERIF_MC": "DOC_VERIF_MC",
-    }
-    h = _renombrar(h, m)
-    if "NU_IDINFORMACIONMC" in mysql.columns:
-        h["COD_MA"] = mysql["NU_IDINFORMACIONMC"].values
     return _a_canonico(h, COLS_MULTAS)
 
 
@@ -178,24 +174,21 @@ def integrar(
     gs2: pd.DataFrame,
     etapas: pd.DataFrame,
     ora: pd.DataFrame,
-    mysql: pd.DataFrame,
     gs2_ods: dict[str, pd.DataFrame] | None = None,
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    # GS2 unificado trae COD_OD por fila (STG_GS2_OD_MULTAS).
-    partes = [
-        _integrar_gs2(gs2, None),
-        _integrar_gs1(gs1),
-        _integrar_mysql(mysql),
-        _integrar_ora(ora),
-    ]
-    extra = gs2_ods or {}
-    for clave, df in extra.items():
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Devuelve (df_csep, df_od, df_sisud, df_etapas). Sin enrich Sheets←SISUD."""
+    df_csep = _integrar_gs1(gs1)
+
+    partes_od = [_integrar_gs2(gs2, None)]
+    for clave, df in (gs2_ods or {}).items():
         if df is None or df.empty:
             continue
         cod = F1_OD_LECTURAS.get(clave)
         if cod == "*":
             cod = None
-        partes.append(_integrar_gs2(df, cod))
-    df_multas = pd.concat(partes, ignore_index=True, sort=False)
+        partes_od.append(_integrar_gs2(df, cod))
+    df_od = pd.concat(partes_od, ignore_index=True, sort=False)
+
+    df_sisud = _integrar_ora(ora)
     df_etapas = _integrar_etapas(etapas)
-    return df_multas, df_etapas
+    return df_csep, df_od, df_sisud, df_etapas

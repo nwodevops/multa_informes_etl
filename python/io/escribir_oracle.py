@@ -1,6 +1,6 @@
 """SALIDA legado: DataFrame -> tabla Oracle BD_CURSOR (TRUNCATE + INSERT + COUNT).
 
-ETLs nuevos: MySQL o Excel, no este escritor.
+ETLs nuevos: usar `cargar_dw.py` (DW dimensional). No usar este módulo.
 """
 
 from __future__ import annotations

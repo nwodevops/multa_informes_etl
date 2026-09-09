@@ -17,10 +17,9 @@ Detalle campo a campo: [`../lineamientos/ANEXO_MAPEO_CAMPOS.md`](../lineamientos
 |---|---|---|
 | **31 ODs** | F1 — Google Sheets medidas administrativas | Catálogo JSON + Hop `GoogleSheetsInput` |
 | **10 unidades CSEP** | F2 — Google Sheets multas + etapas (10 activas) | Catálogo JSON + Hop |
-| **Conciliación multas** | F4 — MySQL GAPP | En uso |
 | **Vista institucional multas** | F5 — Oracle SISUD | En uso |
 
-**Fuera de alcance:** F3 — Oracle SISUD informes; consolidados F1 (`CONSOLIDADO MEDIDAS ADMINISTRATIVAS` / `… CSEP`); unidad CODE (solo en `MI_DIM_OD`, sin sheet).
+**Fuera de alcance:** F3 — Oracle SISUD informes; **F4 — MySQL GAPP** (`T_MVC_MULTACOERCITIVA_MC`); consolidados F1 (`CONSOLIDADO MEDIDAS ADMINISTRATIVAS` / `… CSEP`); unidad CODE (solo en `MI_DIM_OD`, sin sheet).
 
 ---
 
@@ -38,7 +37,7 @@ flowchart LR
   end
 
   subgraph remoto [Bases fuente]
-    F4["F4 GAPP multas"]
+    F5only["F5 SISUD"]
     F5["F5 SISUD vista MC"]
   end
 
@@ -53,14 +52,13 @@ flowchart LR
   F1 --> STG
   F2 --> STG
   DIC --> STG
-  F4 --> STG
   F5 --> STG
   STG --> DF
 ```
 
 ---
 
-## Resumen por fuente (F1, F2, F4, F5)
+## Resumen por fuente (F1, F2, F5)
 
 | ID | Nombre corto | Dominio | Pestaña | Tipo | Origen | Tabla STG | Pipeline Hop | Uso en el DW |
 |---|---|---|---|---|---|---|---|---|
@@ -68,10 +66,9 @@ flowchart LR
 | **F2** | CSEP multas | **Multas** | `1) Multas coercitivas` | Google Sheets | [`f2_csep_sheets.json`](f2_csep_sheets.json) | `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | `pl_stage_csep_sheet.hpl` vía `scripts/stage_csep_sheets.sh` | Hecho multa (`ID_FUENTE`→`CAGR`, unidad vía `COORD`) |
 | **F2-ET** | CSEP etapas | **Multas** (detalle) | `2) Etapas` | Google Sheets | mismo catálogo F2 | `STG_GS1_ETAPAS` | `pl_stage_csep_etapa.hpl` vía `stage_csep_sheets.sh` | Detalle `MI_DET_ETAPA_MC` |
 | **F2-DIC** | Diccionario | Apoyo | `DIC_TABLAS` / `DIC_VARIABLES` | Excel legacy | `input_excel/legacy/CAGR_…xlsx` | `STG_GS1_DIC_*` | `pl_stage_excel.hpl` | Perfilamiento / diccionario |
-| **F4** | GAPP multas | **Multas** | — | MySQL | `gappsdb.T_MVC_MULTACOERCITIVA_MC` | `STG_MYSQL_T_MVC_MULTACOERCITIVA` | `pl_stage_mysql.hpl` | Conciliación |
 | **F5** | SISUD vista MC | **Multas** | — | Oracle | `SISUD.VW_MULTA_COERCITIVA` | `STG_ORA_VW_MULTA_COERCITIVA` | `pl_stage_oracle.hpl` | Expediente / resolución |
 
-Códigos de universo en staging/integración (`FUENTE_ORIGEN`): F1 = **`OD_SHEETS`**, F2 = **`CAGR`**, F4 = **`GAPPS`**, F5 = **`SISUD_VW`**. En el DW solo persiste **`ID_FUENTE`** → `MI_DIM_FUENTE_REGISTRO`. Territorio F2: `COORD` / `MI_DIM_ORGANO_UNIDAD`. Territorio F1: **`MI_DIM_OD`** (`ID_OD`). Reportes: `VW_MC_*`.
+Códigos de universo en staging/integración (`FUENTE_ORIGEN`): F1 = **`OD_SHEETS`**, F2 = **`CAGR`**, F5 = **`SISUD_VW`**. En el DW solo persiste **`ID_FUENTE`** → `MI_DIM_FUENTE_REGISTRO`. Territorio F2: `COORD` / `MI_DIM_ORGANO_UNIDAD`. Territorio F1: **`MI_DIM_OD`** (`ID_OD`). Reportes: `VW_MC_*`.
 
 Auth Google: `client_secret.json` en la raíz del proyecto (**gitignored**). Cada spreadsheet debe estar compartido con el service account.
 
@@ -108,11 +105,10 @@ Auth Google: `client_secret.json` en la raíz del proyecto (**gitignored**). Cad
 
 ---
 
-## Fuentes remotas (F4, F5)
+## Fuentes remotas (F5)
 
 | ID | Conexión Hop | Esquema / base | Objeto |
 |---|---|---|---|
-| F4 | `mysql` | `gappsdb` | `T_MVC_MULTACOERCITIVA_MC` |
 | F5 | `oracle_sisud` | `SISUD` | `VW_MULTA_COERCITIVA` |
 
 ---
@@ -121,12 +117,12 @@ Auth Google: `client_secret.json` en la raíz del proyecto (**gitignored**). Cad
 
 | Salida intermedia | Fuentes |
 |---|---|
-| `DF_MULTAS` | F1 (31 ODs en `GS2`) + F2 CSEP + F4 + F5 (`FUENTE_ORIGEN`: `OD_SHEETS` / `CAGR` / `GAPPS` / `SISUD_VW`) |
+| `DF_MULTAS` | F1 (31 ODs en `GS2`) + F2 CSEP + F5 (`FUENTE_ORIGEN`: `OD_SHEETS` / `CAGR` / `SISUD_VW`) |
 | `DF_ETAPAS` | F2-ET (Sheets CSEP) |
 
 Mapa: [`../../logica/dwh/constantes.py`](../../logica/dwh/constantes.py) (`STG_FUENTE`, mapa de códigos → `MI_DIM_FUENTE_REGISTRO`).
 
-En el DW el linaje es **`ID_FUENTE`** (no hay VARCHAR `FUENTE_REGISTRO` en el hecho). Reportes: vistas `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` / `VW_MC_GAPPS`.
+En el DW el linaje es **`ID_FUENTE`** (no hay VARCHAR `FUENTE_REGISTRO` en el hecho). Reportes: vistas `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD`.
 
 ---
 

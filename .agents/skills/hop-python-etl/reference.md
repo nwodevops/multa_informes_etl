@@ -9,7 +9,6 @@ Opción **B**: Reset H2 primero; Python lee `inputs.yaml`, introspecta, escribe 
 | type | Conexión | object |
 |---|---|---|
 | oracle | `DB_ORA_SISUD_*` | `OWNER.NOMBRE` |
-| mysql | `DB_MYSQL_*` | `schema.tabla` |
 | sheets | `client_secret.json` | `spreadsheet_key` + `worksheet` |
 | excel | path relativo | `worksheet` + `header_row` (1-based) |
 
@@ -20,7 +19,6 @@ Sheets/Excel: **todos VARCHAR** (gotcha `#N/A`). Landing: nullable, sin PK.
 | Origen | Prefijo |
 |---|---|
 | Oracle | `STG_ORA_` |
-| MySQL | `STG_MYSQL_` |
 | Sheets libro N | `STG_GSN_` |
 | Excel | `STG_GSN_` o prefijo acordado |
 

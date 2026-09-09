@@ -31,6 +31,7 @@ MI_DIM_PARAMETRO_UIT: dict[int, float] = {
     2023: 4950.0,
     2024: 5150.0,
     2025: 5350.0,
+    2026: 5500.0,
 }
 
 # Oficinas desconcentradas F1 (Google Sheets medidas administrativas). COD_OD = slug catálogo.
@@ -87,12 +88,6 @@ CATALOGO_CAMPOS: list[dict[str, str]] = [
     {"fuente": "F2", "dataset": "2) Etapas", "campo": "COD_PROY_MC", "tipo": "Texto", "descripcion": "Proyecto multa"},
     {"fuente": "F2", "dataset": "2) Etapas", "campo": "NRO_ETAPA_MC", "tipo": "Entero", "descripcion": "Número etapa"},
     {"fuente": "F2", "dataset": "2) Etapas", "campo": "EST_ETAPA_MC", "tipo": "Texto", "descripcion": "Estado etapa"},
-    # F4
-    {"fuente": "F4", "dataset": "T_MVC_MULTACOERCITIVA_MC", "campo": "NU_IDINFORMACIONMC", "tipo": "Número", "descripcion": "Id información MC"},
-    {"fuente": "F4", "dataset": "T_MVC_MULTACOERCITIVA_MC", "campo": "TX_IDCUM", "tipo": "Texto", "descripcion": "CUM"},
-    {"fuente": "F4", "dataset": "T_MVC_MULTACOERCITIVA_MC", "campo": "TX_IDCAM", "tipo": "Texto", "descripcion": "CAM"},
-    {"fuente": "F4", "dataset": "T_MVC_MULTACOERCITIVA_MC", "campo": "NU_MONTOMCUIT", "tipo": "Decimal", "descripcion": "Monto UIT"},
-    {"fuente": "F4", "dataset": "T_MVC_MULTACOERCITIVA_MC", "campo": "FG_ESTADOMULTA", "tipo": "Texto", "descripcion": "Estado multa flag"},
     # F5
     {"fuente": "F5", "dataset": "VW_MULTA_COERCITIVA", "campo": "NUMERO_EXPEDIENTE", "tipo": "Texto", "descripcion": "Expediente"},
     {"fuente": "F5", "dataset": "VW_MULTA_COERCITIVA", "campo": "CUM", "tipo": "Texto", "descripcion": "CUM"},

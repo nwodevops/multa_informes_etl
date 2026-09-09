@@ -101,8 +101,6 @@ Se recrean al inicio: `reset_and_create.sh` (DDL base) + `create_stg.py` (DDL st
 | `STG_GS1_DIC_TABLAS` | F2 hoja DIC_TABLAS (Excel legacy) | `create_stg.py` | `pl_stage_excel.hpl` |
 | `STG_GS1_DIC_VARIABLES` | F2 hoja DIC_VARIABLES (Excel legacy) | `create_stg.py` | `pl_stage_excel.hpl` |
 | `STG_ORA_VW_MULTA_COERCITIVA` | F5 Oracle SISUD | `create_stg.py` | `pl_stage_oracle.hpl` |
-| `STG_MYSQL_T_MVC_MULTACOERCITIVA` | F4 MySQL GAPP | `create_stg.py` | `pl_stage_mysql.hpl` |
-
 H2 es **efímero**: al parar el server o al Reset desaparece todo. No es entregable.
 
 DDL staging generado: `h2/sql/02_stg.sql` (gitignore).
@@ -123,7 +121,7 @@ Destino del modelo dimensional (`DB_ORA_DW_*` / esquema `APP` local o `REPOCSEP`
 | Hechos | `MI_FACT_MULTA_COERCITIVA` (`ID_FUENTE`, `ID_TIEMPO_FIRMA`), `MI_DET_ETAPA_MC` |
 | Calidad | `MI_DQ_HALLAZGO`, `MI_QA_AMARRE`, `MI_QA_AMARRE_DETALLE` |
 | Indicadores | `MI_INDICADOR_RESULTADO` (K1–K5) |
-| Vistas reporte | `VW_MC_CSEP`, `VW_MC_OD`, `VW_MC_SISUD`, `VW_MC_GAPPS` |
+| Vistas reporte | `VW_MC_CSEP`, `VW_MC_OD`, `VW_MC_SISUD` |
 
 ```mermaid
 flowchart LR
@@ -145,7 +143,7 @@ flowchart LR
 | F1 | 31 Google Sheets OD | `STG_GS2_OD_MULTAS` | Sí | `stage_ods_sheets.sh` |
 | F2 | 10 Google Sheets CSEP | `STG_GS1_CSEP_MULTAS` / `ETAPAS` | Sí | `stage_csep_sheets.sh` |
 | F2 | DIC (Excel legacy) | `STG_GS1_DIC_*` | Sí | `pl_stage_excel.hpl` |
-| F4 | MySQL GAPP | `STG_MYSQL_*` | Sí | credenciales MySQL |
+| F4 | MySQL GAPP | — | **No** (fuera de este ETL) | — |
 | F5 | SISUD vista multas | `STG_ORA_VW_*` | Sí | credenciales Oracle |
 
 ---
