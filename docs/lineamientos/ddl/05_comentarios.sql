@@ -137,6 +137,14 @@ COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.FLAG_AMERITA_MC IS '1 = amerita multa
 COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.FLAG_PAGADA IS '1 = multa pagada; 0 = pendiente o incumplida.';
 COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.FLAG_EJECUCION_FORZOSA IS '1 = en ejecución forzosa; 0 = no.';
 COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.FLAG_CUMPLIO_VERIF IS '1 = cumplió verificación posterior (K4); 0 = no.';
+COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.JEFE IS 'Jefe de equipo (Sheet F2); NULL en OD/SISUD.';
+COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.UF IS 'Unidad fiscalizable (texto Sheet F2).';
+COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.N_PROY_MC IS 'Número de proyecto MC en la unidad (F2).';
+COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.ETA_REG_PROY_MC IS 'Etapa de registro del proyecto (F2).';
+COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.ETA_REG_MC IS 'Etapa de registro de la multa coercitiva (F2).';
+COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.RESULT_PROY_MC IS 'Resultado del proyecto MC (F2).';
+COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.ESTADO_MC_TXT IS 'Estado de multa tal cual Sheet (además de ID_ESTADO_MULTA).';
+COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.ESTADO_PAGO_TXT IS 'Estado de pago tal cual Sheet (además de ID_ESTADO_PAGO).';
 COMMENT ON COLUMN MI_FACT_MULTA_COERCITIVA.FECHA_CARGA IS 'Fecha y hora de carga de la fila en el DW.';
 
 -- MI_DET_ETAPA_MC
@@ -158,7 +166,7 @@ COMMENT ON COLUMN MI_DET_ETAPA_MC.FECHA_CARGA IS 'Fecha y hora de carga de la fi
 
 -- MI_QA_AMARRE
 COMMENT ON TABLE MI_QA_AMARRE IS 'Resumen de amarre H9 entre fuentes (puentes); alimenta K5.';
-COMMENT ON COLUMN MI_QA_AMARRE.PUENTE IS 'Nombre del puente de cruce (ej. CUM_SISUD_vs_GAPP).';
+COMMENT ON COLUMN MI_QA_AMARRE.PUENTE IS 'Nombre del puente de cruce (ej. COD_MA_vs_CUM_SISUD).';
 COMMENT ON COLUMN MI_QA_AMARRE.PCT_MATCH_IZQ IS 'Porcentaje de claves izquierda que encuentran match a la derecha.';
 
 -- MI_QA_AMARRE_DETALLE

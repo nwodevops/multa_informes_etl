@@ -293,7 +293,7 @@ def _k5_calidad(
     qa_amarre: pd.DataFrame,
 ) -> list[dict]:
     rows: list[dict] = []
-    tabla = "MI_FACT_MULTA_COERCITIVA"
+    tabla = "DF_MULTAS"
     total = len(df_multas)
     if total:
         if "FG_CONFORME" in df_multas.columns:

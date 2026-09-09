@@ -59,21 +59,23 @@ Prerrequisitos Win:
 
 - Java en PATH (H2)
 - `.venv` + `pip install -r python\requirements.txt`
-- `input_excel\*.xlsx`
+- `input_excel\*.xlsx` / `client_secret.json` (Sheets)
 - Hop: `D:\Eder\hop\hop-run.bat` (o `set HOP_RUN=...`)
-- Red/VPN a Oracle SISUD, MySQL GAPP, Oracle DW (`REPOCSEP` @ `10.6.0.15`)
+- Red/VPN a Oracle SISUD y Oracle DW (`REPOCSEP` @ `10.6.0.15`)
 
-Flujo: `inputs.yaml` → Hop `STG_*` → `python/main.py` → `logica/ejecutar.py` (auto-descubierto) → `logica/dwh/pipeline.py` (fases 2–7) → `cargar_dw.py` (TRUNCATE+INSERT, esquema = **USER** Oracle, p.ej. `REPOCSEP`).
+Flujo: `inputs.yaml` → Hop `STG_*` (F1/F2/F5) → `python/main.py` → 3 facts evidencia + dims/QA/K → `cargar_dw.py` (wipe `MI_*`/`VW_*` + DDL + INSERT; esquema = **USER** Oracle) → SQL **`07_enrich_sheets_sisud.sql`** → `MI_FACT_MULTA_COERCITIVA`.
+
+**Diseño vigente:** evidencia `MI_FACT_MC_CSEP|_OD|_SISUD` + negocio enriquecido (Sheet manda, CUM/CAM de SISUD). F3/F4 fuera de ingestión. Guía: [`docs/adjuntos/guia-leer-modelo-dimensional.md`](docs/adjuntos/guia-leer-modelo-dimensional.md). Manual: [`docs/lineamientos/extra/manual-como-se-arma-el-fact.md`](docs/lineamientos/extra/manual-como-se-arma-el-fact.md).
 
 ## Python (esta rama)
 
 ```text
 python/
-  create_stg.py / main.py / verify_dw.py
+  create_stg.py / main.py / verify_dw.py / stage_sheets.py
   config.py / h2_conn.py / plantilla_logica.py
   introspect/     # DDL STG
   io/leer_h2.py   # entrada
-  io/cargar_dw.py # salida DW
+  io/cargar_dw.py # salida DW (wipe+DDL+INSERT+07)
 ```
 
 Sin escritores legacy (`escribir_*`). Contrato: [`python/CONTRATO.md`](python/CONTRATO.md).

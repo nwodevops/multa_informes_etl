@@ -19,10 +19,10 @@ Detalle por fase: [phases.md](phases.md).
 | Fase | Entregable | Módulo |
 |:---:|---|---|
 | 2 | `PROF_*`, `DICCIONARIO` | `perfilamiento.py`, `diccionario.py` |
-| 3 | `DF_MULTAS`, `DF_ETAPAS` | `homologacion.py`, `integracion.py` |
+| 3 | Intermedios F1/F2/F5 + `DF_ETAPAS` (sin merge) | `homologacion.py`, `integracion.py` |
 | 4 | `FG_CONFORME`, `MI_DQ_HALLAZGO`, `MI_QA_AMARRE`(+`_DETALLE`) | `calidad.py` |
-| 5 | `MI_DIM_*`, `MI_FACT_*` (`ID_FUENTE`, `ID_TIEMPO_FIRMA`), `DET_*` | `dimensional.py` |
-| 6 | Carga Oracle + vistas `VW_MC_*` | `python/io/cargar_dw.py` |
+| 5 | `MI_DIM_*`, `MI_FACT_MC_CSEP`/`_OD`/`_SISUD`, `DET_*` | `dimensional.py` |
+| 6 | Carga Oracle + enrich 07 + vistas `VW_MC_*` | `python/io/cargar_dw.py` |
 | 7 | `MI_INDICADOR_RESULTADO` K1–K5 | `indicadores.py` |
 
 Orquestación: `logica/dwh/pipeline.py` → `logica/ejecutar.py` → `python/main.py`.
@@ -34,9 +34,9 @@ logica/dwh/
   constantes.py      # ID_CARGA, FUENTE_REGISTRO (mapa staging → CODIGO)
   catalogos.py       # semillas DIM_*
   homologacion.py    # vacio(), CUM/CAM, SI/NO, estados
-  integracion.py     # UNION por fuente + columnas canónicas
-  calidad.py         # R01–R05, MI_QA_AMARRE*, no elimina filas
-  dimensional.py     # modelo en memoria, miembro -1, ID_FUENTE / ID_TIEMPO_FIRMA
+  integracion.py     # intermedios por fuente F1/F2/F5 (sin merge a un fact)
+  calidad.py         # R01–R05 (sin GAPPS), MI_QA_AMARRE* (RES_MONTO), no elimina filas
+  dimensional.py     # dims + 3 facts evidencia, miembro -1, ID_FUENTE / ID_TIEMPO_FIRMA
   indicadores.py     # K1–K5 sobre hechos en memoria
   pipeline.py        # ejecutar() devuelve dict[str, DataFrame]
 ```
@@ -47,7 +47,7 @@ logica/dwh/
 
 1. Implementar módulo en `logica/dwh/`.
 2. Llamar desde `pipeline.py`; exportar en `ejecutar.py`.
-3. Si persiste en Oracle: DDL en `docs/lineamientos/ddl/NN_*.sql` + extender `cargar_dw.py` (`TRUNCATE_ORDEN`, `INSERT_ORDEN`, `_prepare_schema`).
+3. Si persiste en Oracle: DDL en `docs/lineamientos/ddl/NN_*.sql` + extender `cargar_dw.py` (`DROP_ORDEN`, `INSERT_ORDEN`, `REQUIRED_CORE`); enrich Sheet←SISUD vive en `07_enrich_sheets_sisud.sql`.
 4. Prefijo en `python/main.py` → `_es_salida` y `tablas_dw`.
 5. Documentar en `docs/lineamientos/implementacion-fase-N.md` y `python/CONTRATO.md`.
 6. Smoke: `.venv/bin/python python/main.py` → conteos `N filas -> N en BD (OK)`.
@@ -58,12 +58,12 @@ logica/dwh/
 - **No** carpetas `fase-N/` en el código; la fase vive en la rama.
 - Lineamiento interno (Fases 2–7) puede ir en la misma rama hasta el hito acordado con CSEP.
 
-## Modelo dimensional (Fase 5)
+## Modelo dimensional (Fase 5–6)
 
 - H2 = solo staging; modelo final **solo** en Oracle (o memoria previa a carga).
-- Tablas: `DIM_*`, `FACT_*`, `DET_*` — no reutilizar nombres legacy `FCT_*` / `VW_*_VALIDADA`.
+- Evidencia: `MI_FACT_MC_CSEP` / `_OD` / `_SISUD`; negocio: `MI_FACT_MULTA_COERCITIVA` vía SQL 07.
 - Claves surrogate en Python (`ID_* = -1` para ND).
-- Amarres opcionales entre fuentes → `NULL` + métrica en K5 (`QA_AMARRE`), no bloqueante.
+- Amarres opcionales → `NULL` + métrica en K5 (`MI_QA_AMARRE`), no bloqueante.
 
 ## Indicadores (Fase 7)
 

@@ -43,7 +43,7 @@ chmod +x init.sh
 | Fuentes STG | Entradas en `inputs.yaml` → `pl_stage_*.hpl` → cablear en `wf_main.hwf` |
 | Lecturas | Claves en `python/io/leer_h2.py` |
 | Lógica | Un solo `.py` en `logica/` (ver `python/plantilla_logica.py`) |
-| MySQL salida | Copiar `python/io/escribir_mysql.py` del repo OEFA |
+| Destino DW | `python/io/cargar_dw.py` (Oracle) |
 
 ## Extender a consultoría OEFA (opcional)
 

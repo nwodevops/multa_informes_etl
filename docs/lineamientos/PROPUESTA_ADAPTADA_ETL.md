@@ -1,5 +1,7 @@
 # Propuesta Adaptada — DWH OEFA sobre tu arquitectura real (Apache Hop + H2 + Python + Oracle BD_CURSOR)
 
+> **Diseño vigente (no inventar sobre este doc histórico):** fuentes activas **F1 Sheets OD + F2 Sheets CSEP (+etapas) + F5 SISUD**. **F3 OUT**. **F4 MySQL fuera de ingestión** (solo semilla `ID_FUENTE=GAPPS` en dim). Python materializa **3 facts de evidencia** (`MI_FACT_MC_CSEP` / `_OD` / `_SISUD`); Oracle `ddl/07_enrich_sheets_sisud.sql` arma `MI_FACT_MULTA_COERCITIVA` = (CSEP∪OD) LEFT JOIN SISUD. Vistas: `VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA`. Manual: [`extra/manual-como-se-arma-el-fact.md`](extra/manual-como-se-arma-el-fact.md) · Guía: [`../adjuntos/guia-leer-modelo-dimensional.md`](../adjuntos/guia-leer-modelo-dimensional.md).
+
 **Evaluación de la efectividad de las estrategias de promoción del cumplimiento**
 *(multas coercitivas)*
 
@@ -9,9 +11,9 @@
 | **Área usuaria** | CSEP — DPEF / OEFA |
 | **Origen de este documento** | Adaptación de `PROPUESTA_CONSOLIDADA.md` a la arquitectura ETL real ya definida en `arquitectura.md` |
 | **Cambio respecto a la consolidada** | No se introduce SQL Server ni un motor nuevo; se reutilizan Apache Hop, H2 en memoria y Oracle BD_CURSOR tal como ya existen |
-| **Alcance de este documento** | Planteamiento técnico y plan de implementación por fases (diseño conceptual, sin scripts ejecutables) |
+| **Alcance de este documento** | Planteamiento técnico y plan de implementación por fases (diseño conceptual; partes del texto inicial son históricas) |
 | **Documentos complementarios** | `ddl/` (scripts de creación de tablas) · [`ANEXO_MAPEO_CAMPOS.md`](ANEXO_MAPEO_CAMPOS.md) (mapeo campo a campo fuente → modelo) |
-| **Estado implementado (repo)** | Fases 2–7 en código; DW solo Multas; linaje `ID_FUENTE`; vistas `VW_MC_*`; amarre `MI_QA_AMARRE`(+`_DETALLE`); órgano CSEP limpia; sin VARCHAR `FUENTE_REGISTRO`. Guía: [`../adjuntos/guia-leer-modelo-dimensional.md`](../adjuntos/guia-leer-modelo-dimensional.md) |
+| **Estado implementado (repo)** | Fases 2–7; 3 facts evidencia + enrich 07; linaje `ID_FUENTE`; vistas `VW_MC_*` (+ `VW_MC_ENRIQUECIDA`); amarre `MI_QA_AMARRE`(+`_DETALLE`); sin MySQL en pipeline. Guía: [`../adjuntos/guia-leer-modelo-dimensional.md`](../adjuntos/guia-leer-modelo-dimensional.md) |
 
 ---
 
@@ -30,10 +32,9 @@ flowchart TD
         LOG["logica/<br/>(único script)"]
     end
 
-    subgraph FUENTES["Fuentes"]
-        ORASISUD[("Oracle SISUD")]
-        MYSQL[("MySQL gapps")]
-        SHEETS[("Google Sheets<br/>(client_secret.json)")]
+    subgraph FUENTES["Fuentes activas"]
+        ORASISUD[("Oracle SISUD F5")]
+        SHEETS[("Google Sheets<br/>F1 OD + F2 CSEP")]
     end
 
     ORAREPO[("Oracle BD_CURSOR<br/>destino")]
@@ -55,7 +56,7 @@ flowchart TD
 
 | Componente | Responsabilidad | Estado |
 |---|---|---|
-| **Apache Hop** (`wf_main.hwf`) | Orquesta el workflow: resetea H2, extrae las 3 fuentes hacia H2, invoca la capa lógica | Ya existe |
+| **Apache Hop** (`wf_main.hwf`) | Orquesta el workflow: resetea H2, extrae F1/F2/F5 hacia H2, invoca la capa lógica | Ya existe |
 | **H2 en memoria** (`mem:csep`) | Staging transitorio, recreado limpio en cada corrida (sin persistencia entre ejecuciones) | Ya existe |
 | **Capa lógica aislada** (H2 → BD_CURSOR) | Homologación, calidad de datos, modelo dimensional, KPIs, `TRUNCATE + INSERT` final | **Por desarrollar — este documento define su alcance** |
 | **Oracle BD_CURSOR** | Único lugar donde vive el modelo dimensional final (hechos, dimensiones, indicadores) | Ya existe como destino |
@@ -84,19 +85,19 @@ construir.
 
 | ID | Fuente | Motor / origen | Contenido |
 |---|---|---|---|
-| F1 | Excel "Medidas Administrativas OD Lambayeque" | Google Sheets (vía `client_secret.json`) | Tracking operativo de multas coercitivas (32 columnas) + catálogos (feriados, UBIGEO, parámetros) |
-| F2 | Excel "CAGR Multas Coercitivas" | Google Sheets (vía `client_secret.json`) | Versión evolucionada del tracking (48 columnas) + etapas del workflow + diccionario de datos |
-| F4 | `T_MVC_MULTACOERCITIVA_MC` | MySQL gapps | Tabla transaccional de la app de multas coercitivas |
+| F1 | Sheets OD (familia oficinas) | Google Sheets (vía `client_secret.json`) | Tracking operativo de multas coercitivas OD |
+| F2 | Sheets CSEP (+ etapas) | Google Sheets (vía `client_secret.json`) | Tracking CSEP + etapas del workflow + DIC legacy |
+| F4 | `T_MVC_MULTACOERCITIVA_MC` | MySQL gapps | **Fuera de ingestión** (solo semilla histórica `GAPPS` en `MI_DIM_FUENTE_REGISTRO`) |
 | F5 | `VW_MULTA_COERCITIVA` | Oracle SISUD | Vista institucional consolidada de multas |
 
 ### Hallazgos de calidad ya confirmados
 
 | # | Hallazgo | Tratamiento en la capa lógica |
 |---|---|---|
-| H1 | Nulos en campos clave / filas casi vacías (F4, F5) | Regla de completitud + tabla de rechazos en BD_CURSOR |
+| H1 | Nulos en campos clave / filas casi vacías (F5; históricamente también F4) | Regla de completitud + tabla de rechazos en BD_CURSOR |
 | H2 | CAM con 11 y 13 dígitos en la misma columna (F5) | Normalización a un formato único |
 | H3 | Texto con saltos de línea embebidos (F5) | Limpieza de caracteres de control |
-| H4 | Fechas heterogéneas: Oracle vs MySQL vs Sheets | Parseo único a `date` en Python |
+| H4 | Fechas heterogéneas: Oracle vs Sheets | Parseo único a `date` en Python |
 | H5 | Lógica de negocio atrapada en fórmulas de Google Sheets (`WORKDAY.INTL`, `IMPORTRANGE`) | Migración a reglas Python documentadas |
 | H6 | Catálogos con `IMPORTRANGE` roto (feriados, UBIGEO, parámetros, diccionario) | Solicitud a CSEP de exportación con valores + siembra de valores oficiales (UIT-MEF) como contingencia |
 | H7 | Dos versiones del registro de multas (F1 32 col. vs F2 48 col.) | Una sola tabla integrada con columna `FUENTE_ORIGEN` |
@@ -111,8 +112,8 @@ construir.
 |---|---|---|
 | Reset de H2 | **Hop** | `stop + start + DDL` de las tablas espejo en `mem:csep`, tal como ya está definido en `wf_main.hwf` |
 | Extracción Oracle SISUD → H2 | **Hop** | Steps nativos de Hop (JDBC Oracle → H2) |
-| Extracción MySQL gapps → H2 | **Hop** | Steps nativos de Hop (JDBC MySQL → H2) |
-| Extracción Google Sheets → H2 | **Hop** | Step de Hop con `client_secret.json`, o delegado a un step de script si Hop no tiene conector nativo para Sheets |
+| Extracción MySQL gapps → H2 | — | **No aplica** en el ETL vigente (F4 fuera de ingestión) |
+| Extracción Google Sheets → H2 | **Hop** | Pipelines Sheets F1/F2 (+ scripts `stage_*_sheets.sh`) con `client_secret.json` |
 | Invocación de la capa lógica | **Hop** | Step "Execute script" / "Shell" que llama al script Python, pasándole la conexión a H2 y a BD_CURSOR resueltas desde `project-config.json` |
 | Perfilamiento, homologación, calidad, modelo dimensional, KPIs | **Python (nuevo)** | Todo el contenido de las secciones 3-6 de este documento |
 | `TRUNCATE + INSERT` final a Oracle BD_CURSOR | **Python (nuevo)** | Al final del script, una vez validado el modelo dimensional en memoria/H2 |
@@ -135,7 +136,8 @@ completo se calcula en Python y se materializa **únicamente** en Oracle BD_CURS
 
 | Tabla (en BD_CURSOR) | Grano | Notas |
 |---|---|---|
-| `MI_FACT_MULTA_COERCITIVA` | Una medida administrativa con su multa coercitiva, integrando F1+F2+F4+F5 | Hecho acumulativo: una sola fila recorre notificación → descargos → análisis → imposición → verificación → cobranza. Fechas de cada hito como columnas `DATE` directas |
+| `MI_FACT_MC_CSEP` / `_OD` / `_SISUD` | Evidencia 1:1 de F2 / F1 / F5 (sin merge) | Materializados por Python; auditan qué se descargó |
+| `MI_FACT_MULTA_COERCITIVA` | Negocio enriquecido: (F1∪F2) LEFT JOIN SISUD por `norm(N_RES_MC)+MONTO_UIT` | Armado en Oracle (`07_enrich_sheets_sisud.sql`); Sheet manda; CUM/CAM a la derecha |
 | `MI_DET_ETAPA_MC` | Una etapa del workflow de elaboración de la multa (hoja "2) Etapas" de F2) | Tabla de detalle simple, no un segundo hecho dimensional — información operativa de apoyo |
 
 ### 3.2 Dimensiones
@@ -212,14 +214,14 @@ Fases con dependencia estricta — no se avanza a la siguiente hasta cumplir el 
 | **Entrada** | H2 poblado por Hop (Fase 1 de tu pipeline actual) |
 | **Tareas** | Perfilar cada tabla de H2 (nulos, duplicados, formatos, dominios); reconstruir el diccionario de campos a partir de `DIC_TABLAS`/`DIC_VARIABLES`; documentar los 9 hallazgos con evidencia del ambiente real |
 | **Salida** | Reporte de perfilamiento + diccionario de datos |
-| **Criterio de avance** | Todo campo de las 5 fuentes está documentado |
+| **Criterio de avance** | Todo campo de las fuentes activas (F1/F2/F5) está documentado |
 
 ### Fase 3 — Homologación e integración
 
 | | |
 |---|---|
 | **Entrada** | Diccionario completo (Fase 2) |
-| **Tareas** | Normalizar CUM/CAM; parsear fechas heterogéneas; limpiar texto (saltos de línea, tokens de error); integrar F1+F2+F4+F5 en un dataframe único de multas con columna `FUENTE_ORIGEN`; homologar estados (aprobado por CSEP) |
+| **Tareas** | Normalizar CUM/CAM; parsear fechas heterogéneas; limpiar texto (saltos de línea, tokens de error); tipificar intermedios F1+F2+F5 (sin merge a un solo fact; F4 fuera); homologar estados (aprobado por CSEP) |
 | **Salida** | Dataframes integrados y tipificados, en memoria de Python |
 | **Criterio de avance** | Cero errores de tipo al procesar cada dataframe; catálogo de estados aprobado |
 

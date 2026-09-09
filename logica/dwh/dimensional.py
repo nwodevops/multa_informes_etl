@@ -9,7 +9,7 @@ from datetime import date, datetime
 import pandas as pd
 
 from .catalogos import MI_DIM_ESTADO as SEMILLAS_ESTADO, MI_DIM_PARAMETRO_UIT as UIT_MEF, ODS_OEFA
-from .constantes import ID_CARGA, SEMILLAS_FUENTE_REGISTRO
+from .constantes import SEMILLAS_FUENTE_REGISTRO
 from .homologacion import homologar_estado, vacio
 
 ND = -1
@@ -325,7 +325,7 @@ def _build_dim_fuente() -> pd.DataFrame:
 
 def _normalizar_codigo_fuente(val) -> str:
     fuente = str(val) if not vacio(val) else "CAGR"
-    if fuente in ("LAM_OD", "OD_EXCEL"):
+    if fuente == "OD_EXCEL":
         fuente = "OD_SHEETS"
     if fuente not in ("OD_SHEETS", "CAGR", "GAPPS", "SISUD_VW"):
         fuente = "CAGR"
@@ -437,8 +437,6 @@ def _build_fact_multas(
         sigla = None
         if not vacio(r.get("COORD")):
             sigla = str(r.get("COORD")).strip().upper()[:30]
-        elif not vacio(r.get("COD_UNIDAD")):
-            sigla = str(r.get("COD_UNIDAD")).strip().upper()[:30]
         elif not vacio(r.get("NUMERO_EXPEDIENTE")):
             sigla = _sigla_csep_desde_expediente(r.get("NUMERO_EXPEDIENTE"), csep_known)
         id_org = lk_o.get(sigla, ND) if sigla else ND
@@ -523,6 +521,14 @@ def _build_fact_multas(
                 "FLAG_PAGADA": 1 if id_est_pago == id_pagado and id_pagado != ND else 0,
                 "FLAG_EJECUCION_FORZOSA": 0 if vacio(r.get("MEMO_EF")) else 1,
                 "FLAG_CUMPLIO_VERIF": 0 if vacio(r.get("F_VERIF_POST_MC")) else 1,
+                "JEFE": r.get("JEFE"),
+                "UF": r.get("UF"),
+                "N_PROY_MC": r.get("N_PROY_MC"),
+                "ETA_REG_PROY_MC": r.get("ETA_REG_PROY_MC"),
+                "ETA_REG_MC": r.get("ETA_REG_MC"),
+                "RESULT_PROY_MC": r.get("RESULT_PROY_MC"),
+                "ESTADO_MC_TXT": est_mul_val,
+                "ESTADO_PAGO_TXT": r.get("ESTADO_PAGO_MC"),
                 "FECHA_CARGA": datetime.now(),
             }
         )
@@ -564,30 +570,28 @@ def _build_det_etapas(
 
 
 def construir_modelo(
-    df_multas: pd.DataFrame,
+    df_csep: pd.DataFrame,
+    df_od: pd.DataFrame,
+    df_sisud: pd.DataFrame,
     df_etapas: pd.DataFrame,
 ) -> dict[str, pd.DataFrame]:
-    """Fase 5: arma DIM_*, FACT_MULTA y MI_DET_ETAPA_MC listos para carga Oracle."""
+    """Fase 5: 3 facts evidencia + dims + etapas. El enriquecido se llena en Oracle (07)."""
+    df_all = pd.concat([df_csep, df_od, df_sisud], ignore_index=True, sort=False)
+
     dim_tiempo = _build_dim_tiempo()
-    dim_estado = _build_dim_estado(df_multas)
+    dim_estado = _build_dim_estado(df_all)
     dim_uit = _build_dim_uit()
     dim_materia = _build_dim_materia()
     dim_organo = _build_dim_organo()
     dim_od = _build_dim_od()
     dim_fuente = _build_dim_fuente()
-    dim_admin = _build_dim_administrado(df_multas)
+    dim_admin = _build_dim_administrado(df_all)
 
-    fact_multas = _build_fact_multas(
-        df_multas,
-        dim_admin,
-        dim_organo,
-        dim_materia,
-        dim_estado,
-        dim_uit,
-        dim_od,
-        dim_fuente,
-    )
-    det_etapas = _build_det_etapas(df_etapas, fact_multas, dim_fuente)
+    args = (dim_admin, dim_organo, dim_materia, dim_estado, dim_uit, dim_od, dim_fuente)
+    fact_csep = _build_fact_multas(df_csep, *args)
+    fact_od = _build_fact_multas(df_od, *args)
+    fact_sisud = _build_fact_multas(df_sisud, *args)
+    det_etapas = _build_det_etapas(df_etapas, fact_csep, dim_fuente)
 
     return {
         "MI_DIM_TIEMPO": dim_tiempo,
@@ -598,6 +602,8 @@ def construir_modelo(
         "MI_DIM_MATERIA_SUBSECTOR": dim_materia,
         "MI_DIM_ESTADO": dim_estado,
         "MI_DIM_PARAMETRO_UIT": dim_uit,
-        "MI_FACT_MULTA_COERCITIVA": fact_multas,
+        "MI_FACT_MC_CSEP": fact_csep,
+        "MI_FACT_MC_OD": fact_od,
+        "MI_FACT_MC_SISUD": fact_sisud,
         "MI_DET_ETAPA_MC": det_etapas,
     }

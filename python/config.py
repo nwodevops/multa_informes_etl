@@ -17,7 +17,6 @@ CONNECTION_PREFIX = {
     "oracle_sisud": "DB_ORA_SISUD",
     "oracle_BD_CURSOR": "DB_ORA_REPO",
     "oracle_dw": "DB_ORA_DW",
-    "mysql": "DB_MYSQL",
     "h2": "DB_H2",
 }
 

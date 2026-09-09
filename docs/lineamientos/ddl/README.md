@@ -2,7 +2,7 @@
 
 Scripts de creación de tablas para el destino final del modelo dimensional, según
 `PROPUESTA_ADAPTADA_ETL.md` (secciones 3 y 4). Corresponden a la carga que hace la capa
-lógica (Python) mediante `TRUNCATE + INSERT` hacia Oracle BD_CURSOR (`python/io/cargar_dw.py`).
+lógica (Python) mediante wipe + DDL + INSERT hacia Oracle BD_CURSOR (`python/io/cargar_dw.py`).
 
 Guía de lectura: [`../../adjuntos/guia-leer-modelo-dimensional.md`](../../adjuntos/guia-leer-modelo-dimensional.md).
 
@@ -12,15 +12,15 @@ Guía de lectura: [`../../adjuntos/guia-leer-modelo-dimensional.md`](../../adjun
    `MI_DIM_ORGANO_UNIDAD`, `MI_DIM_OD`, `MI_DIM_FUENTE_REGISTRO`, `MI_DIM_MATERIA_SUBSECTOR`,
    `MI_DIM_ESTADO`, `MI_DIM_PARAMETRO_UIT`),
    cada una con su miembro `NO ESPECIFICADO` (clave `-1`) ya sembrado.
-2. **`02_hechos.sql`** — `MI_FACT_MULTA_COERCITIVA` (incluye `ID_FUENTE`, `ID_TIEMPO_FIRMA`;
-   **sin** VARCHAR `FUENTE_REGISTRO`) + `MI_DET_ETAPA_MC`.
+2. **`02_hechos.sql`** — 3 facts evidencia (`MI_FACT_MC_CSEP` / `_OD` / `_SISUD`) +
+   `MI_FACT_MULTA_COERCITIVA` (enriquecido, vacío hasta `07`) + `MI_DET_ETAPA_MC` (FK → CSEP).
 3. **`03_bitacora.sql`** — `MI_DQ_HALLAZGO` (R01–R05) + `MI_QA_AMARRE` + `MI_QA_AMARRE_DETALLE` (H9).
 4. **`04_indicadores.sql`** — `MI_INDICADOR_RESULTADO` (K1–K5).
 5. **`05_comentarios.sql`** — comentarios Oracle (aplicados por `cargar_dw` si existe).
-6. **`06_vistas.sql`** — `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` / `VW_MC_GAPPS`
-   (filtro por `ID_FUENTE`; no sumar universos por defecto).
+6. **`06_vistas.sql`** — `VW_MC_CSEP` / `OD` / `SISUD` (evidencia) + `VW_MC_ENRIQUECIDA`.
+7. **`07_enrich_sheets_sisud.sql`** — post-carga: arma el enriquecido = (CSEP∪OD) LEFT JOIN SISUD por resolución+monto.
 
-En corridas normales el orden lo aplica `cargar_dw.py` (ensure + recreación parcial + vistas).
+En corridas normales el orden lo aplica `cargar_dw.py`: **wipe** `MI_*`/`VW_*` → DDL `01`–`04` + vistas `06` → INSERT → enrich `07`.
 
 ## Notas de compatibilidad
 
@@ -40,4 +40,6 @@ En corridas normales el orden lo aplica `cargar_dw.py` (ensure + recreación par
 @04_indicadores.sql
 @05_comentarios.sql
 @06_vistas.sql
+-- Tras cargar evidencia (Python):
+@07_enrich_sheets_sisud.sql
 ```

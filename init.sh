@@ -76,12 +76,11 @@ else
   warn "hop-run no encontrado ($HOP_RUN); STG ODs Sheets puede quedar vacío"
 fi
 
-step "Staging Oracle / MySQL (Hop directo)"
+step "Staging Oracle SISUD (Hop directo)"
 if [ -x "$HOP_RUN" ]; then
   "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_oracle.hpl" -r local
-  "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_mysql.hpl" -r local
 else
-  fail "hop-run no encontrado ($HOP_RUN); requerido para staging Oracle/MySQL"
+  fail "hop-run no encontrado ($HOP_RUN); requerido para staging Oracle"
 fi
 
 step "Python main (logica Fases 2-7 + carga DW)"
@@ -94,7 +93,9 @@ set -e
 step "Comprobando salidas mínimas en log"
 grep -q "Salida PROF_" "$LOG" || fail "no hay salida PROF_* en el log"
 grep -q "Salida MI_DIM_" "$LOG" || fail "no hay salida MI_DIM_* en el log"
-grep -q "Salida MI_FACT_MULTA_COERCITIVA" "$LOG" || fail "no hay salida MI_FACT_MULTA_COERCITIVA en el log"
+grep -q "Salida MI_FACT_MC_CSEP" "$LOG" || fail "no hay salida MI_FACT_MC_CSEP en el log"
+grep -q "Salida MI_FACT_MC_OD" "$LOG" || fail "no hay salida MI_FACT_MC_OD en el log"
+grep -q "Salida MI_FACT_MC_SISUD" "$LOG" || fail "no hay salida MI_FACT_MC_SISUD en el log"
 grep -q "Salida MI_INDICADOR_RESULTADO" "$LOG" || fail "no hay MI_INDICADOR_RESULTADO en el log"
 if grep -q "Salida DF_INFORMES" "$LOG"; then
   fail "log contiene DF_INFORMES (F3 fuera de alcance)"
@@ -191,26 +192,49 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
         print("ID_TIEMPO_FIRMA: presente")
         cur.execute(
             """
-            SELECT fu.CODIGO, COUNT(*)
-            FROM APP.MI_FACT_MULTA_COERCITIVA f
-            JOIN APP.MI_DIM_FUENTE_REGISTRO fu ON fu.ID_FUENTE = f.ID_FUENTE
-            GROUP BY fu.CODIGO
+            SELECT 'CSEP' AS U, COUNT(*) FROM APP.MI_FACT_MC_CSEP
+            UNION ALL
+            SELECT 'OD', COUNT(*) FROM APP.MI_FACT_MC_OD
+            UNION ALL
+            SELECT 'SISUD', COUNT(*) FROM APP.MI_FACT_MC_SISUD
+            UNION ALL
+            SELECT 'ENRIQUECIDA', COUNT(*) FROM APP.MI_FACT_MULTA_COERCITIVA
             """
         )
-        by_src = {r[0]: int(r[1]) for r in cur.fetchall()}
-        print(f"Conteos por fuente: {by_src}")
-        # Bandas orientativas (corrida local típica); aviso si caen de golpe
-        expected_min = {"CAGR": 200, "OD_SHEETS": 50, "SISUD_VW": 50}
+        by_tbl = {r[0]: int(r[1]) for r in cur.fetchall()}
+        print(f"Conteos evidencia+enriquecida: {by_tbl}")
+        expected_min = {"CSEP": 200, "OD": 50, "SISUD": 50}
         for cod, mn in expected_min.items():
-            n = by_src.get(cod, 0)
+            n = by_tbl.get(cod, 0)
             if n < mn:
                 sys.exit(f"conteo {cod}={n} bajo mínimo esperado {mn} (posible fallo de staging)")
+        n_enriq = by_tbl.get("ENRIQUECIDA", 0)
+        n_sheets = by_tbl.get("CSEP", 0) + by_tbl.get("OD", 0)
+        if n_enriq != n_sheets:
+            sys.exit(f"enriquecida={n_enriq} debe igualar CSEP+OD={n_sheets}")
+        # Caso negocio: resolución 0153 + 64 UIT → 2 filas con CUM/CAM si hay match SISUD
+        cur.execute(
+            """
+            SELECT COUNT(*),
+                   SUM(CASE WHEN CUM IS NOT NULL AND CAM IS NOT NULL THEN 1 ELSE 0 END)
+            FROM APP.MI_FACT_MULTA_COERCITIVA
+            WHERE REGEXP_REPLACE(UPPER(REPLACE(TRIM(N_RES_MC), ' ', '')), '^0+([0-9]+)', '\\1')
+                  LIKE '153-2026-OEFA/DSEM'
+              AND MONTO_UIT = 64
+            """
+        )
+        n0153, n_con_cum = cur.fetchone()
+        n0153 = int(n0153 or 0)
+        n_con_cum = int(n_con_cum or 0)
+        print(f"Caso 0153/64: {n0153} filas enriquecida, {n_con_cum} con CUM+CAM")
+        if n0153 < 2:
+            sys.exit(f"caso 0153/64: esperado >=2 filas enriquecida, hay {n0153}")
         cur.execute("SELECT COUNT(*) FROM APP.MI_DIM_ORGANO_UNIDAD")
         n_org, = cur.fetchone()
         if n_org > 20:
             sys.exit(f"MI_DIM_ORGANO_UNIDAD={n_org} (esperado ~11 CSEP+ND)")
         print(f"MI_DIM_ORGANO_UNIDAD: {n_org}")
-        for v in ("VW_MC_CSEP", "VW_MC_OD", "VW_MC_SISUD", "VW_MC_GAPPS"):
+        for v in ("VW_MC_CSEP", "VW_MC_OD", "VW_MC_SISUD", "VW_MC_ENRIQUECIDA"):
             cur.execute(
                 "SELECT COUNT(*) FROM all_views WHERE owner='APP' AND view_name=:1",
                 [v],
@@ -228,6 +252,11 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
         print(f"MI_QA_AMARRE: {n_am} filas")
         if n_am < 1:
             sys.exit("MI_QA_AMARRE vacío (esperado resumen de puentes H9)")
+        cur.execute(
+            "SELECT COUNT(*) FROM APP.MI_QA_AMARRE WHERE PUENTE = 'RES_MONTO_Sheets_vs_SISUD'"
+        )
+        if not cur.fetchone()[0]:
+            sys.exit("falta puente RES_MONTO_Sheets_vs_SISUD en MI_QA_AMARRE")
 PY
 
 echo ""

@@ -16,7 +16,11 @@ cd ~/workspace/mi_etl/
 # ver archetype/README.md → venv, hop-conf, ./init.sh
 ```
 
-Este repo (`etl_phyton_cursor`) **extiende** ese arquetipo con lógica OEFA (Fases 2–7, DW Oracle).
+Este repo (`datawarehouse_multa_etl`) **extiende** ese arquetipo con lógica OEFA (Fases 2–7, DW Oracle):
+
+- Fuentes: **F1** Sheets OD, **F2** Sheets CSEP, **F5** SISUD (sin F3/F4 en ingestión).
+- Oracle: 3 facts evidencia + enrich `07` → `MI_FACT_MULTA_COERCITIVA` / `VW_MC_ENRIQUECIDA`.
+- Guía: [`docs/adjuntos/guia-leer-modelo-dimensional.md`](docs/adjuntos/guia-leer-modelo-dimensional.md).
 
 ## Uso (desde arquetipo histórico)
 
@@ -33,10 +37,10 @@ Este repo (`etl_phyton_cursor`) **extiende** ese arquetipo con lógica OEFA (Fas
 
 3. **Completar variables** con `./switch-env.sh local|remote` (lee `environments/local.json` o `remote.json` y regenera `project-config.json`):
    - `DB_H2_*` ya vienen listas (in-memory `mem:csep`).
-   - Oracle, MySQL y DW requieren credenciales reales en el entorno elegido.
-   - `DB_ORA_SISUD_*` → **Oracle oefabd** (SISUD, fuente).
-   - `DB_ORA_REPO_*` → **Oracle BD_CURSOR** (destino).
-   - `DB_MYSQL_*` → MySQL gapps.
+   - Oracle y DW requieren credenciales reales en el entorno elegido.
+   - `DB_ORA_SISUD_*` → **Oracle** (SISUD, fuente).
+   - `DB_ORA_DW_*` → **Oracle DW** (destino dimensional).
+   - Este ETL **no usa MySQL**.
 4. **Escribir el DDL propio** en `h2/sql/01_schema.sql` (la tabla demo `DEMO_TABLA_EJEMPLO` es solo un smoke test).
 5. **Poner la lógica**: en `pipelines/` y `workflows/` (partiendo de `wf_main.hwf` / `pl_demo.hpl`), o pegando un `.py` en `logica/` (zona de pegado aislada, fuera de `python/`; ver `python/plantilla_logica.py` y `python/CONTRATO.md`).
 
@@ -45,7 +49,7 @@ Este repo (`etl_phyton_cursor`) **extiende** ese arquetipo con lógica OEFA (Fas
 - Dos capas: `python/create_stg.py` + `introspect/` (DDL STG, sin filas) y `python/main.py` + `io/` + `logica/` en la raíz (post-staging). Mapa: `python/LEEME.md`.
 - Para un ETL nuevo: copiar `python/plantilla_logica.py` → `logica/<tu_logica>.py` (**un solo `.py`**), escribir la transformación con los DataFrames de entrada (nombres = claves de `LECTURAS` en `python/io/leer_h2.py`) y dejar el DataFrame `RESULTADO`. `main.py` lo auto-descubre y lo ejecuta.
 - **Prerequisitos**: Java en PATH (H2), venv con `pip install -r python/requirements.txt` (incluye pandas y openpyxl). No se usa R ni `ojdbc11.jar`.
-- **Smoke**: `./init.sh` exige credenciales reales y staging Hop Oracle/MySQL; falla si la conexión no responde.
+- **Smoke**: `./init.sh` exige credenciales reales y staging Hop Oracle/Sheets; falla si la conexión no responde.
 
 ## Plataforma
 

@@ -1,4 +1,4 @@
-"""Fase 2 — diccionario de datos (STG DIC_* + fallback catálogo institucional H6)."""
+"""Fase 2 — diccionario de datos (STG DIC_* + catálogo institucional)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from pathlib import Path
 import pandas as pd
 
 from .catalogos import CATALOGO_CAMPOS
-from .constantes import EXCEL_CAGR, ID_CARGA
+from .constantes import ID_CARGA
 
 
 def _desde_stg_dic_tablas(df: pd.DataFrame) -> list[dict]:
@@ -66,25 +66,6 @@ def _desde_stg_dic_variables(df: pd.DataFrame) -> list[dict]:
     return rows
 
 
-def _desde_excel(root: Path) -> list[dict]:
-    path = root / EXCEL_CAGR
-    if not path.is_file():
-        return []
-    rows: list[dict] = []
-    try:
-        for sheet, header in (("DIC_TABLAS", 0), ("DIC_VARIABLES", 0)):
-            df = pd.read_excel(path, sheet_name=sheet, header=header, dtype=str)
-            if sheet == "DIC_TABLAS":
-                rows.extend(_desde_stg_dic_tablas(df))
-            else:
-                rows.extend(_desde_stg_dic_variables(df))
-    except Exception:
-        return []
-    for r in rows:
-        r["ORIGEN"] = f"EXCEL_{r.get('ORIGEN', 'DIC')}"
-    return rows
-
-
 def _desde_catalogo_estatico() -> list[dict]:
     return [
         {
@@ -126,14 +107,11 @@ def _campos_observados_stg(tablas: dict[str, pd.DataFrame]) -> list[dict]:
 def armar_diccionario(
     tablas: dict[str, pd.DataFrame], root: Path | None = None
 ) -> pd.DataFrame:
-    """Reconstruye diccionario: STG DIC → Excel → catálogo estático + campos STG vivos."""
+    """Reconstruye diccionario: STG DIC_* → catálogo estático + campos STG vivos."""
+    del root  # API estable; ya no hay fallback Excel
     filas: list[dict] = []
     filas.extend(_desde_stg_dic_tablas(tablas.get("DIC_TABLAS", pd.DataFrame())))
     filas.extend(_desde_stg_dic_variables(tablas.get("DIC_VARIABLES", pd.DataFrame())))
-
-    if not filas and root is not None:
-        filas.extend(_desde_excel(root))
-
     filas.extend(_desde_catalogo_estatico())
     filas.extend(_campos_observados_stg(tablas))
 

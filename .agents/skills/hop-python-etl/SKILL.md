@@ -12,13 +12,14 @@ description: >-
 ## Arquitectura (no mezclar capas)
 
 ```
-Fuentes (Sheets / Excel / Oracle / MySQL)
+Fuentes este proyecto: Sheets F1/F2 + Oracle SISUD F5
+  (F4 MySQL fuera de ingestión; arquetipo genérico puede declarar MySQL en otros repos)
   → inputs.yaml          (declara STG_*)
   → Python create_stg    (DDL H2; no extrae filas)
   → Hop extract          (TableInput → TableOutput H2, truncate)
   → H2 mem:csep          (landing efímero, reset cada corrida)
-  → Python logica/       (reglas, modelo, KPIs)
-  → Destino              (Oracle DW, MySQL, Excel)
+  → Python logica/       (reglas, 3 facts evidencia, KPIs)
+  → Destino              (Oracle DW + enrich 07)
 ```
 
 | Capa | Hace | No hace |
@@ -34,7 +35,7 @@ Fuentes (Sheets / Excel / Oracle / MySQL)
 ## Cuándo Hop solo vs Python
 
 - **Hop solo:** 1 fuente → 1 destino, mapeo 1:1.
-- **Python:** UNION multi-fuente, homologación, calidad, dimensional, indicadores.
+- **Python:** homologación, calidad, dimensional (3 facts evidencia), indicadores; enrich Sheet←SISUD en Oracle.
 
 Un solo `.py` en `logica/` (auto-descubierto por `python/main.py`). Entrada = claves de `LECTURAS` en `python/io/leer_h2.py`. Salida = DataFrames nombrados + `RESULTADO`.
 
@@ -68,8 +69,8 @@ Verificación = log de Hop + conteos en stdout Python. No hay suite de tests.
 Fuente única: `project-config.json` → `config.variables`. Entorno: `./switch-env.sh local|remote`.
 
 - `DB_H2_*` — staging TCP `localhost:9092/mem:csep`
-- `DB_ORA_SISUD_*` / `DB_MYSQL_*` — fuentes
-- `DB_ORA_DW_*` — destino dimensional (Oracle BD_CURSOR)
+- `DB_ORA_SISUD_*` — fuente SISUD
+- `DB_ORA_DW_*` — destino dimensional (Oracle)
 
 `${VAR}` literal en log = variable no definida o proyecto Hop equivocado.
 
@@ -84,7 +85,7 @@ Fuente única: `project-config.json` → `config.variables`. Entorno: `./switch-
 | `import io` falla | colisión con stdlib; cargar módulos por ruta en `main.py` |
 | `#N/A` tumba pipeline | Sheets/Excel → VARCHAR en STG |
 | Hop sobrescribe variables | `hop-conf.sh --project-create` sin `--project-keep-config-file` |
-| Hop staging Oracle/MySQL falla | Credenciales en `environments/*.json`; `./switch-env.sh local|remote`; `HOP_PROJECT` = basename del repo |
+| Hop staging Oracle falla | Credenciales en `environments/*.json`; `./switch-env.sh local|remote`; `HOP_PROJECT` = basename del repo |
 
 ## Skills relacionadas
 

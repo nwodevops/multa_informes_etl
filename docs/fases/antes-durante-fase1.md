@@ -1,10 +1,12 @@
 # Antes → durante → fase 1
 
-> **Nota:** este documento conserva cifras históricas de una corrida con F3. El DW vigente es **solo Multas**; F3 ya no se extrae.
+> **Banner — no vigente para el diseño actual:** este documento describe la **fase 1 medallion** histórica (`INT_*` / `QA_*`, F3 informes, MySQL GAPP en pipeline).  
+> **ETL actual:** F1+F2+F5 → 3 facts evidencia → enrich 07 → `MI_FACT_MULTA_COERCITIVA`. **F3 OUT. F4 MySQL fuera de ingestión.**  
+> Ver: [`adjuntos/guia-leer-modelo-dimensional.md`](adjuntos/guia-leer-modelo-dimensional.md) · [`lineamientos/extra/manual-como-se-arma-el-fact.md`](lineamientos/extra/manual-como-se-arma-el-fact.md) · [`fase1-3/status.md`](fase1-3/status.md).
 
-Dónde viven los datos en cada momento de una corrida de `wf_main`, y **en qué se diferencian**.
+Dónde vivían los datos en cada momento de una corrida de `wf_main` **en aquel diseño**, y **en qué se diferencian**.
 
-Nombres: [`../glosario.md`](../glosario.md). Vista general: [`../vista-general.md`](../vista-general.md). Status: [`status.md`](status.md).
+Nombres: [`glosario.md`](glosario.md). Qué hacía la fase 1: [`fase-1-vista.md`](fase-1-vista.md).
 
 Hay **tres momentos**, no tres copias idénticas de la misma base.
 

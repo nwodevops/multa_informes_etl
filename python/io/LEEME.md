@@ -1,14 +1,10 @@
-# python/io/ — I/O post-staging
+# python/io/ — I/O de la capa post-staging
 
-Hop ya cargó `STG_*`. Aquí solo lectura H2 y carga Oracle DW.
+Hop ya cargó `STG_*`. Aquí solo se lee H2 y se escribe el destino.
 
-| Archivo | Rol |
-|---|---|
-| `leer_h2.py` | ENTRADA: `LECTURAS` → DataFrames para `logica/` |
-| `cargar_dw.py` | SALIDA: DDL formal + TRUNCATE+INSERT `MI_*` → Oracle (`DB_ORA_DW_*`) |
+- `leer_h2.py` — `LECTURAS` (contrato de entrada de `logica/` en la raíz)
+- `cargar_dw.py` — wipe + DDL canónico + INSERT Oracle DW (`MI_*` / vistas `VW_MC_*`)
 
-No crear `STG_*`. No introspectar fuentes. Eso es `python/introspect/` vía `create_stg.py`.
+No crear `STG_*`. No introspectar Oracle/Excel/Sheets. Eso es `python/introspect/` vía `create_stg.py`.
 
-No `import io` (choca con stdlib). `main.py` carga estos módulos por ruta.
-
-Escritores legacy (`escribir_excel` / `escribir_mysql` / `escribir_oracle` / `escribir_dw` VARCHAR) **eliminados** — no los usa este proyecto.
+No importar este paquete como `import io`: choca con la stdlib. `main.py` carga estos módulos por ruta.

@@ -6,14 +6,15 @@
 |---|---|
 | ID | `fase-remote-deploy` |
 | Status | `in_progress` |
-| Criterio | `init.bat` o `wf_main_win.hwf` → Success + DW (OK) K1–K5 |
+| Criterio | `init.bat` o `wf_main_win.hwf` → Success + DW POST-CARGA 990/281/534/1271 + K1–K5 |
 
-> Merge `linux` → `windows`: F1/F2 Google Sheets, `MI_DIM_OD`/`MI_DIM_ORGANO_UNIDAD`, vistas `VW_MC_*`, amarre H9 detalle, linaje solo `ID_FUENTE`. Lote puntos 2–7 cerrado en linux (`progress/impl_mejoras-kimball-2-7.md`).
+> Merge `linux` → `windows` (`a960432`): facts evidencia + enrich 07 + carga canónica wipe `MI_*`/`VW_*`. Validado en linux. Attrs operativos Sheet (JEFE/UF/…) incluidos.
 
 ## Plan
 
 1. En PC Win: `git pull` → `.\switch-env.ps1 remote` → `wf_main_win` / `init.bat` (requiere `client_secret.json` para Sheets).
-2. Si OK → `fase-remote-deploy` = done.
+2. Confirmar POST-CARGA: CSEP 990, OD 281, SISUD 534, enriquecida 1271.
+3. Si OK → `fase-remote-deploy` = done; `fact-attrs-operativos-sheet` = done.
 
 ## Comandos Win
 

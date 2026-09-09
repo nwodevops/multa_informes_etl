@@ -1,53 +1,53 @@
 # Glosario
 
-Nombres cortos que usa este ETL. Dónde vive cada dato (antes / H2 / Oracle): [`fases/antes-durante-fase1.md`](fases/antes-durante-fase1.md). Status fases: [`fases/status.md`](fases/status.md). Vista general: [`vista-general.md`](vista-general.md). Kimball: [`modelo-kimball.md`](modelo-kimball.md).
+Nombres cortos que usa este ETL. Diseño vigente: [`adjuntos/guia-leer-modelo-dimensional.md`](adjuntos/guia-leer-modelo-dimensional.md) · Manual fact: [`lineamientos/extra/manual-como-se-arma-el-fact.md`](lineamientos/extra/manual-como-se-arma-el-fact.md).  
+Nota histórica (fase 1 medallion): [`antes-durante-fase1.md`](antes-durante-fase1.md).
 
-El `_` al final (`STG_`, `INT_`) significa “todas las tablas de esa capa”.
+El `_` al final (`STG_`, `MI_`) significa “todas las tablas de esa capa”.
 
-## Capas (prefijos)
-
-| Término | Qué es, en una frase |
-|---|---|
-| **STG_** | Staging en H2: copia 1:1 de cada fuente. Sin UNION, sin `ID_CORRIDA`, sin QA. |
-| **INT_** | Intermediate en Oracle `APP`: consolidado **sin filtrar**, con `ID_CORRIDA` y `FUENTE`. |
-| **QA_** | Control en Oracle `APP` (no hay QA en H2): conteos y hallazgos, no datos de negocio. |
-| **FCT_** | Fact: hecho depurado y tipado. **Fase 2**, aún no existe. |
-| **VW_** | Vista publicada (solo filas válidas). **Fase 2**. |
-| **IND_** | Indicadores agregados. **Fase 2–3**. |
-
-```mermaid
-flowchart LR
-  STG["STG_ copia"]
-  INT["INT_ consolida"]
-  FCT["FCT_ depura"]
-  VW["VW_ publica"]
-  STG --> INT --> FCT --> VW
-```
-
-## Tablas de control
+## Capas (prefijos vigentes)
 
 | Término | Qué es, en una frase |
 |---|---|
-| **QA_CORRIDA** | Una fila por corrida, capa y fuente: cuántas filas, nulos, duplicados, OK/WARN. |
-| **QA_EXCEPCION** | Una fila por hallazgo (llave vacía, duplicado, fecha o monto ilegible). |
-| **ID_CORRIDA** | Identificador de esa ejecución (`YYYYMMDDHHMMSS`). Sirve para no mezclar corridas. |
-| **CHECK_STS** | Resultado del control: `OK` o `WARN`. Nunca tumba el pipeline. |
-| **FG_VALIDO** | Marca S/N en el hecho. **Fase 2**; en fase 1 no se usa. |
+| **STG_** | Staging en H2: copia 1:1 de cada fuente activa (F1/F2/F5). Sin UNION, sin QA. |
+| **MI_** | Modelo dimensional en Oracle BD_CURSOR (dims, hechos, DQ, indicadores). |
+| **MI_FACT_MC_*** | Facts de **evidencia** por universo: CSEP / OD / SISUD (lo que se descargó). |
+| **MI_FACT_MULTA_COERCITIVA** | Fact de negocio **enriquecido**: (CSEP∪OD) LEFT JOIN SISUD (SQL 07). |
+| **VW_MC_*** | Vistas de reporte: evidencia (`_CSEP`/`_OD`/`_SISUD`) y `VW_MC_ENRIQUECIDA`. |
+
+## Legado (fase 1 medallion — ya no es el entregable)
+
+| Término | Qué era |
+|---|---|
+| **INT_** / **QA_** / **FCT_** | Capas medallion antiguas; sustituidas por `MI_*` + cuarentena blanda. |
+
+## Tablas de control / calidad
+
+| Término | Qué es, en una frase |
+|---|---|
+| **MI_DQ_HALLAZGO** | Defectos R01–R05 (cuarentena blanda; filas no se eliminan). |
+| **MI_QA_AMARRE** (+ `_DETALLE`) | Amarre H9 entre fuentes; puente vigente `RES_MONTO_Sheets_vs_SISUD`. |
+| **FG_CONFORME** | Marca S/N de calidad en intermedios / hechos. |
+| **ID_CORRIDA** / **QA_CORRIDA** | Legado fase 1; el lineamiento usa `ID_CARGA` / tablas `MI_*`. |
 
 ## Dónde vive
 
 | Término | Qué es, en una frase |
 |---|---|
 | **H2** | Workbench de la corrida (puerto 9092): solo `STG_*`. No es el entregable. |
-| **BD_CURSOR** | Oracle destino (puerto 1524, `APP`): `INT_*` + `QA_*`. Ahí está la fase 1. |
-| **LECTURAS** | Nombres de los DataFrames que lee Python desde H2 (`GS1`, `ORA`, `MYSQL`…). |
-| **RESULTADO** | Portada del Excel: copia de `QA_CORRIDA`. |
+| **BD_CURSOR** | Oracle destino (`DB_ORA_DW_*`): `MI_*` + `VW_MC_*`. |
+| **LECTURAS** | DataFrames que lee Python desde H2 (`GS1`, `GS2`, `ORA`, `ETAPAS`…). |
+| **RESULTADO** | Resumen de corrida en memoria/log. |
 
 ## Fuentes (nombres cortos)
 
 | Término | Qué es, en una frase |
 |---|---|
-| **GS1 / GS2** | Hojas Excel CAGR y familia OD F1 (Lambayeque / Ica / Puno). |
-| **SISUD** | Oracle fuente de la vista de multas (`VW_MULTA_COERCITIVA`). |
-| **GAPP** | MySQL de multas coercitivas. |
-| **MC** | Multa coercitiva (en nombres tipo `INT_MC_EXCEL`). |
+| **F1 / GS2** | Sheets OD (oficinas desconcentradas) → `MI_FACT_MC_OD`. |
+| **F2 / GS1** | Sheets CSEP (+ etapas) → `MI_FACT_MC_CSEP`. |
+| **F5 / SISUD** | Vista Oracle `VW_MULTA_COERCITIVA` → `MI_FACT_MC_SISUD` (+ CUM/CAM en enrich). |
+| **F3** | Informes SISUD — **fuera de alcance**. |
+| **F4 / GAPP** | MySQL histórico — **fuera de ingestión** (semilla `GAPPS` en dim). |
+| **MC** | Multa coercitiva. |
+| **Evidencia** | Fact 1:1 por fuente, sin merge. |
+| **Enriquecida** | Negocio Sheet + CUM/CAM SISUD a la derecha. |
