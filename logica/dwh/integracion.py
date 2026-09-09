@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pandas as pd
 
-from .constantes import F1_OD_LECTURAS, FUENTE_REGISTRO, ID_CARGA
+from .constantes import FUENTE_REGISTRO, ID_CARGA
 from .homologacion import aplicar_homologacion
 
 COLS_MULTAS = [
@@ -174,21 +174,10 @@ def integrar(
     gs2: pd.DataFrame,
     etapas: pd.DataFrame,
     ora: pd.DataFrame,
-    gs2_ods: dict[str, pd.DataFrame] | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """Devuelve (df_csep, df_od, df_sisud, df_etapas). Sin enrich Sheets←SISUD."""
     df_csep = _integrar_gs1(gs1)
-
-    partes_od = [_integrar_gs2(gs2, None)]
-    for clave, df in (gs2_ods or {}).items():
-        if df is None or df.empty:
-            continue
-        cod = F1_OD_LECTURAS.get(clave)
-        if cod == "*":
-            cod = None
-        partes_od.append(_integrar_gs2(df, cod))
-    df_od = pd.concat(partes_od, ignore_index=True, sort=False)
-
+    df_od = _integrar_gs2(gs2, None)
     df_sisud = _integrar_ora(ora)
     df_etapas = _integrar_etapas(etapas)
     return df_csep, df_od, df_sisud, df_etapas

@@ -16,9 +16,8 @@ veces a propósito: DDL de staging y lógica de negocio son entry points distint
 ```mermaid
 flowchart TB
   subgraph fuentes [Fuentes]
-    GS["Google Sheets"]
-    ORA["Oracle SISUD"]
-    MY["MySQL"]
+    GS["Google Sheets F1/F2"]
+    ORA["Oracle SISUD F5"]
   end
 
   subgraph declaracion [Declaracion]
@@ -39,22 +38,20 @@ flowchart TB
   end
 
   subgraph logica [Logica de negocio]
-    PYL["python/main.py<br/>unico .py en logica/"]
+    PYL["python/main.py<br/>3 facts evidencia + dims/QA/K"]
   end
 
   subgraph destino [Destino]
-    OUT["Oracle APP@BD_CURSOR<br/>MI_* + VW_MC_*"]
+    OUT["Oracle APP@BD_CURSOR<br/>MI_FACT_MC_* + enrich 07 + VW_MC_*"]
   end
 
   GS --> YAML
   ORA --> YAML
-  MY --> YAML
   YAML --> PY
   PCFG --> PY
   PY -->|"crea tablas vacias"| H2
   GS --> HOP
   ORA --> HOP
-  MY --> HOP
   PCFG --> HOP
   HOP -->|"truncate + insert"| H2
   H2 --> PYL

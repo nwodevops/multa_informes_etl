@@ -4,9 +4,14 @@
 > entre "qué tablas construir" y "de dónde sale exactamente cada columna", para que la capa
 > lógica (Python) se pueda escribir sin ambigüedad.
 >
+> **Diseño vigente:** 3 facts de evidencia (`MI_FACT_MC_CSEP` / `_OD` / `_SISUD`) + enrich Oracle
+> (`07_enrich_sheets_sisud.sql` → `MI_FACT_MULTA_COERCITIVA`). Attrs operativos en hechos:
+> `JEFE`, `UF`, `N_PROY_MC`, `ETA_REG_PROY_MC`, `ETA_REG_MC`, `RESULT_PROY_MC`, `ESTADO_MC_TXT`, `ESTADO_PAGO_TXT`.
+> Manual: [`extra/manual-como-se-arma-el-fact.md`](extra/manual-como-se-arma-el-fact.md).
+>
 > Inventario de fuentes: [`extra/fuentes_datos/01-fuentes-de-datos.md`](extra/fuentes_datos/01-fuentes-de-datos.md).
 > Inputs runtime: [`docs/inputs/README.md`](../inputs/README.md) · catálogos F1/F2 JSON · `inputs.yaml`.
-> F3 (informes) está **fuera de alcance**.
+> F3 (informes) y F4 (MySQL) están **fuera de ingestión** (F4: semilla `GAPPS` en dim).
 
 ---
 
@@ -17,24 +22,23 @@
 | F1 | **31 Google Sheets** OD (`f1_ods_sheets.json`) | hoja `5) Multas Coercitivas` → `STG_GS2_OD_MULTAS` (+ `COD_OD`) | 32 |
 | F2 | **10 Google Sheets** CSEP (`f2_csep_sheets.json`) | hoja `1) Multas coercitivas` → `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | 48 (32 comunes F1 + 16 propias) |
 | F2-ET | Mismos sheets F2 | hoja `2) Etapas` → `STG_GS1_ETAPAS` | 12 |
-| F4 | MySQL gapps | **fuera de ingestión** (semilla histórica) | — |
+| F4 | MySQL gapps | **fuera de ingestión** (semilla histórica `GAPPS`) | — |
 | F5 | Oracle SISUD | `VW_MULTA_COERCITIVA` → `STG_ORA_*` | 13 |
 
 | `CODIGO` (`MI_DIM_FUENTE_REGISTRO`) | Significado |
 |---|---|
 | `OD_SHEETS` | Fila procedente de F1 (Sheets OD) |
 | `CAGR` | Fila procedente de F2 (Sheets CSEP; unidad en `COORD` / `COD_UNIDAD`) |
-| `GAPPS` | F4 MySQL |
-| `SISUD_VW` | F5 Oracle |
+| `GAPPS` | Semilla histórica F4 (no hay filas de evidencia MySQL) |
+| `SISUD_VW` | Fila procedente de F5 Oracle |
 
 Dimensión formal: `MI_DIM_FUENTE_REGISTRO` (`ID_FUENTE` en el hecho y en etapas). El VARCHAR degenerado `FUENTE_REGISTRO` **se eliminó** del hecho; usar `CODIGO` vía join o vistas `VW_MC_*`.
 
 > Excel OD / CAGR históricos viven en `input_excel/.../legacy/`. Solo el DIC (`DIC_TABLAS` / `DIC_VARIABLES`) se stagea aún desde el Excel CAGR legacy (`pl_stage_excel.hpl`).
 
-**Regla general de prioridad cuando dos fuentes traen el mismo dato:** se prioriza la fuente
-más confiable/reciente y se conserva el resto como respaldo con su `ID_FUENTE` visible;
-nunca se descarta el dato divergente, se registra como hallazgo de calidad (R… según regla
-aplicable, ver sección 4 de `PROPUESTA_ADAPTADA_ETL.md`).
+**Regla de negocio (Sheet←SISUD):** el enriquecido prioriza filas Sheet; CUM/CAM llegan por lookup.
+Divergencias se registran como hallazgo de calidad (R… según regla aplicable, ver sección 4 de
+`PROPUESTA_ADAPTADA_ETL.md`).
 
 ---
 

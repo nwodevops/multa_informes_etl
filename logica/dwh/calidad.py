@@ -20,7 +20,8 @@ REGLAS = {
 
 MAX_HALLAZGOS = 5000
 
-_FUENTES_SHEET = ("OD_SHEETS", "OD_EXCEL", "LAM_OD", "CAGR")
+_FUENTES_SHEET = ("OD_SHEETS", "CAGR")
+TABLA_DQ = "DF_MULTAS"
 
 
 def _hallazgo(
@@ -60,8 +61,6 @@ def _registro_id(row: pd.Series) -> str:
         return f"{cum or ''}|{cam or ''}"
     if not vacio(row.get("NUMERO_EXPEDIENTE")):
         return str(row.get("NUMERO_EXPEDIENTE"))
-    if not vacio(row.get("IDACTIVIDAD")):
-        return str(row.get("IDACTIVIDAD"))
     return ""
 
 
@@ -97,7 +96,7 @@ def _validar_multas(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
             _hallazgo(
                 regla,
                 str(row.get("FUENTE_ORIGEN", "")),
-                "MI_FACT_MULTA_COERCITIVA",
+                TABLA_DQ,
                 _registro_id(row),
                 campo,
                 valor,
@@ -200,7 +199,7 @@ def _amarre(
     df_multas: pd.DataFrame,
     df_sisud: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Resumen QA_AMARRE + detalle de claves sin match (MI_QA_AMARRE_DETALLE)."""
+    """Resumen MI_QA_AMARRE + detalle de claves sin match (MI_QA_AMARRE_DETALLE)."""
     puentes: list[tuple[str, pd.Series, pd.Series, str]] = []
     if not df_multas.empty:
         excel = df_multas[df_multas["FUENTE_ORIGEN"].isin(list(_FUENTES_SHEET))]
@@ -281,7 +280,7 @@ def aplicar_calidad(
     df_multas: pd.DataFrame,
     df_sisud: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Marca conformidad, arma MI_DQ_HALLAZGO, QA_AMARRE y detalle. No elimina filas."""
+    """Marca conformidad, arma MI_DQ_HALLAZGO, MI_QA_AMARRE y detalle. No elimina filas."""
     multas = df_multas.copy()
     hallazgos: list[dict] = []
 

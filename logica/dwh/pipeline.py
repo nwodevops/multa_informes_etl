@@ -22,10 +22,8 @@ def ejecutar(
     ora: pd.DataFrame,
     dic_tablas: pd.DataFrame | None = None,
     dic_variables: pd.DataFrame | None = None,
-    gs2_ods: dict[str, pd.DataFrame] | None = None,
     root: Path | None = None,
 ) -> dict[str, pd.DataFrame]:
-    extra_ods = gs2_ods or {}
     tablas = {
         "GS1": gs1,
         "GS2": gs2,
@@ -34,17 +32,16 @@ def ejecutar(
         "DIC_TABLAS": dic_tablas if dic_tablas is not None else pd.DataFrame(),
         "DIC_VARIABLES": dic_variables if dic_variables is not None else pd.DataFrame(),
     }
-    tablas.update(extra_ods)
 
     prof_resumen, prof_hallazgo = perfilar_todas(tablas)
     diccionario = armar_diccionario(tablas, root=root)
 
-    df_csep, df_od, df_sisud, df_etapas = integrar(gs1, gs2, etapas, ora, gs2_ods=extra_ods)
+    df_csep, df_od, df_sisud, df_etapas = integrar(gs1, gs2, etapas, ora)
     df_sheets = pd.concat([df_csep, df_od], ignore_index=True, sort=False)
     df_multas = pd.concat([df_sheets, df_sisud], ignore_index=True, sort=False)
 
+    # Calidad sobre df_multas (UNION auxiliar); facts evidencia se construyen sin FG_CONFORME.
     df_multas, dq_hallazgo, qa_amarre, qa_amarre_det = aplicar_calidad(df_multas, df_sisud)
-    # Conformidad también sobre los trozos por universo (misma lógica vía df_multas ya marcado)
     modelo = construir_modelo(df_csep, df_od, df_sisud, df_etapas)
 
     fact_evidencia = pd.concat(
@@ -102,7 +99,6 @@ def ejecutar(
         "DF_SISUD": df_sisud,
         "DF_ETAPAS": df_etapas,
         "MI_DQ_HALLAZGO": dq_hallazgo,
-        "QA_AMARRE": qa_amarre,
         "MI_QA_AMARRE": qa_amarre,
         "MI_QA_AMARRE_DETALLE": qa_amarre_det,
         "MI_INDICADOR_RESULTADO": indicadores,

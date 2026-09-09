@@ -37,8 +37,8 @@ Módulo: `logica/dwh/perfilamiento.py`, `logica/dwh/diccionario.py`.
 
 ## Fase 3 — Homologación e integración {#fase-3}
 
-- [ ] `DF_MULTAS`, `DF_ETAPAS` tipificados en memoria.
-- [ ] Columna `FUENTE_ORIGEN` en multas integradas.
+- [ ] Universos tipificados: CSEP / OD / SISUD (+ etapas) en memoria (`integracion.py`).
+- [ ] Columna `FUENTE_ORIGEN` en multas integradas; molde `COLS_MULTAS` (incluye attrs F2: `JEFE`, `UF`, …).
 - [ ] Cero errores de coerción no capturados en log.
 
 Módulos: `logica/dwh/homologacion.py`, `logica/dwh/integracion.py`.
@@ -49,7 +49,7 @@ Módulos: `logica/dwh/homologacion.py`, `logica/dwh/integracion.py`.
 
 - [ ] `FG_CONFORME` en dataframes; reglas R01–R05 aplicadas.
 - [ ] `MI_DQ_HALLAZGO` append (cuarentena blanda: no se eliminan filas).
-- [ ] `MI_QA_AMARRE` (resumen % puente H9) y `MI_QA_AMARRE_DETALLE` (claves `SOLO_IZQ`/`SOLO_DER` + motivo) cargados en Oracle.
+- [ ] `MI_QA_AMARRE` (resumen % puente H9) y `MI_QA_AMARRE_DETALLE` (claves `SOLO_IZQ`/`SOLO_DER` + motivo) cargados en Oracle; puente Sheets↔SISUD: `RES_MONTO_Sheets_vs_SISUD`.
 
 Módulo: `logica/dwh/calidad.py`. Skill: `.agents/skills/auditable-soft-quarantine/`.
 
@@ -57,19 +57,21 @@ Módulo: `logica/dwh/calidad.py`. Skill: `.agents/skills/auditable-soft-quaranti
 
 ## Fase 5 — Modelo dimensional {#fase-5}
 
-- [ ] Ocho `MI_DIM_*` (incluye `MI_DIM_OD`, `MI_DIM_FUENTE_REGISTRO`), `MI_FACT_MULTA_COERCITIVA`, `MI_DET_ETAPA_MC`.
-- [ ] Linaje por `ID_FUENTE` (sin VARCHAR `FUENTE_REGISTRO`); `ID_TIEMPO_FIRMA` poblado.
-- [ ] `MI_DIM_ORGANO_UNIDAD` solo CSEP+ND (~11); no hinchada con siglas de expediente.
-- [ ] Miembro `-1` en dimensiones; ningún hecho con FK huérfana sin `-1`.
+- [ ] Ocho `MI_DIM_*` (incluye `MI_DIM_OD`, `MI_DIM_FUENTE_REGISTRO`).
+- [ ] **Tres facts evidencia:** `MI_FACT_MC_CSEP`, `MI_FACT_MC_OD`, `MI_FACT_MC_SISUD` + `MI_DET_ETAPA_MC`.
+- [ ] `MI_FACT_MULTA_COERCITIVA` vacío en Python (lo llena Oracle SQL `07`).
+- [ ] Linaje por `ID_FUENTE`; `ID_TIEMPO_FIRMA` poblado; attrs operativos F2 en CSEP/enriquecida.
+- [ ] `MI_DIM_ORGANO_UNIDAD` solo CSEP+ND (~11); miembro `-1` en dims.
 
-Módulo: `logica/dwh/dimensional.py`.
+Módulo: `logica/dwh/dimensional.py`. Manual: `docs/lineamientos/extra/manual-como-se-arma-el-fact.md`.
 
 ---
 
 ## Fase 6 — Carga Oracle {#fase-6}
 
-- [ ] DDL formal aplicado (`docs/lineamientos/ddl/01`–`04` + vistas `06`).
-- [ ] Vistas legacy `VW_FCT_*` eliminadas si existían; vistas `VW_MC_*` presentes.
+- [ ] DDL formal aplicado (`docs/lineamientos/ddl/01`–`04` + vistas `06` + enrich `07`).
+- [ ] Vistas legacy `VW_FCT_*` eliminadas si existían; vistas `VW_MC_CSEP|OD|SISUD|ENRIQUECIDA` presentes.
+- [ ] Tras insert evidencia: `07_enrich_sheets_sisud.sql` → enriquecida COUNT = CSEP + OD.
 - [ ] Por cada tabla cargada: log `DW: <tabla>: N filas -> N en BD (OK)` (incluye `MI_QA_*`).
 - [ ] `COUNT(*)` Oracle = filas del DataFrame (excepto `MI_DQ_HALLAZGO`: `>=`).
 
@@ -101,4 +103,4 @@ ORDER BY 1, 2;
 
 - Corrida GUI completa de `wf_main.hwf` (Hop visual).
 
-Para smoke con datos reales: `./switch-env.sh local` y `./init.sh` (Oracle/MySQL/Hop obligatorios), o Play `wf_main.hwf` en Hop.
+Para smoke con datos reales: `./switch-env.sh local` y `./init.sh` (Oracle SISUD + Sheets + Hop obligatorios; **sin MySQL**), o Play `wf_main.hwf` en Hop.

@@ -16,7 +16,11 @@ cd ~/workspace/mi_etl/
 # ver archetype/README.md → venv, hop-conf, ./init.sh
 ```
 
-Este repo (`etl_phyton_cursor`) **extiende** ese arquetipo con lógica OEFA (Fases 2–7, DW Oracle).
+Este repo (`datawarehouse_multa_etl`) **extiende** ese arquetipo con lógica OEFA (Fases 2–7, DW Oracle):
+
+- Fuentes: **F1** Sheets OD, **F2** Sheets CSEP, **F5** SISUD (sin F3/F4 en ingestión).
+- Oracle: 3 facts evidencia + enrich `07` → `MI_FACT_MULTA_COERCITIVA` / `VW_MC_ENRIQUECIDA`.
+- Guía: [`docs/adjuntos/guia-leer-modelo-dimensional.md`](docs/adjuntos/guia-leer-modelo-dimensional.md).
 
 ## Uso (desde arquetipo histórico)
 

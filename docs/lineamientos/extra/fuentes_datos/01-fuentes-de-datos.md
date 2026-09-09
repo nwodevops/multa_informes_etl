@@ -1,4 +1,4 @@
-> **Alcance vigente del ETL:** el DW carga **solo Multas** (F1, F2, F4, F5). F3 (informes) es inventario histórico del diagnóstico; **no se extrae ni se modela**.
+> **Alcance vigente del ETL:** el DW carga Multas desde **F1 + F2 (+etapas) + F5**. **F3 OUT**. **F4 MySQL fuera de ingestión** (semilla histórica `GAPPS` en dim fuente). F3 (informes) es inventario histórico del diagnóstico; **no se extrae ni se modela**.
 >
 > **Inputs vigentes (runtime):** [`docs/inputs/README.md`](../../../inputs/README.md) · catálogos [`f1_ods_sheets.json`](../../../inputs/f1_ods_sheets.json) / [`f2_csep_sheets.json`](../../../inputs/f2_csep_sheets.json) · manifiesto [`inputs.yaml`](../../../../inputs.yaml).
 
@@ -6,7 +6,7 @@
 
 > **Proyecto:** Data Warehouse OEFA — Estrategias de promoción del cumplimiento
 > **Referencia:** TDR REQ N.° 3629-2026 · Área usuaria: CSEP — DPEF
-> **Contenido:** inventario campo por campo de las 5 fuentes, con tipos, descripciones,
+> **Contenido:** inventario campo por campo de las fuentes (F1/F2/F5 activas; F3/F4 históricas), con tipos, descripciones,
 > dominios observados y hallazgos de calidad **verificados sobre los archivos / sheets reales**.
 
 ---
@@ -18,14 +18,14 @@
 | **F1** | **31 Google Sheets** OD (catálogo `f1_ods_sheets.json`) | Google Sheets + SA | Multas coercitivas por oficina desconcentrada | `STG_GS2_OD_MULTAS` (+ `COD_OD`); hoja `5) Multas Coercitivas` (32 cols, header fila 3). Excel OD → `input_excel/medidas_administrativas/legacy/` |
 | **F2** | **10 Google Sheets** CSEP (catálogo `f2_csep_sheets.json`) | Google Sheets + SA | Multas + etapas por unidad/coordinación (CMIN…UFSAVC) | `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`); hoja `1) Multas coercitivas` (48 cols). Etapas → `STG_GS1_ETAPAS`. DIC → Excel legacy `input_excel/legacy/CAGR_…xlsx` |
 | **F3** | `CSEP_INFORMES_VIEW` | Oracle `SISUD` | Informes de supervisión | **Fuera de alcance** del ETL |
-| **F4** | `gappsdb.T_MVC_MULTACOERCITIVA_MC` | MySQL GAPP | Tabla transaccional MC | `STG_MYSQL_T_MVC_MULTACOERCITIVA` |
+| **F4** | `gappsdb.T_MVC_MULTACOERCITIVA_MC` | MySQL GAPP | Tabla transaccional MC | **Fuera de ingestión** (solo semilla `GAPPS` en dim) |
 | **F5** | `SISUD.VW_MULTA_COERCITIVA` | Oracle SISUD | Vista institucional MC | `STG_ORA_VW_MULTA_COERCITIVA` |
 
-> **Linaje en DW:** `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO.CODIGO` (F1=`OD_SHEETS`, F2=`CAGR`, F4=`GAPPS`, F5=`SISUD_VW`). El VARCHAR `FUENTE_REGISTRO` ya no existe en el hecho. Reportes: vistas `VW_MC_*`.  
+> **Linaje en DW:** `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO.CODIGO` (F1=`OD_SHEETS`, F2=`CAGR`, F5=`SISUD_VW`; `GAPPS` = semilla histórica F4). El VARCHAR `FUENTE_REGISTRO` ya no existe en el hecho. Reportes: vistas `VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA`.  
 > Unidad F2: `COORD` / `MI_DIM_ORGANO_UNIDAD.SIGLA` + `DESCRIPCION` desde catálogo (solo 10 CSEP + ND).  
 > **Auth Google:** `client_secret.json` (gitignored); cada spreadsheet compartido con el service account.
 
-> **Nota de volumen:** los conteos de muestra del TDR son históricos. En producción el volumen depende de los sheets vivos (p. ej. CMIN/CHID/CRES concentran la mayor parte de F2).
+> **Nota de volumen:** conteos de referencia actuales ≈ CSEP~990, OD~281, SISUD~534, enriquecido~1271 (varían con sheets vivos).
 
 ---
 
@@ -217,10 +217,10 @@ Nulos en la muestra; se conservan por trazabilidad del ciclo completo.
 
 ---
 
-## 5. F4 — SQL Server gappsdb · `T_MVC_MULTACOERCITIVA_MC`
+## 5. F4 — MySQL gappsdb · `T_MVC_MULTACOERCITIVA_MC` (**fuera de ingestión**)
 
-Tabla transaccional de la aplicación web de multas coercitivas. Fechas como cadena
-`YYYY-MM-DD [HH:MM:SS]`. Grano: **un registro de MC en la app** (con auditoría).
+Inventario histórico del diagnóstico. **No se stagea ni se carga** en el ETL vigente; solo permanece la semilla `GAPPS` en `MI_DIM_FUENTE_REGISTRO`. Fechas como cadena
+`YYYY-MM-DD [HH:MM:SS]`. Grano (histórico): **un registro de MC en la app** (con auditoría).
 
 | Campo | Tipo | Descripción | Observación real |
 |---|---|---|---|
@@ -268,21 +268,23 @@ resolución de MC** (un expediente puede repetirse con varias medidas y CUM).
 
 ## 7. Matriz de correspondencia entre fuentes
 
-| Concepto | F1 Sheets OD (31) | F2 Sheets CSEP (10) | F4 gappsdb | F5 Vista Oracle | F3 Informes | Modelo DWH |
+> F4 es **histórico** (fuera de ingestión). Lookup vigente: Sheet←SISUD por `norm(N_RES_MC)+MONTO_UIT`.
+
+| Concepto | F1 Sheets OD (31) | F2 Sheets CSEP (10) | F4 gappsdb (hist.) | F5 Vista Oracle | F3 Informes | Modelo DWH |
 |---|---|---|---|---|---|---|
 | Medida administrativa | `COD_MA` | `COD_MA`/`AUX_COD_MA` | — | (en `MEDIDA_ADMINISTRATIVA`) | — | `COD_MA` |
-| Código CUM | — | — | `TX_IDCUM` | `CUM` | — | `CUM` (normalizado, 11 díg.) |
-| Código CAM | — | — | `TX_IDCAM` | `CAM` | — | `CAM` (normalizado, 13 díg.) |
+| Código CUM | — | — | `TX_IDCUM` | `CUM` | — | `CUM` (desde SISUD en enrich) |
+| Código CAM | — | — | `TX_IDCAM` | `CAM` | — | `CAM` (desde SISUD en enrich) |
 | Expediente supervisión | `EXP_INF_INCUMP` | `EXP_INF_INCUMP` | — | `NUMERO_EXPEDIENTE` | `TXCUC` / `TXNUMEXP` | `NUMERO_EXPEDIENTE` |
-| Resolución MC | `N_RES_MC` | `N_RES_MC` | — | `RESOLUCION` | — | `N_RES_MC` |
-| Monto UIT | `MULTA_UIT` | `MULTA_UIT` | `NU_MONTOMCUIT` | `MONTO_MULTA` | — | `MONTO_UIT` |
+| Resolución MC | `N_RES_MC` | `N_RES_MC` | — | `RESOLUCION` | — | `N_RES_MC` (+ clave lookup) |
+| Monto UIT | `MULTA_UIT` | `MULTA_UIT` | `NU_MONTOMCUIT` | `MONTO_MULTA` | — | `MONTO_UIT` (+ clave lookup) |
 | Monto S/ | `MULTA_S` | `MULTA_S` | `NU_MONTOMCS` | — | — | `MONTO_S` + `MONTO_S_CALC` |
 | Estado multa | `ESTADO_MC` | `ESTADO_MC`/`AUX_EST_MC` | `FG_ESTADOMULTA` | `ESTADO_MULTA` | — | `ID_ESTADO_MULTA` |
 | Verificación post-MC | `F_VERIF_POST_MC`, `DOC_VERIF_MC` | idem | `FE_F_VERIF_POST_MC`, `TX_DOC_VERIF_MC` | — | — | `F_VERIF_POST_MC`, `DOC_VERIF_MC` |
 | SIGED | `SIGED` | `SIGED`, `EXP_SIGED_DOC` | `TX_EXP_SIGED_DOC` | `NUMERO_REGISTRO` | — | `SIGED` |
 | Proyecto / etapas | — | `COD_PROY_MC`, hoja `2) Etapas` | `TX_PASOACTUAL` | — | — | `MI_DET_ETAPA_MC` |
 | Territorio / unidad | `COD_OD` (inyectado) → `MI_DIM_OD` | `COORD` / `COD_UNIDAD` → `MI_DIM_ORGANO_UNIDAD` (+ `DESCRIPCION`) | — | — | — | dims órgano / OD |
-| Universo (`CODIGO`) | `OD_SHEETS` | `CAGR` | `GAPPS` | `SISUD_VW` | — | `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO` / `VW_MC_*` |
+| Universo (`CODIGO`) | `OD_SHEETS` | `CAGR` | `GAPPS` (semilla) | `SISUD_VW` | — | `ID_FUENTE` → dims / `VW_MC_*` |
 
 ---
 
@@ -290,15 +292,15 @@ resolución de MC** (un expediente puede repetirse con varias medidas y CUM).
 
 | # | Hallazgo | Evidencia verificada | Tratamiento |
 |---|---|---|---|
-| H1 | Nulos en campos clave y filas casi vacías | `ADMINISTRADO` nulo en 5/10 filas de F5; 2/4 filas de F4 solo con auditoría | Regla R01 + tabla de rechazos |
+| H1 | Nulos en campos clave y filas casi vacías | `ADMINISTRADO` nulo en muestra F5; (hist.) filas F4 casi vacías | Regla R01 + tabla de rechazos |
 | H2 | Formatos heterogéneos de CAM | `20250300003` (11) vs `2025020000005` (13) en F5 | Normalización documentada `AAAA+SS+7` (R03) |
 | H3 | Texto multilínea en `MEDIDA_ADMINISTRATIVA` | saltos de línea embebidos en F5 | Limpieza de caracteres de control en ODS |
-| H4 | Heterogeneidad de motores y fechas | Oracle `TIMESTAMP'...'` (F3) vs cadenas ISO (F4) | Parseo tipificado único a `DATE` |
+| H4 | Heterogeneidad de motores y fechas | Oracle vs Sheets (F4 hist. fuera) | Parseo tipificado único a `DATE` |
 | H5 | Lógica de negocio en fórmulas Excel | `WORKDAY.INTL`, `ArrayFormula`, `INDEX/MATCH` | Migración de reglas a la capa DWH documentada |
 | H6 | Catálogos / IMPORTRANGE históricos | Plantillas Excel con `#REF!` (no stageados) | UIT desde MEF; DIC desde Excel legacy |
-| H7 | Dos layouts de registro de MC | F1 (32 col OD) vs F2 (48 col CSEP) | Integración en `DF_MULTAS` con `FUENTE_ORIGEN` |
-| H8 | Estados como texto libre | `INCUMPLIDO` (F1/F2), `ACTIVO`/`INACTIVO` (F5), `1` (F4) | `MI_DIM_ESTADO` con homologación |
-| H9 | Claves de cruce sin correspondencia total | `CUM`/`CAM` (F4↔F5), `COD_MA` (F1↔F2) | `MI_QA_AMARRE` + `MI_QA_AMARRE_DETALLE` / K5 |
+| H7 | Dos layouts de registro de MC | F1 (32 col OD) vs F2 (48 col CSEP) | 3 facts evidencia + enrich; attrs F2 en hechos |
+| H8 | Estados como texto libre | `INCUMPLIDO` (F1/F2), `ACTIVO`/`INACTIVO` (F5) | `MI_DIM_ESTADO` con homologación |
+| H9 | Claves de cruce sin correspondencia total | Sheets↔SISUD por resolución+monto | `RES_MONTO_Sheets_vs_SISUD` → `MI_QA_AMARRE*` / K5 |
 
 ---
 

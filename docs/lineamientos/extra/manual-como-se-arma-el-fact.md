@@ -121,8 +121,9 @@ fact_sisud = _build_fact_multas(df_sisud, ...)
 
 `cargar_dw.py`:
 
-1. `TRUNCATE` + `INSERT` de dims y de los **3 facts evidencia**.  
-2. Ejecuta `_run_enrich_sheets_sisud()` → corre `07_enrich_sheets_sisud.sql`.
+1. Wipe `MI_*` / `VW_*` y recrea DDL `01`–`04` + vistas `06`.  
+2. `INSERT` de dims y de los **3 facts evidencia**.  
+3. Ejecuta `_run_enrich_sheets_sisud()` → corre `07_enrich_sheets_sisud.sql`.
 
 Ese SQL hace, en esencia:
 

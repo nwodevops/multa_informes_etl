@@ -1,4 +1,4 @@
-"""Fase 6–7 — carga TRUNCATE+INSERT del modelo dimensional e indicadores a Oracle BD_CURSOR."""
+"""Carga Oracle DW: wipe MI_*/VW_* → DDL canónico → INSERT → enrich 07."""
 
 from __future__ import annotations
 
@@ -11,22 +11,7 @@ from config import load_vars, project_root, require_live_conn
 
 ESQUEMA = "APP"
 DDL_DIR = "docs/lineamientos/ddl"
-VISTAS_LEGACY = (
-    "VW_FCT_INFORMES_VALIDADA",
-    "VW_FCT_MC_ETAPAS_VALIDADA",
-    "VW_FCT_MC_EXCEL_VALIDADA",
-    "VW_FCT_MC_GAPP_VALIDADA",
-    "VW_FCT_MC_SISUD_VALIDADA",
-    "VW_MC_GAPPS",  # F4 fuera de ingestión; dropear si quedó de corridas previas
-    "VW_MC_MAGGI",  # nombre temporal retirado → VW_MC_ENRIQUECIDA
-)
-# Se recrean al final de _prepare_schema; hay que dropearlas antes de ALTER COLUMN.
-VISTAS_MC = (
-    "VW_MC_CSEP",
-    "VW_MC_OD",
-    "VW_MC_SISUD",
-    "VW_MC_ENRIQUECIDA",
-)
+
 TABLAS_DIM = (
     "MI_DIM_TIEMPO",
     "MI_DIM_ADMINISTRADO",
@@ -44,7 +29,7 @@ TABLAS_EVIDENCIA = (
 )
 TABLAS_HECHOS = (
     *TABLAS_EVIDENCIA,
-    "MI_FACT_MULTA_COERCITIVA",  # enriquecido Sheets←SISUD (SQL 07)
+    "MI_FACT_MULTA_COERCITIVA",
     "MI_DET_ETAPA_MC",
 )
 TABLAS_QA = (
@@ -52,29 +37,15 @@ TABLAS_QA = (
     "MI_QA_AMARRE_DETALLE",
 )
 REQUIRED_CORE = (*TABLAS_DIM, *TABLAS_HECHOS, "MI_DQ_HALLAZGO", *TABLAS_QA)
-REQUIRED_TABLES = (*REQUIRED_CORE, "MI_INDICADOR_RESULTADO")
-# Tablas pre-rename (sin prefijo MI_). Sus constraints chocan con el DDL nuevo (ORA-02264).
-TABLAS_LEGACY = (
-    "INDICADOR_RESULTADO",
-    "DET_ETAPA_MC",
-    "FACT_MULTA_COERCITIVA",
-    "FACT_INFORME_SUPERVISION",
-    "DIM_TIEMPO",
-    "DIM_ADMINISTRADO",
-    "DIM_ORGANO_UNIDAD",
-    "DIM_MATERIA_SUBSECTOR",
-    "DIM_ESTADO",
-    "DIM_PARAMETRO_UIT",
-    "DQ_HALLAZGO",
-)
-TRUNCATE_ORDEN = (
+# Orden DROP/hijos primero (también usado si quedan MI_% sueltos).
+DROP_ORDEN = (
     "MI_INDICADOR_RESULTADO",
     "MI_DET_ETAPA_MC",
     "MI_FACT_MULTA_COERCITIVA",
     *TABLAS_EVIDENCIA,
-    *TABLAS_DIM,
-    "MI_DQ_HALLAZGO",
     *TABLAS_QA,
+    "MI_DQ_HALLAZGO",
+    *TABLAS_DIM,
 )
 INSERT_ORDEN = (
     *TABLAS_DIM,
@@ -83,7 +54,15 @@ INSERT_ORDEN = (
     "MI_DQ_HALLAZGO",
     *TABLAS_QA,
     "MI_INDICADOR_RESULTADO",
-    # MI_FACT_MULTA_COERCITIVA lo llena 07_enrich_sheets_sisud.sql (no INSERT desde Python)
+    # MI_FACT_MULTA_COERCITIVA lo llena 07_enrich_sheets_sisud.sql
+)
+IDENTITY_SKIP = frozenset(
+    {
+        "MI_DQ_HALLAZGO",
+        "MI_INDICADOR_RESULTADO",
+        "MI_QA_AMARRE",
+        "MI_QA_AMARRE_DETALLE",
+    }
 )
 
 
@@ -103,8 +82,19 @@ def _destino_label(cv: dict[str, str]) -> str:
     return f"{cv['username']}@{cv['host']}:{cv['port']}/{cv['database']} esquema {ESQUEMA}"
 
 
+def _table_exists(cur, tabla: str) -> bool:
+    cur.execute(
+        "SELECT COUNT(*) FROM user_tables WHERE table_name = :1",
+        [tabla.upper()],
+    )
+    return int(cur.fetchone()[0]) > 0
+
+
+def _model_complete(cur) -> bool:
+    return all(_table_exists(cur, t) for t in REQUIRED_CORE)
+
+
 def _verificar_post_carga(cur, counts: dict[str, int], cv: dict[str, str]) -> None:
-    """Log explícito para cruzar con el cliente SQL (evita falso 'tabla vacía')."""
     dest = _destino_label(cv)
     print(f"DW: destino {dest}")
     for tabla in (*TABLAS_EVIDENCIA, "MI_FACT_MULTA_COERCITIVA", "MI_INDICADOR_RESULTADO"):
@@ -152,7 +142,6 @@ def _split_sql(text: str) -> list[str]:
 
 
 def _user_tablespace(cur) -> str:
-    """Tablespace con cuota (APP local suele tener USERS, no SYSTEM)."""
     cur.execute(
         """
         SELECT tablespace_name FROM user_ts_quotas
@@ -186,21 +175,7 @@ def _run_ddl_file(cur, path: Path, tablespace: str | None = None) -> None:
             continue
         if tablespace:
             stmt = _inject_tablespace(stmt, tablespace)
-        try:
-            cur.execute(stmt)
-        except Exception as exc:
-            msg = str(exc)
-            if "ORA-00955" in msg or "ORA-01430" in msg or "ORA-02264" in msg:
-                continue
-            raise
-
-
-def _model_complete(cur) -> bool:
-    return all(_table_exists(cur, t) for t in REQUIRED_CORE)
-
-
-def _indicadores_ready(cur) -> bool:
-    return _table_exists(cur, "MI_INDICADOR_RESULTADO")
+        cur.execute(stmt)
 
 
 def _drop_table(cur, tabla: str) -> None:
@@ -210,441 +185,53 @@ def _drop_table(cur, tabla: str) -> None:
     print(f"DW: DROP TABLE {tabla}")
 
 
-def _drop_model_tables(cur) -> None:
-    for tabla in TRUNCATE_ORDEN:
+def _drop_model(cur) -> None:
+    """Borra vistas VW_MC_/VW_FCT_ y tablas MI_* del usuario actual."""
+    cur.execute(
+        """
+        SELECT view_name FROM user_views
+        WHERE view_name LIKE 'VW_MC_%' OR view_name LIKE 'VW_FCT_%'
+        ORDER BY view_name
+        """
+    )
+    for (nombre,) in cur.fetchall():
+        cur.execute(f"DROP VIEW {ESQUEMA}.{nombre}")
+        print(f"DW: DROP VIEW {nombre}")
+
+    cur.execute(
+        "SELECT table_name FROM user_tables WHERE table_name LIKE 'MI_%'"
+    )
+    existentes = {r[0] for r in cur.fetchall()}
+    for tabla in DROP_ORDEN:
+        if tabla in existentes:
+            _drop_table(cur, tabla)
+            existentes.discard(tabla)
+    for tabla in sorted(existentes):
         _drop_table(cur, tabla)
 
 
-def _drop_legacy_tables(cur) -> None:
-    """Elimina modelo sin prefijo MI_ (rename). Evita ORA-02264 por constraints reutilizados."""
-    dropped = False
-    for tabla in TABLAS_LEGACY:
-        if _table_exists(cur, tabla):
-            _drop_table(cur, tabla)
-            dropped = True
-    if dropped:
-        print("DW: tablas legacy (sin MI_) eliminadas")
-
-
-def _table_exists(cur, tabla: str) -> bool:
-    cur.execute(
-        "SELECT COUNT(*) FROM user_tables WHERE table_name = :1",
-        [tabla.upper()],
-    )
-    return int(cur.fetchone()[0]) > 0
-
-
-def _column_exists(cur, tabla: str, columna: str) -> bool:
-    cur.execute(
-        "SELECT COUNT(*) FROM user_tab_columns WHERE table_name = :1 AND column_name = :2",
-        [tabla.upper(), columna.upper()],
-    )
-    return int(cur.fetchone()[0]) > 0
-
-
-def _constraint_exists(cur, tabla: str, constraint: str) -> bool:
-    cur.execute(
-        "SELECT COUNT(*) FROM user_constraints WHERE table_name = :1 AND constraint_name = :2",
-        [tabla.upper(), constraint.upper()],
-    )
-    return int(cur.fetchone()[0]) > 0
-
-
-def _fk_on_column_exists(cur, tabla: str, columna: str) -> bool:
-    """True si ya hay una FK (tipo R) sobre esa columna (cualquier nombre de constraint)."""
-    cur.execute(
-        """
-        SELECT COUNT(*)
-        FROM user_constraints c
-        JOIN user_cons_columns cc
-          ON cc.constraint_name = c.constraint_name
-         AND cc.owner = c.owner
-        WHERE c.table_name = :1
-          AND cc.column_name = :2
-          AND c.constraint_type = 'R'
-        """,
-        [tabla.upper(), columna.upper()],
-    )
-    return int(cur.fetchone()[0]) > 0
-
-
-def _index_on_column_exists(cur, tabla: str, columna: str) -> bool:
-    cur.execute(
-        """
-        SELECT COUNT(*)
-        FROM user_ind_columns
-        WHERE table_name = :1 AND column_name = :2
-        """,
-        [tabla.upper(), columna.upper()],
-    )
-    return int(cur.fetchone()[0]) > 0
-
-
-def _index_exists(cur, index: str) -> bool:
-    cur.execute(
-        "SELECT COUNT(*) FROM user_indexes WHERE index_name = :1",
-        [index.upper()],
-    )
-    return int(cur.fetchone()[0]) > 0
-
-
-def _strip_informe_residuo(cur) -> None:
-    """Quita rastro F3 (informes) del DW: tabla, FK, índice y columna ID_INFORME."""
-    if _constraint_exists(cur, "MI_FACT_MULTA_COERCITIVA", "FK_MI_FMC_INFORME"):
-        cur.execute(f"ALTER TABLE {ESQUEMA}.MI_FACT_MULTA_COERCITIVA DROP CONSTRAINT FK_MI_FMC_INFORME")
-        print("DW: DROP CONSTRAINT FK_MI_FMC_INFORME")
-    _drop_table(cur, "MI_FACT_INFORME_SUPERVISION")
-    if _table_exists(cur, "MI_FACT_MULTA_COERCITIVA") and _column_exists(
-        cur, "MI_FACT_MULTA_COERCITIVA", "ID_INFORME"
-    ):
-        if _index_exists(cur, "IX_FMC_INFORME"):
-            cur.execute(f"DROP INDEX {ESQUEMA}.IX_FMC_INFORME")
-            print("DW: DROP INDEX IX_FMC_INFORME")
-        cur.execute(f"ALTER TABLE {ESQUEMA}.MI_FACT_MULTA_COERCITIVA DROP COLUMN ID_INFORME")
-        print("DW: DROP COLUMN MI_FACT_MULTA_COERCITIVA.ID_INFORME")
-
-
-def _ensure_dim_od(cur, tablespace: str | None = None) -> None:
-    """Crea MI_DIM_OD si el esquema ya existía sin esa dimensión."""
-    if _table_exists(cur, "MI_DIM_OD"):
-        return
-    stmt = """
-        CREATE TABLE MI_DIM_OD (
-            ID_OD                 NUMBER         GENERATED BY DEFAULT ON NULL AS IDENTITY
-                                                  (START WITH 1 INCREMENT BY 1),
-            COD_OD                VARCHAR2(30)   NOT NULL,
-            NOMBRE                VARCHAR2(100)  NOT NULL,
-            TIPO                  VARCHAR2(20)   NOT NULL,
-            ORDEN                 NUMBER(3),
-            FECHA_ACTUALIZACION   DATE           DEFAULT SYSDATE,
-            CONSTRAINT PK_MI_DIM_OD PRIMARY KEY (ID_OD),
-            CONSTRAINT UQ_MI_DIM_OD_COD UNIQUE (COD_OD),
-            CONSTRAINT CK_MI_DIM_OD_TIPO CHECK (TIPO IN ('OD','ODES','UNIDAD','NO ESPECIFICADO'))
-        )
-    """
-    if tablespace:
-        stmt = _inject_tablespace(stmt, tablespace)
-    cur.execute(stmt)
-    cur.execute(
-        """
-        INSERT INTO MI_DIM_OD (ID_OD, COD_OD, NOMBRE, TIPO, ORDEN)
-        VALUES (-1, 'ND', 'NO ESPECIFICADO', 'NO ESPECIFICADO', NULL)
-        """
-    )
-    print("DW: CREATE TABLE MI_DIM_OD")
-
-
-def _ensure_fact_id_od(cur) -> None:
-    """Añade ID_OD + FK al hecho si falta (esquema previo a familia OD)."""
-    if not _table_exists(cur, "MI_FACT_MULTA_COERCITIVA"):
-        return
-    if not _column_exists(cur, "MI_FACT_MULTA_COERCITIVA", "ID_OD"):
-        cur.execute(
-            f"ALTER TABLE {ESQUEMA}.MI_FACT_MULTA_COERCITIVA "
-            "ADD ID_OD NUMBER DEFAULT -1 NOT NULL"
-        )
-        print("DW: ADD COLUMN MI_FACT_MULTA_COERCITIVA.ID_OD")
-    if _table_exists(cur, "MI_DIM_OD") and not _fk_on_column_exists(
-        cur, "MI_FACT_MULTA_COERCITIVA", "ID_OD"
-    ):
-        cur.execute(
-            f"ALTER TABLE {ESQUEMA}.MI_FACT_MULTA_COERCITIVA "
-            f"ADD CONSTRAINT FK_MI_FMC_OD FOREIGN KEY (ID_OD) "
-            f"REFERENCES {ESQUEMA}.MI_DIM_OD (ID_OD)"
-        )
-        print("DW: ADD CONSTRAINT FK_MI_FMC_OD")
-    if not _index_on_column_exists(cur, "MI_FACT_MULTA_COERCITIVA", "ID_OD"):
-        cur.execute(f"CREATE INDEX {ESQUEMA}.IX_FMC_OD ON {ESQUEMA}.MI_FACT_MULTA_COERCITIVA (ID_OD)")
-        print("DW: CREATE INDEX IX_FMC_OD")
-
-
-def _ensure_fuente_ck_od_sheets(cur) -> None:
-    """Legacy no-op: FUENTE_REGISTRO VARCHAR eliminado; linaje vía ID_FUENTE."""
-    return
-
-
-def _ensure_drop_fuente_registro_varchar(cur) -> None:
-    """Quita columna degenerada FUENTE_REGISTRO si aún existe."""
-    for tabla, ck in (
-        ("MI_FACT_MULTA_COERCITIVA", "CK_MI_FMC_FUENTE"),
-        ("MI_DET_ETAPA_MC", None),
-    ):
-        if not _table_exists(cur, tabla):
-            continue
-        if ck and _constraint_exists(cur, tabla, ck):
-            try:
-                cur.execute(f"ALTER TABLE {ESQUEMA}.{tabla} DROP CONSTRAINT {ck}")
-                print(f"DW: DROP CONSTRAINT {ck}")
-            except Exception as exc:
-                print(f"AVISO: DROP CONSTRAINT {ck}: {exc}")
-        if _column_exists(cur, tabla, "FUENTE_REGISTRO"):
-            cur.execute(f"ALTER TABLE {ESQUEMA}.{tabla} DROP COLUMN FUENTE_REGISTRO")
-            print(f"DW: DROP COLUMN {tabla}.FUENTE_REGISTRO")
-
-
-def _ensure_fact_id_tiempo_firma(cur) -> None:
-    if not _table_exists(cur, "MI_FACT_MULTA_COERCITIVA"):
-        return
-    if not _column_exists(cur, "MI_FACT_MULTA_COERCITIVA", "ID_TIEMPO_FIRMA"):
-        cur.execute(
-            f"ALTER TABLE {ESQUEMA}.MI_FACT_MULTA_COERCITIVA "
-            "ADD ID_TIEMPO_FIRMA NUMBER DEFAULT -1 NOT NULL"
-        )
-        print("DW: ADD COLUMN MI_FACT_MULTA_COERCITIVA.ID_TIEMPO_FIRMA")
-    # DDL 02 usa FK_MI_FMC_TF; legacy usaba FK_MI_FMC_TIEMPO_FIRMA — no duplicar FK
-    if _table_exists(cur, "MI_DIM_TIEMPO") and not _fk_on_column_exists(
-        cur, "MI_FACT_MULTA_COERCITIVA", "ID_TIEMPO_FIRMA"
-    ):
-        cur.execute(
-            f"ALTER TABLE {ESQUEMA}.MI_FACT_MULTA_COERCITIVA "
-            f"ADD CONSTRAINT FK_MI_FMC_TIEMPO_FIRMA FOREIGN KEY (ID_TIEMPO_FIRMA) "
-            f"REFERENCES {ESQUEMA}.MI_DIM_TIEMPO (ID_TIEMPO)"
-        )
-        print("DW: ADD CONSTRAINT FK_MI_FMC_TIEMPO_FIRMA")
-    if not _index_on_column_exists(cur, "MI_FACT_MULTA_COERCITIVA", "ID_TIEMPO_FIRMA"):
-        cur.execute(
-            f"CREATE INDEX {ESQUEMA}.IX_FMC_TIEMPO_FIRMA "
-            f"ON {ESQUEMA}.MI_FACT_MULTA_COERCITIVA (ID_TIEMPO_FIRMA)"
-        )
-        print("DW: CREATE INDEX IX_FMC_TIEMPO_FIRMA")
-
-
-def _ensure_qa_amarre_tables(cur, tablespace: str | None = None) -> None:
-    if not _table_exists(cur, "MI_QA_AMARRE"):
-        stmt = """
-            CREATE TABLE MI_QA_AMARRE (
-                ID_AMARRE             NUMBER          GENERATED BY DEFAULT ON NULL AS IDENTITY
-                                                       (START WITH 1 INCREMENT BY 1),
-                ID_CARGA              VARCHAR2(50)    NOT NULL,
-                PUENTE                VARCHAR2(80)    NOT NULL,
-                N_IZQ                 NUMBER(12),
-                N_DER                 NUMBER(12),
-                N_MATCH               NUMBER(12),
-                PCT_MATCH_IZQ         NUMBER(8,2),
-                CONSTRAINT PK_MI_QA_AMARRE PRIMARY KEY (ID_AMARRE)
-            )
-        """
-        if tablespace:
-            stmt = _inject_tablespace(stmt, tablespace)
-        cur.execute(stmt)
-        print("DW: CREATE TABLE MI_QA_AMARRE")
-    if not _table_exists(cur, "MI_QA_AMARRE_DETALLE"):
-        stmt = """
-            CREATE TABLE MI_QA_AMARRE_DETALLE (
-                ID_DETALLE            NUMBER          GENERATED BY DEFAULT ON NULL AS IDENTITY
-                                                       (START WITH 1 INCREMENT BY 1),
-                ID_CARGA              VARCHAR2(50)    NOT NULL,
-                PUENTE                VARCHAR2(80)    NOT NULL,
-                LADO                  VARCHAR2(20)    NOT NULL,
-                CLAVE                 VARCHAR2(200)   NOT NULL,
-                MOTIVO                VARCHAR2(200),
-                CONSTRAINT PK_MI_QA_AMARRE_DET PRIMARY KEY (ID_DETALLE),
-                CONSTRAINT CK_MI_QA_AMARRE_LADO CHECK (LADO IN ('SOLO_IZQ','SOLO_DER'))
-            )
-        """
-        if tablespace:
-            stmt = _inject_tablespace(stmt, tablespace)
-        cur.execute(stmt)
-        print("DW: CREATE TABLE MI_QA_AMARRE_DETALLE")
-
-
-def _ensure_dim_organo_descripcion(cur) -> None:
-    """Añade DESCRIPCION a MI_DIM_ORGANO_UNIDAD si el esquema es anterior a F2 CSEP."""
-    if not _table_exists(cur, "MI_DIM_ORGANO_UNIDAD"):
-        return
-    if not _column_exists(cur, "MI_DIM_ORGANO_UNIDAD", "DESCRIPCION"):
-        cur.execute(
-            f"ALTER TABLE {ESQUEMA}.MI_DIM_ORGANO_UNIDAD "
-            "ADD DESCRIPCION VARCHAR2(200)"
-        )
-        print("DW: ADD COLUMN MI_DIM_ORGANO_UNIDAD.DESCRIPCION")
-
-
-# Atributos operativos Sheet (P0) — mismo shape en evidencia + enriquecida (UNION ALL 07).
-_FACT_ATTRS_OPERATIVOS: tuple[tuple[str, str], ...] = (
-    ("JEFE", "VARCHAR2(150)"),
-    ("UF", "VARCHAR2(200)"),
-    ("N_PROY_MC", "NUMBER(10)"),
-    ("ETA_REG_PROY_MC", "VARCHAR2(100)"),
-    ("ETA_REG_MC", "VARCHAR2(100)"),
-    ("RESULT_PROY_MC", "VARCHAR2(200)"),
-    ("ESTADO_MC_TXT", "VARCHAR2(100)"),
-    ("ESTADO_PAGO_TXT", "VARCHAR2(100)"),
-)
-_TABLAS_FACT_ATTRS = (
-    "MI_FACT_MC_CSEP",
-    "MI_FACT_MC_OD",
-    "MI_FACT_MC_SISUD",
-    "MI_FACT_MULTA_COERCITIVA",
-)
-
-
-def _ensure_fact_attrs_operativos(cur) -> None:
-    """Añade JEFE/UF/etapas/estados texto a facts si el esquema es anterior."""
-    for tabla in _TABLAS_FACT_ATTRS:
-        if not _table_exists(cur, tabla):
-            continue
-        for col, typ in _FACT_ATTRS_OPERATIVOS:
-            if _column_exists(cur, tabla, col):
-                continue
-            cur.execute(f"ALTER TABLE {ESQUEMA}.{tabla} ADD {col} {typ}")
-            print(f"DW: ADD COLUMN {tabla}.{col}")
-
-
-def _ensure_dim_fuente(cur, tablespace: str | None = None) -> None:
-    """Crea MI_DIM_FUENTE_REGISTRO si el esquema ya existía sin esa dimensión."""
-    if _table_exists(cur, "MI_DIM_FUENTE_REGISTRO"):
-        return
-    stmt = """
-        CREATE TABLE MI_DIM_FUENTE_REGISTRO (
-            ID_FUENTE             NUMBER         GENERATED BY DEFAULT ON NULL AS IDENTITY
-                                                  (START WITH 1 INCREMENT BY 1),
-            CODIGO                VARCHAR2(20)   NOT NULL,
-            NOMBRE                VARCHAR2(100)  NOT NULL,
-            FAMILIA_TDR           VARCHAR2(10),
-            DESCRIPCION           VARCHAR2(300),
-            FECHA_ACTUALIZACION   DATE           DEFAULT SYSDATE,
-            CONSTRAINT PK_MI_DIM_FUENTE PRIMARY KEY (ID_FUENTE),
-            CONSTRAINT UQ_MI_DIM_FUENTE_COD UNIQUE (CODIGO)
-        )
-    """
-    if tablespace:
-        stmt = _inject_tablespace(stmt, tablespace)
-    cur.execute(stmt)
-    seeds = (
-        (-1, "ND", "NO ESPECIFICADO", "ND", "NO ESPECIFICADO"),
-        (1, "OD_SHEETS", "Sheets OD", "F1", "31 Google Sheets OD → STG_GS2_OD_MULTAS"),
-        (2, "CAGR", "Sheets CSEP", "F2", "10 Google Sheets CSEP → STG_GS1_CSEP_MULTAS / ETAPAS"),
-        (3, "GAPPS", "MySQL GAPP (histórico)", "F4", "Fuera de ingestión; semilla conservada"),
-        (4, "SISUD_VW", "Oracle SISUD", "F5", "SISUD.VW_MULTA_COERCITIVA → STG_ORA_*"),
-        (5, "OD_EXCEL", "Excel OD (legacy)", "F1", "Alias histórico; el ETL normaliza a OD_SHEETS"),
-    )
-    for row in seeds:
-        cur.execute(
-            f"""
-            INSERT INTO {ESQUEMA}.MI_DIM_FUENTE_REGISTRO
-                (ID_FUENTE, CODIGO, NOMBRE, FAMILIA_TDR, DESCRIPCION)
-            VALUES (:1, :2, :3, :4, :5)
-            """,
-            row,
-        )
-    print("DW: CREATE TABLE MI_DIM_FUENTE_REGISTRO")
-
-
-def _ensure_fact_id_fuente(cur) -> None:
-    """Añade ID_FUENTE + FK al hecho y al detalle etapas si faltan."""
-    if _table_exists(cur, "MI_FACT_MULTA_COERCITIVA"):
-        if not _column_exists(cur, "MI_FACT_MULTA_COERCITIVA", "ID_FUENTE"):
-            cur.execute(
-                f"ALTER TABLE {ESQUEMA}.MI_FACT_MULTA_COERCITIVA "
-                "ADD ID_FUENTE NUMBER DEFAULT -1 NOT NULL"
-            )
-            print("DW: ADD COLUMN MI_FACT_MULTA_COERCITIVA.ID_FUENTE")
-        if _table_exists(cur, "MI_DIM_FUENTE_REGISTRO") and not _fk_on_column_exists(
-            cur, "MI_FACT_MULTA_COERCITIVA", "ID_FUENTE"
-        ):
-            cur.execute(
-                f"ALTER TABLE {ESQUEMA}.MI_FACT_MULTA_COERCITIVA "
-                f"ADD CONSTRAINT FK_MI_FMC_FUENTE FOREIGN KEY (ID_FUENTE) "
-                f"REFERENCES {ESQUEMA}.MI_DIM_FUENTE_REGISTRO (ID_FUENTE)"
-            )
-            print("DW: ADD CONSTRAINT FK_MI_FMC_FUENTE")
-        if not _index_on_column_exists(cur, "MI_FACT_MULTA_COERCITIVA", "ID_FUENTE"):
-            cur.execute(
-                f"CREATE INDEX {ESQUEMA}.IX_FMC_FUENTE "
-                f"ON {ESQUEMA}.MI_FACT_MULTA_COERCITIVA (ID_FUENTE)"
-            )
-            print("DW: CREATE INDEX IX_FMC_FUENTE")
-
-    if _table_exists(cur, "MI_DET_ETAPA_MC"):
-        if not _column_exists(cur, "MI_DET_ETAPA_MC", "ID_FUENTE"):
-            cur.execute(
-                f"ALTER TABLE {ESQUEMA}.MI_DET_ETAPA_MC "
-                "ADD ID_FUENTE NUMBER DEFAULT 2 NOT NULL"
-            )
-            print("DW: ADD COLUMN MI_DET_ETAPA_MC.ID_FUENTE")
-        if _table_exists(cur, "MI_DIM_FUENTE_REGISTRO") and not _fk_on_column_exists(
-            cur, "MI_DET_ETAPA_MC", "ID_FUENTE"
-        ):
-            cur.execute(
-                f"ALTER TABLE {ESQUEMA}.MI_DET_ETAPA_MC "
-                f"ADD CONSTRAINT FK_MI_DETAPA_FUENTE FOREIGN KEY (ID_FUENTE) "
-                f"REFERENCES {ESQUEMA}.MI_DIM_FUENTE_REGISTRO (ID_FUENTE)"
-            )
-            print("DW: ADD CONSTRAINT FK_MI_DETAPA_FUENTE")
-        if not _index_on_column_exists(cur, "MI_DET_ETAPA_MC", "ID_FUENTE"):
-            cur.execute(
-                f"CREATE INDEX {ESQUEMA}.IX_DETAPA_FUENTE "
-                f"ON {ESQUEMA}.MI_DET_ETAPA_MC (ID_FUENTE)"
-            )
-            print("DW: CREATE INDEX IX_DETAPA_FUENTE")
-
-
-def _drop_views(cur, nombres: tuple[str, ...]) -> None:
-    for v in nombres:
-        try:
-            cur.execute(f"DROP VIEW {ESQUEMA}.{v}")
-            print(f"DW: DROP VIEW {v}")
-        except Exception as exc:
-            if "ORA-00942" not in str(exc):
-                print(f"AVISO: DROP VIEW {v}: {exc}")
-
-
 def _prepare_schema(cur, root: Path) -> None:
-    # Vistas primero: SELECT * / dependencias bloquean DROP COLUMN FUENTE_REGISTRO.
-    _drop_views(cur, VISTAS_LEGACY + VISTAS_MC)
-
-    _strip_informe_residuo(cur)
-
+    """Wipe modelo → CREATE desde DDL 01–04 + vistas 06."""
     ddl_root = root / DDL_DIR
     ts = _user_tablespace(cur)
-    _ensure_dim_od(cur, ts)
-    _ensure_fact_id_od(cur)
-    _ensure_fuente_ck_od_sheets(cur)
-    _ensure_dim_organo_descripcion(cur)
-    _ensure_dim_fuente(cur, ts)
-    _ensure_fact_id_fuente(cur)
-    _ensure_drop_fuente_registro_varchar(cur)
-    _ensure_fact_id_tiempo_firma(cur)
-    _ensure_qa_amarre_tables(cur, ts)
-    _ensure_fact_attrs_operativos(cur)
-
-    if not _model_complete(cur) or not all(_table_exists(cur, t) for t in TABLAS_EVIDENCIA):
-        _drop_legacy_tables(cur)
-        if any(_table_exists(cur, t) for t in REQUIRED_CORE + TABLAS_EVIDENCIA):
-            print("DW: esquema incompleto / sin facts evidencia -> recrear modelo")
-            _drop_model_tables(cur)
-            for t in (*TABLAS_HECHOS, "MI_FACT_MULTA_COERCITIVA"):
-                _drop_table(cur, t)
-        print(f"DW: aplicando DDL formal (01, 02, 03, 04) en TABLESPACE {ts}...")
-        _run_ddl_file(cur, ddl_root / "01_dimensiones.sql", ts)
-        _run_ddl_file(cur, ddl_root / "02_hechos.sql", ts)
-        _run_ddl_file(cur, ddl_root / "03_bitacora.sql", ts)
-        _run_ddl_file(cur, ddl_root / "04_indicadores.sql", ts)
-        _ensure_drop_fuente_registro_varchar(cur)
-        _ensure_fact_id_tiempo_firma(cur)
-    elif _table_exists(cur, "MI_DQ_HALLAZGO") and not _column_exists(cur, "MI_DQ_HALLAZGO", "ID_HALLAZGO"):
-        print("DW: DROP MI_DQ_HALLAZGO (esquema legacy VARCHAR) -> recrear")
-        cur.execute(f"DROP TABLE {ESQUEMA}.MI_DQ_HALLAZGO PURGE")
-        _run_ddl_file(cur, ddl_root / "03_bitacora.sql", ts)
-        if not _indicadores_ready(cur):
-            _run_ddl_file(cur, ddl_root / "04_indicadores.sql", ts)
-    elif not _table_exists(cur, "MI_DQ_HALLAZGO"):
-        _run_ddl_file(cur, ddl_root / "03_bitacora.sql", ts)
-        if not _indicadores_ready(cur):
-            _run_ddl_file(cur, ddl_root / "04_indicadores.sql", ts)
-    elif not _indicadores_ready(cur):
-        print("DW: aplicando DDL indicadores (04)...")
-        _run_ddl_file(cur, ddl_root / "04_indicadores.sql", ts)
-
+    print(f"DW: wipe modelo MI_*/VW_* y recrear DDL (TABLESPACE {ts})...")
+    _drop_model(cur)
+    for name in (
+        "01_dimensiones.sql",
+        "02_hechos.sql",
+        "03_bitacora.sql",
+        "04_indicadores.sql",
+    ):
+        print(f"DW: aplicando {name}...")
+        _run_ddl_file(cur, ddl_root / name, ts)
     vistas = ddl_root / "06_vistas.sql"
-    if vistas.is_file() and all(_table_exists(cur, t) for t in TABLAS_EVIDENCIA):
+    if vistas.is_file():
         print("DW: aplicando vistas VW_MC_* (06)...")
         _run_ddl_file(cur, vistas)
 
 
 def _run_enrich_sheets_sisud(cur, root: Path) -> int:
-    """TRUNCATE+INSERT hecho enriquecido desde los 3 facts evidencia (07_enrich_sheets_sisud.sql)."""
+    """TRUNCATE+INSERT hecho enriquecido (07_enrich_sheets_sisud.sql)."""
     path = root / DDL_DIR / "07_enrich_sheets_sisud.sql"
     if not path.is_file():
         raise FileNotFoundError(path)
@@ -653,7 +240,6 @@ def _run_enrich_sheets_sisud(cur, root: Path) -> int:
     if not _table_exists(cur, "MI_FACT_MULTA_COERCITIVA"):
         raise RuntimeError("falta MI_FACT_MULTA_COERCITIVA")
     print("DW: aplicando enrich Sheets←SISUD (07)...")
-    # No usar _run_ddl_file: ese helper omite INSERT (semillas). Aquí el INSERT es el enrich.
     for stmt in _split_sql(path.read_text(encoding="utf-8")):
         u = stmt.upper().strip()
         if u.startswith("COMMIT") or not u:
@@ -665,9 +251,7 @@ def _run_enrich_sheets_sisud(cur, root: Path) -> int:
     return n
 
 
-
 def _apply_column_comments(cur, root: Path) -> None:
-    """COMMENT ON TABLE/COLUMN (05). Idempotente; aplica en APP o REPOCSEP según USER."""
     if not _model_complete(cur):
         return
     path = root / DDL_DIR / "05_comentarios.sql"
@@ -699,10 +283,6 @@ def _column_meta(cur, tabla: str) -> dict[str, tuple[str, int | None]]:
     return {r[0]: (r[1], int(r[2]) if r[2] is not None else None) for r in cur.fetchall()}
 
 
-def _table_columns(cur, tabla: str) -> list[str]:
-    return list(_column_meta(cur, tabla).keys())
-
-
 def _coerce_for_oracle(v, data_type: str, varchar_limit: int | None):
     if v is None:
         return None
@@ -714,7 +294,7 @@ def _coerce_for_oracle(v, data_type: str, varchar_limit: int | None):
     if isinstance(v, pd.Timestamp):
         v = v.to_pydatetime()
     if isinstance(v, datetime):
-        return v if data_type == "DATE" else v
+        return v
     if data_type == "VARCHAR2":
         if isinstance(v, (int, float)) and not isinstance(v, bool):
             if isinstance(v, float) and v == int(v):
@@ -754,10 +334,6 @@ def _coerce_for_oracle(v, data_type: str, varchar_limit: int | None):
     return v
 
 
-def _cell(v, data_type: str = "VARCHAR2", varchar_limit: int | None = None):
-    return _coerce_for_oracle(v, data_type, varchar_limit)
-
-
 def _insert_df(cur, tabla: str, df: pd.DataFrame, skip_identity: bool = True) -> int:
     if df.empty and tabla != "MI_DQ_HALLAZGO":
         cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.{tabla}")
@@ -790,7 +366,7 @@ def _insert_df(cur, tabla: str, df: pd.DataFrame, skip_identity: bool = True) ->
         for v, col in zip(row, use_cols):
             dtype, vlen = meta[col]
             lim = vlen if dtype == "VARCHAR2" else None
-            cells.append(_cell(v, dtype, lim))
+            cells.append(_coerce_for_oracle(v, dtype, lim))
         rows.append(tuple(cells))
     if rows:
         cur.executemany(
@@ -802,14 +378,13 @@ def _insert_df(cur, tabla: str, df: pd.DataFrame, skip_identity: bool = True) ->
 
 
 def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict[str, int]:
-    """TRUNCATE + INSERT del modelo lineamiento. Devuelve COUNT por tabla."""
+    """Wipe + DDL + INSERT del modelo lineamiento. Devuelve COUNT por tabla."""
     root = root or project_root()
     if not tablas:
         print("AVISO: no hay tablas para cargar a BD_CURSOR.")
         return {}
 
     conn, cv = _connect(root)
-
     counts: dict[str, int] = {}
     try:
         cur = conn.cursor()
@@ -817,11 +392,6 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
             _prepare_schema(cur, root)
             _apply_column_comments(cur, root)
             conn.commit()
-
-            for tabla in TRUNCATE_ORDEN:
-                if _table_exists(cur, tabla):
-                    cur.execute(f"TRUNCATE TABLE {ESQUEMA}.{tabla}")
-                    print(f"DW: TRUNCATE {tabla}")
 
             for tabla in INSERT_ORDEN:
                 df = tablas.get(tabla)
@@ -832,15 +402,7 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
                     cur,
                     tabla,
                     df,
-                    skip_identity=(
-                        tabla
-                        in (
-                            "MI_DQ_HALLAZGO",
-                            "MI_INDICADOR_RESULTADO",
-                            "MI_QA_AMARRE",
-                            "MI_QA_AMARRE_DETALLE",
-                        )
-                    ),
+                    skip_identity=(tabla in IDENTITY_SKIP),
                 )
                 conn.commit()
                 counts[tabla] = n_bd

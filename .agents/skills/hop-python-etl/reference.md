@@ -35,9 +35,8 @@ Python create STG va **antes** de los pipelines de extract (in-memory se borra e
 ## Capa post-staging
 
 - Lectura: `python/io/leer_h2.py` → `LECTURAS`
-- Escritura Oracle DW: `python/io/cargar_dw.py` (formal DDL + TRUNCATE+INSERT)
+- Escritura Oracle DW: `python/io/cargar_dw.py` (wipe + DDL canónico + INSERT + enrich 07)
 - Escritura Excel smoke: `output/resultado.xlsx`
-- `python/io/escribir_dw.py` legacy VARCHAR — no usar para `DIM_`/`FACT_`
 
 ## Debug rápido
 

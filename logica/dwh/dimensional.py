@@ -9,7 +9,7 @@ from datetime import date, datetime
 import pandas as pd
 
 from .catalogos import MI_DIM_ESTADO as SEMILLAS_ESTADO, MI_DIM_PARAMETRO_UIT as UIT_MEF, ODS_OEFA
-from .constantes import ID_CARGA, SEMILLAS_FUENTE_REGISTRO
+from .constantes import SEMILLAS_FUENTE_REGISTRO
 from .homologacion import homologar_estado, vacio
 
 ND = -1
@@ -325,7 +325,7 @@ def _build_dim_fuente() -> pd.DataFrame:
 
 def _normalizar_codigo_fuente(val) -> str:
     fuente = str(val) if not vacio(val) else "CAGR"
-    if fuente in ("LAM_OD", "OD_EXCEL"):
+    if fuente == "OD_EXCEL":
         fuente = "OD_SHEETS"
     if fuente not in ("OD_SHEETS", "CAGR", "GAPPS", "SISUD_VW"):
         fuente = "CAGR"
@@ -437,8 +437,6 @@ def _build_fact_multas(
         sigla = None
         if not vacio(r.get("COORD")):
             sigla = str(r.get("COORD")).strip().upper()[:30]
-        elif not vacio(r.get("COD_UNIDAD")):
-            sigla = str(r.get("COD_UNIDAD")).strip().upper()[:30]
         elif not vacio(r.get("NUMERO_EXPEDIENTE")):
             sigla = _sigla_csep_desde_expediente(r.get("NUMERO_EXPEDIENTE"), csep_known)
         id_org = lk_o.get(sigla, ND) if sigla else ND
@@ -607,7 +605,5 @@ def construir_modelo(
         "MI_FACT_MC_CSEP": fact_csep,
         "MI_FACT_MC_OD": fact_od,
         "MI_FACT_MC_SISUD": fact_sisud,
-        # enriquecido: vacío en Python; se materializa en Oracle tras cargar evidencia
-        "MI_FACT_MULTA_COERCITIVA": pd.DataFrame(columns=fact_csep.columns if len(fact_csep.columns) else []),
         "MI_DET_ETAPA_MC": det_etapas,
     }

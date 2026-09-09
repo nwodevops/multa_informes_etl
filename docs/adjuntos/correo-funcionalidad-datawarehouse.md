@@ -17,15 +17,17 @@ Les comparto un resumen del **Data Warehouse de Multas Coercitivas** (proyecto E
 El warehouse integra en un solo modelo Oracle (tablas `MI_*`) las multas coercitivas que hoy viven en sistemas y planillas distintas. Permite responder, sin cruzar a mano varias fuentes:
 
 - ¿Cuántas multas hay por unidad CSEP, oficina OD o periodo?
+- ¿Quién es el **jefe** / qué **UF** / en qué **etapa** está el proyecto? (campos del Sheet F2 en el DW)
 - ¿Cuánto se cobró (UIT / soles) y cómo avanza el ciclo (notificación → firma → vencimiento / pago)?
-- ¿Qué tan bien “amarra” una fuente con otra? (calidad / amarre H9 y KPI K5)
+- ¿Qué tan bien “amarra” Sheet con SISUD? (calidad / amarre H9 y KPI K5)
 
-El modelo sigue un diseño **Kimball** (estrella):
+El modelo sigue un diseño **Kimball** con evidencia + negocio:
 
-- **Hecho:** `MI_FACT_MULTA_COERCITIVA` → **1 fila = 1 multa**
+- **Evidencia:** `MI_FACT_MC_CSEP` / `_OD` / `_SISUD` → lo descargado de cada fuente
+- **Negocio enriquecido:** `MI_FACT_MULTA_COERCITIVA` → **Sheet manda**; CUM/CAM de SISUD a la derecha (resolución + monto)
 - **Dimensiones:** fuente, órgano/unidad CSEP, oficina OD, administrado, estado, tiempo, UIT, etc.
 - **Detalle F2:** etapas en `MI_DET_ETAPA_MC`
-- **Calidad y KPIs:** `MI_DQ_HALLAZGO`, `MI_QA_AMARRE` / `MI_QA_AMARRE_DETALLE`, `MI_INDICADOR_RESULTADO` (K1–K5)
+- **Calidad y KPIs:** `MI_DQ_HALLAZGO`, `MI_QA_AMARRE` / `_DETALLE`, `MI_INDICADOR_RESULTADO` (K1–K5)
 
 > Alcance: **solo Multas**. Los informes de supervisión (F3) **no forman parte** de este DW.
 
@@ -60,9 +62,19 @@ Hay **tres facts de evidencia** (`MI_FACT_MC_CSEP` / `_OD` / `_SISUD`) y un fact
 | **`VW_MC_CSEP`** | `MI_FACT_MC_CSEP` | Evidencia **10 Sheets CSEP** |
 | **`VW_MC_OD`** | `MI_FACT_MC_OD` | Evidencia **Sheets OD** |
 | **`VW_MC_SISUD`** | `MI_FACT_MC_SISUD` | Evidencia **vista SISUD** |
-| **`VW_MC_ENRIQUECIDA`** | `MI_FACT_MULTA_COERCITIVA` | Negocio: planillas + CUM/CAM (lookup SISUD) |
+| **`VW_MC_ENRIQUECIDA`** | `MI_FACT_MULTA_COERCITIVA` | Negocio: planillas + CUM/CAM (lookup SISUD); attrs F2 (`JEFE`, `UF`, etapas, …) |
 
-**Regla:** evidencia = qué se descargó; enriquecido = lo que pide negocio (Sheet manda; sin filas solo-SISUD). No sumar CSEP+OD+SISUD como un solo censo.
+**Regla:** evidencia = qué se descargó; enriquecido = lo que pide negocio (Sheet manda; sin filas solo-SISUD). No sumar CSEP+OD+SISUD como un solo censo. Conteos: enriquecida ≈ CSEP + OD.
+
+Ejemplo de consulta de negocio (jefe Homero Mejía):
+
+```sql
+SELECT COD_MA, N_RES_MC, JEFE, UF, ETA_REG_PROY_MC, CUM, CAM, MONTO_UIT
+FROM APP.VW_MC_ENRIQUECIDA
+WHERE UPPER(JEFE) LIKE '%MEJIA%';
+```
+
+Manual de cómo se arma el fact: `docs/lineamientos/extra/manual-como-se-arma-el-fact.md`
 
 ## Dimensiones (`MI_DIM_*`) — para qué sirve cada una
 
@@ -102,6 +114,7 @@ Ejemplos rápidos:
 - KPIs ya calculados → `MI_INDICADOR_RESULTADO` (K1 cobertura, K2 tiempos, K3 cobranza, K4 verificación, K5 amarre)
 
 Guía de lectura del modelo: `docs/adjuntos/guia-leer-modelo-dimensional.md`  
+Cómo se arma el fact enriquecido: `docs/lineamientos/extra/manual-como-se-arma-el-fact.md`  
 Manual breve (Word, 2 págs.): `docs/adjuntos/Manual_uso_datawarehouse_multas.docx`
 
 Quedo atento/a a comentarios o a una sesión corta de recorrido sobre las vistas `VW_MC_*` y los catálogos de Sheets.

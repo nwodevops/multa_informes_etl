@@ -1,6 +1,7 @@
 # 01 - Fuentes de Datos
 
-> **Alcance vigente:** el DW carga solo Multas (F1, F2, F4, F5). La vista `CSEP_INFORMES_VIEW` (F3) no se extrae ni se modela.
+> **Alcance vigente:** el DW carga Multas desde **F1 Sheets OD + F2 Sheets CSEP (+etapas) + F5 SISUD**. **F3 OUT**. **F4 MySQL fuera de ingestión** (solo semilla `GAPPS` en `MI_DIM_FUENTE_REGISTRO`).  
+> Flujo: 3 facts evidencia → enrich `07` → `MI_FACT_MULTA_COERCITIVA`. Manual: [`../manual-como-se-arma-el-fact.md`](../manual-como-se-arma-el-fact.md).
 >
 > **Inputs runtime:** [`docs/inputs/README.md`](../../../inputs/README.md) · catálogos F1/F2 JSON · `inputs.yaml`.
 
@@ -65,11 +66,11 @@ Vista consolidada de multas coercitivas. Staging: `STG_ORA_VW_MULTA_COERCITIVA` 
 
 ---
 
-### 2. MySQL GAPP - Gestión operativa (F4)
+### 2. MySQL GAPP - Gestión operativa (F4) — histórico / fuera de ingestión
 
 #### Tabla: `gappsdb.T_MVC_MULTACOERCITIVA_MC`
 
-Staging: `STG_MYSQL_T_MVC_MULTACOERCITIVA` · Hop `pl_stage_mysql.hpl` · universo `GAPPS`.
+**No se stagea ni se carga en el ETL vigente.** Queda documentada por diagnóstico; en DW solo existe la semilla `ID_FUENTE` / `CODIGO=GAPPS` en `MI_DIM_FUENTE_REGISTRO`.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -91,7 +92,7 @@ Staging: `STG_MYSQL_T_MVC_MULTACOERCITIVA` · Hop `pl_stage_mysql.hpl` · univer
 | TX_ESTADOREGISTRO | VARCHAR2 | Estado del registro |
 | TX_PASOACTUAL | VARCHAR2 | Paso actual del proceso |
 
-**Volumen estimado**: ~5,000+ registros
+**Volumen estimado (histórico diagnóstico):** ~5,000+ registros — **no aplica a conteos del ETL actual**.
 
 ---
 
@@ -179,17 +180,18 @@ Staging: `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) + `STG_GS1_ETAPAS` · `scripts/s
 
 ```
 SISUD.VW_MULTA_COERCITIVA (F5)
-    └── CUM / CAM ──────────┐
-                             ├──► MI_QA_AMARRE / MI_QA_AMARRE_DETALLE / K5
-gappsdb.T_MVC_MULTACOERCITIVA_MC (F4)
-    └── TX_IDCUM / TX_IDCAM ─┘
+    └── RESOLUCION + MONTO ──► lookup enrich 07 (CUM/CAM a la derecha)
+    └── evidencia ───────────► MI_FACT_MC_SISUD · VW_MC_SISUD
 
 F1 Sheets OD (31)
-    └── COD_MA + COD_OD ───► MI_DIM_OD · ID_FUENTE=OD_SHEETS · VW_MC_OD
+    └── COD_MA + COD_OD ───► MI_FACT_MC_OD · MI_DIM_OD · ID_FUENTE=OD_SHEETS · VW_MC_OD
 
 F2 Sheets CSEP (10)
-    └── COD_MA + COORD ────► MI_DIM_ORGANO_UNIDAD (DESCRIPCION) · ID_FUENTE=CAGR · VW_MC_CSEP
+    └── COD_MA + COORD ────► MI_FACT_MC_CSEP · MI_DIM_ORGANO_UNIDAD · ID_FUENTE=CAGR · VW_MC_CSEP
     └── COD_PROY_MC ───────► MI_DET_ETAPA_MC
+
+Amarre H9: RES_MONTO_Sheets_vs_SISUD → MI_QA_AMARRE / _DETALLE / K5
+(F4 MySQL: fuera de ingestión; no participa del amarre vigente)
 ```
 
 ### 6. Calidad de Datos Observada

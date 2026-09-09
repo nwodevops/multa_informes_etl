@@ -45,15 +45,16 @@ flowchart LR
     STG["STG_* en H2"]
   end
 
-  subgraph py [Python]
-    DF["DF_MULTAS · DF_ETAPAS"]
+  subgraph py [Python → Oracle]
+    EV["MI_FACT_MC_CSEP / _OD / _SISUD"]
+    ENR["07 enrich → MI_FACT_MULTA_COERCITIVA"]
   end
 
   F1 --> STG
   F2 --> STG
   DIC --> STG
   F5 --> STG
-  STG --> DF
+  STG --> EV --> ENR
 ```
 
 ---
@@ -62,13 +63,13 @@ flowchart LR
 
 | ID | Nombre corto | Dominio | Pestaña | Tipo | Origen | Tabla STG | Pipeline Hop | Uso en el DW |
 |---|---|---|---|---|---|---|---|---|
-| **F1** | Familia OD | **Multas** | `5) Multas Coercitivas` | Google Sheets | [`f1_ods_sheets.json`](f1_ods_sheets.json) | `STG_GS2_OD_MULTAS` (+ `COD_OD`) | `pl_stage_od_sheet.hpl` vía `scripts/stage_ods_sheets.sh` | Hecho multa + `ID_OD` |
-| **F2** | CSEP multas | **Multas** | `1) Multas coercitivas` | Google Sheets | [`f2_csep_sheets.json`](f2_csep_sheets.json) | `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | `pl_stage_csep_sheet.hpl` vía `scripts/stage_csep_sheets.sh` | Hecho multa (`ID_FUENTE`→`CAGR`, unidad vía `COORD`) |
+| **F1** | Familia OD | **Multas** | `5) Multas Coercitivas` | Google Sheets | [`f1_ods_sheets.json`](f1_ods_sheets.json) | `STG_GS2_OD_MULTAS` (+ `COD_OD`) | `pl_stage_od_sheet.hpl` vía `scripts/stage_ods_sheets.sh` | Evidencia `MI_FACT_MC_OD` + enriquecido; `ID_OD` |
+| **F2** | CSEP multas | **Multas** | `1) Multas coercitivas` | Google Sheets | [`f2_csep_sheets.json`](f2_csep_sheets.json) | `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | `pl_stage_csep_sheet.hpl` vía `scripts/stage_csep_sheets.sh` | Evidencia `MI_FACT_MC_CSEP` + enriquecido (`JEFE`/`UF`/…); `ID_ORGANO` |
 | **F2-ET** | CSEP etapas | **Multas** (detalle) | `2) Etapas` | Google Sheets | mismo catálogo F2 | `STG_GS1_ETAPAS` | `pl_stage_csep_etapa.hpl` vía `stage_csep_sheets.sh` | Detalle `MI_DET_ETAPA_MC` |
 | **F2-DIC** | Diccionario | Apoyo | `DIC_TABLAS` / `DIC_VARIABLES` | Excel legacy | `input_excel/legacy/CAGR_…xlsx` | `STG_GS1_DIC_*` | `pl_stage_excel.hpl` | Perfilamiento / diccionario |
-| **F5** | SISUD vista MC | **Multas** | — | Oracle | `SISUD.VW_MULTA_COERCITIVA` | `STG_ORA_VW_MULTA_COERCITIVA` | `pl_stage_oracle.hpl` | Expediente / resolución |
+| **F5** | SISUD vista MC | **Multas** | — | Oracle | `SISUD.VW_MULTA_COERCITIVA` | `STG_ORA_VW_MULTA_COERCITIVA` | `pl_stage_oracle.hpl` | Evidencia `MI_FACT_MC_SISUD`; lookup CUM/CAM al enriquecido |
 
-Códigos de universo en staging/integración (`FUENTE_ORIGEN`): F1 = **`OD_SHEETS`**, F2 = **`CAGR`**, F5 = **`SISUD_VW`**. En el DW solo persiste **`ID_FUENTE`** → `MI_DIM_FUENTE_REGISTRO`. Territorio F2: `COORD` / `MI_DIM_ORGANO_UNIDAD`. Territorio F1: **`MI_DIM_OD`** (`ID_OD`). Reportes: `VW_MC_*`.
+Códigos de universo en staging/integración (`FUENTE_ORIGEN`): F1 = **`OD_SHEETS`**, F2 = **`CAGR`**, F5 = **`SISUD_VW`**. En el DW: **`ID_FUENTE`** → `MI_DIM_FUENTE_REGISTRO`. Territorio F2: `COORD` / `MI_DIM_ORGANO_UNIDAD`. Territorio F1: **`MI_DIM_OD`**. Reportes: `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` / **`VW_MC_ENRIQUECIDA`**. Cómo se arma el enriquecido: [`../lineamientos/extra/manual-como-se-arma-el-fact.md`](../lineamientos/extra/manual-como-se-arma-el-fact.md).
 
 Auth Google: `client_secret.json` en la raíz del proyecto (**gitignored**). Cada spreadsheet debe estar compartido con el service account.
 

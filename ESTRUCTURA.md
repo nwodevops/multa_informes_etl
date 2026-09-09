@@ -4,12 +4,12 @@ Estructura de `etl_cursor`, copia del arquetipo (original en `~/Documents/desarr
 
 ```
 etl_cursor/
-├── project-config.json                  # Fuente única de variables (H2 + Oracle + MySQL)
+├── project-config.json                  # Fuente única de variables (H2 + Oracle SISUD/DW)
 ├── switch-env.sh                        # Cambia entorno: ./switch-env.sh local|remote
 ├── switch-env.ps1                       # Referencia Windows (no se usa en Linux)
 ├── .gitignore                           # client_secret.json, *.xlsx, 02_stg.sql, .venv/
 ├── .venv/                               # GENERADO (gitignore): deps de python/requirements.txt
-├── inputs.yaml                          # Manifiesto de fuentes STG (excel local CAGR + Lambayeque)
+├── inputs.yaml                          # Manifiesto de fuentes STG (Sheets F1/F2 + Oracle F5)
 ├── README.md                            # Cómo usar el arquetipo
 ├── AGENTS.md                            # Mapa corto para agentes (divulgación progresiva)
 ├── CHECKPOINTS.md                       # Criterios de "estado final correcto" por fase
@@ -33,8 +33,8 @@ etl_cursor/
 │       └── platform.md                  # Hop, H2, variables (detalle desde AGENTS.md)
 │
 ├── environments/                        # Plantillas de variables por entorno
-│   ├── local.json                       #   Entorno local/oficina (completar Oracle/MySQL)
-│   └── remote.json                      #   Entorno remoto/casa (completar Oracle/MySQL)
+│   ├── local.json                       #   Entorno local/oficina (completar Oracle SISUD/DW)
+│   └── remote.json                      #   Entorno remoto/casa (completar Oracle SISUD/DW)
 │
 ├── h2/                                  # Infra H2 in-memory (reutilizada de etl_diego/h2)
 │   ├── lib/
@@ -118,7 +118,7 @@ Start → Reset H2 clean (SHELL: ./h2/scripts/reset_and_create.sh)
 ```
 
 - **Reset H2 clean**: detiene el server H2, lo levanta y aplica `h2/sql/00_reset.sql` + `h2/sql/01_schema.sql`. H2 es **in-memory** (`mem:csep`): se limpia sola al parar el server, por eso el DDL se aplica por TCP después del start. El reset **no** ejecuta `02_stg.sql`.
-- **Python create STG**: lee `inputs.yaml`, introspecta Oracle/MySQL/Sheets/Excel, escribe `h2/sql/02_stg.sql` y aplica `CREATE TABLE STG_*` en H2.
+- **Python create STG**: lee `inputs.yaml`, introspecta Oracle/Sheets/Excel (este proyecto **no** usa MySQL), escribe `h2/sql/02_stg.sql` y aplica `CREATE TABLE STG_*` en H2.
 - **Stage Excel**: `pl_stage_excel.hpl` lee `input_excel/*.xlsx` (todo String) y carga `STG_GS1_*` / `STG_GS2_*` (truncate).
 - **Stage Oracle VW**: TableInput 1:1 hacia `STG_ORA_VW_MULTA_COERCITIVA` (truncate).
 - **Pipeline demo**: lee `PUBLIC.DEMO_TABLA_EJEMPLO` (creada en `01_schema.sql`) por la conexión `h2`. Es un smoke test: funciona sin BDs externas. Los extract `pl_stage_*` se cablean **después** de Python.

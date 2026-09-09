@@ -1,4 +1,4 @@
-"""Catálogos de referencia (semillas ddl/01 + inventario de campos F1/F2/F4/F5)."""
+"""Catálogos de referencia (semillas ddl/01 + inventario de campos F1/F2/F5)."""
 
 from __future__ import annotations
 

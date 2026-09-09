@@ -25,7 +25,7 @@ Patrón: [ejemplo-harness-subagentes](https://github.com/nwoswo/ejemplo-harness-
 - [`.agents/skills/auditable-soft-quarantine/SKILL.md`](.agents/skills/auditable-soft-quarantine/SKILL.md) — cuarentena blanda, DQ, amarre H9
 - [`.agents/skills/oracle-cargar-dw/SKILL.md`](.agents/skills/oracle-cargar-dw/SKILL.md) — TRUNCATE+INSERT, DDL, gotchas Oracle
 
-Lineamiento canónico: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md).  
+Lineamiento canónico (fases 2–7; ver banner de estado vigente al inicio): [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md).  
 Modelo vigente: [`docs/adjuntos/guia-leer-modelo-dimensional.md`](docs/adjuntos/guia-leer-modelo-dimensional.md). Status: [`docs/fase1-3/status.md`](docs/fase1-3/status.md).
 
 ## Inicio rápido
@@ -36,7 +36,9 @@ Modelo vigente: [`docs/adjuntos/guia-leer-modelo-dimensional.md`](docs/adjuntos/
 ~/apps/hop/hop-gui.sh                        # Hop GUI → wf_main.hwf
 ```
 
-Flujo datos: `inputs.yaml` → Hop `STG_*` → `python/main.py` → `logica/` → Oracle DW (`cargar_dw.py`) si `DB_ORA_DW_*` configurado.
+Flujo datos: `inputs.yaml` → Hop `STG_*` (F1/F2/F5) → `python/main.py` → 3 facts evidencia + dims/QA/K → `cargar_dw.py` → SQL **`07_enrich_sheets_sisud.sql`** → `MI_FACT_MULTA_COERCITIVA`.
+
+**Diseño vigente:** evidencia `MI_FACT_MC_CSEP|_OD|_SISUD` + negocio enriquecido (Sheet manda, CUM/CAM de SISUD). F3/F4 fuera de ingestión. Guía: [`docs/adjuntos/guia-leer-modelo-dimensional.md`](docs/adjuntos/guia-leer-modelo-dimensional.md). Manual fact: [`docs/lineamientos/extra/manual-como-se-arma-el-fact.md`](docs/lineamientos/extra/manual-como-se-arma-el-fact.md).
 
 ## Reglas críticas
 

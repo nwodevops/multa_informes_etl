@@ -2,7 +2,7 @@
 
 Scripts de creación de tablas para el destino final del modelo dimensional, según
 `PROPUESTA_ADAPTADA_ETL.md` (secciones 3 y 4). Corresponden a la carga que hace la capa
-lógica (Python) mediante `TRUNCATE + INSERT` hacia Oracle BD_CURSOR (`python/io/cargar_dw.py`).
+lógica (Python) mediante wipe + DDL + INSERT hacia Oracle BD_CURSOR (`python/io/cargar_dw.py`).
 
 Guía de lectura: [`../../adjuntos/guia-leer-modelo-dimensional.md`](../../adjuntos/guia-leer-modelo-dimensional.md).
 
@@ -20,7 +20,7 @@ Guía de lectura: [`../../adjuntos/guia-leer-modelo-dimensional.md`](../../adjun
 6. **`06_vistas.sql`** — `VW_MC_CSEP` / `OD` / `SISUD` (evidencia) + `VW_MC_ENRIQUECIDA`.
 7. **`07_enrich_sheets_sisud.sql`** — post-carga: arma el enriquecido = (CSEP∪OD) LEFT JOIN SISUD por resolución+monto.
 
-En corridas normales el orden lo aplica `cargar_dw.py` (ensure + recreación parcial + vistas).
+En corridas normales el orden lo aplica `cargar_dw.py`: **wipe** `MI_*`/`VW_*` → DDL `01`–`04` + vistas `06` → INSERT → enrich `07`.
 
 ## Notas de compatibilidad
 

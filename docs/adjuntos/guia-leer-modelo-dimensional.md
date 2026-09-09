@@ -4,6 +4,7 @@
 > Objetivo: entender **cómo está organizado** el modelo OEFA de multas y **cómo buscar información** sin ahogarse en el ETL.
 >
 > Detalle técnico del esquema: [`modelo-kimball.md`](modelo-kimball.md).  
+> Cómo se arma el fact enriquecido: [`../lineamientos/extra/manual-como-se-arma-el-fact.md`](../lineamientos/extra/manual-como-se-arma-el-fact.md).  
 > De dónde sale cada columna: [`../lineamientos/ANEXO_MAPEO_CAMPOS.md`](../lineamientos/ANEXO_MAPEO_CAMPOS.md).  
 > Fuentes de origen: [`../lineamientos/extra/fuentes_datos/01-fuentes-datos.md`](../lineamientos/extra/fuentes_datos/01-fuentes-datos.md).  
 > Inventario runtime: [`../inputs/README.md`](../inputs/README.md).
@@ -32,9 +33,9 @@ Imagina una estrella:
 
 | Idea Kimball | En español | En este proyecto |
 |---|---|---|
-| **Hecho (fact)** | Tabla de eventos medibles (conteos, montos, días) | `MI_FACT_MULTA_COERCITIVA` |
+| **Hecho (fact)** | Tabla de eventos medibles (conteos, montos, días) | Negocio: `MI_FACT_MULTA_COERCITIVA`; evidencia: `MI_FACT_MC_CSEP` / `_OD` / `_SISUD` |
 | **Dimensión (dim)** | Catálogo de “cómo mirar” el hecho | `MI_DIM_*` (8 dimensiones) |
-| **Grano** | “¿Qué representa **una fila**?” | En el hecho: **1 fila = 1 multa** |
+| **Grano** | “¿Qué representa **una fila**?” | **1 fila = 1 multa** (en enriquecido: 1 fila Sheet F1 o F2) |
 | **Clave foránea** | Puente numérico hecho ↔ dimensión | `ID_ORGANO`, `ID_OD`, `ID_FUENTE`, `ID_ADMINISTRADO`, … |
 | **Medidas** | Números que sumas o promedias | `MONTO_UIT`, `MONTO_S`, `DIAS_*`, flags |
 
@@ -53,6 +54,12 @@ No hace falta memorizar todas las columnas: con el grano y 2–3 dims ya puedes 
 Prefijo de tablas: **`MI_`**. Esquema típico: `APP` (local) o `REPOCSEP` (remoto).
 
 ```text
+   Evidencia (qué se descargó):
+   · MI_FACT_MC_CSEP   ← 10 Sheets F2
+   · MI_FACT_MC_OD     ← Sheets F1 OD
+   · MI_FACT_MC_SISUD  ← vista F5
+
+   Negocio (Sheet manda + CUM/CAM SISUD a la derecha):
                     ┌─ MI_DIM_ADMINISTRADO     (quién)
                     ├─ MI_DIM_ORGANO_UNIDAD    (unidad CSEP: CMIN, CRES, …)
                     ├─ MI_DIM_OD               (oficina desconcentrada F1)
@@ -60,22 +67,25 @@ Prefijo de tablas: **`MI_`**. Esquema típico: `APP` (local) o `REPOCSEP` (remot
                     ├─ MI_DIM_MATERIA_SUBSECTOR
    MI_FACT_MULTA ───┼─ MI_DIM_ESTADO           (resolución / multa / pago — misma tabla, roles distintos)
    COERCITIVA       ├─ MI_DIM_PARAMETRO_UIT    (valor UIT del año)
-                    └─ (fechas del ciclo van como columnas DATE en el hecho)
+   (enriquecida)    └─ (fechas del ciclo van como columnas DATE en el hecho)
 
-   MI_FACT_MULTA ───< MI_DET_ETAPA_MC          (etapas internas 1:N, solo F2; también ID_FUENTE)
+   MI_FACT_MC_CSEP ─< MI_DET_ETAPA_MC          (etapas internas 1:N, solo F2; también ID_FUENTE)
 
    Calidad / KPIs (no son la estrella, pero viven junto al modelo):
    · MI_DQ_HALLAZGO            defectos de datos (R01–R05)
+   · MI_QA_AMARRE / _DETALLE   amarre H9 (p. ej. RES_MONTO_Sheets_vs_SISUD)
    · MI_INDICADOR_RESULTADO    KPIs K1–K5 ya calculados
 ```
+
+Cómo se arma el enriquecido (lookup): [`../lineamientos/extra/manual-como-se-arma-el-fact.md`](../lineamientos/extra/manual-como-se-arma-el-fact.md).
 
 ### Capas (de afuera hacia adentro)
 
 | Capa | Qué es | ¿La usas para analizar? |
 |---|---|---|
-| Fuentes (Sheets, MySQL, Oracle) | Origen crudo | Solo si depuras el ETL |
+| Fuentes (Sheets, Oracle SISUD) | Origen crudo | Solo si depuras el ETL |
 | Staging `STG_*` (H2, temporal) | Copia 1:1 de cada fuente | No; desaparece al reiniciar H2 |
-| Modelo `MI_*` (Oracle) | Estrella Kimball + calidad + KPIs | **Sí — aquí consultas** |
+| Modelo `MI_*` (Oracle) | Evidencia + estrella enriquecida + calidad + KPIs | **Sí — aquí consultas** |
 
 El ETL (Hop + Python) es el “traductor”. Tú, como lector del modelo, trabajas sobre **`MI_*`**.
 
@@ -85,13 +95,21 @@ El ETL (Hop + Python) es el “traductor”. Tú, como lector del modelo, trabaj
 
 ### El hecho (el centro)
 
+Hay **tres facts de evidencia** (auditoría de lo bajado) y **uno de negocio**:
+
 | Tabla | Una fila es… | Preguntas típicas |
 |---|---|---|
-| `MI_FACT_MULTA_COERCITIVA` | Una multa coercitiva integrada | Conteos, montos, plazos, flags de pago/verificación |
+| `MI_FACT_MC_CSEP` | Una multa del Sheet F2 | Evidencia CSEP / `VW_MC_CSEP` |
+| `MI_FACT_MC_OD` | Una multa del Sheet F1 | Evidencia OD / `VW_MC_OD` |
+| `MI_FACT_MC_SISUD` | Una multa de la vista SISUD | Evidencia F5 / `VW_MC_SISUD` |
+| `MI_FACT_MULTA_COERCITIVA` | Una multa Sheet (F1∪F2) + CUM/CAM si hay match SISUD | **Reportes de negocio** / `VW_MC_ENRIQUECIDA` |
+
+Regla de negocio (Sheet←SISUD): el enriquecido **no** añade filas solo-SISUD; crece en vertical con más Sheets y en horizontal con CUM/CAM.
 
 Columnas útiles para orientarte:
 
 - **Identidad / cruce:** `COD_MA`, `CUM`, `CAM`, `NUMERO_EXPEDIENTE`, `N_RES_MC`
+- **Gestión F2 (attrs operativos):** `JEFE`, `UF`, `N_PROY_MC`, `ETA_REG_PROY_MC`, `ETA_REG_MC`, `RESULT_PROY_MC`, `ESTADO_MC_TXT`, `ESTADO_PAGO_TXT` (NULL en OD/SISUD si no aplica)
 - **De qué fuente vino la fila:** `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO` (usar vistas `VW_MC_*` por universo)
 - **Territorio:** `ID_ORGANO` (unidades CSEP) y `ID_OD` (oficinas OD)
 - **Calendario firma:** `ID_TIEMPO_FIRMA` → `MI_DIM_TIEMPO` (además de `F_FIRMA_RES_MC` DATE)
@@ -169,9 +187,19 @@ Por eso **acota siempre por fuente** (`ID_FUENTE` / vistas `VW_MC_*`) cuando com
 ### Vistas por universo (disciplina de reporte)
 
 ```sql
-SELECT COUNT(*) FROM APP.VW_MC_CSEP;   -- solo F2
-SELECT COUNT(*) FROM APP.VW_MC_OD;     -- solo F1
-SELECT COUNT(*) FROM APP.VW_MC_SISUD;  -- solo F5
+SELECT COUNT(*) FROM APP.VW_MC_CSEP;        -- evidencia F2
+SELECT COUNT(*) FROM APP.VW_MC_OD;          -- evidencia F1
+SELECT COUNT(*) FROM APP.VW_MC_SISUD;       -- evidencia F5
+SELECT COUNT(*) FROM APP.VW_MC_ENRIQUECIDA; -- negocio (= CSEP + OD)
+```
+
+Filtrar por jefe (F2 en el enriquecido):
+
+```sql
+SELECT COD_MA, N_RES_MC, JEFE, UF, ETA_REG_PROY_MC, CUM, CAM, MONTO_UIT
+FROM APP.VW_MC_ENRIQUECIDA
+WHERE UPPER(JEFE) LIKE '%MEJIA%'
+FETCH FIRST 50 ROWS ONLY;
 ```
 
 ### Patrón SQL (esqueleto)
@@ -222,8 +250,18 @@ No-amarre H9 (detalle):
 ```sql
 SELECT PUENTE, LADO, CLAVE, MOTIVO
 FROM APP.MI_QA_AMARRE_DETALLE
-WHERE PUENTE = 'COD_MA_vs_CUM_SISUD'
+WHERE PUENTE = 'RES_MONTO_Sheets_vs_SISUD'
 FETCH FIRST 100 ROWS ONLY;
+```
+
+Buscar una multa concreta (negocio):
+
+```sql
+SELECT f.COD_MA, f.N_RES_MC, f.JEFE, f.UF, f.CUM, f.CAM, f.MONTO_UIT, fu.NOMBRE AS FUENTE_NOMBRE
+FROM APP.MI_FACT_MULTA_COERCITIVA f
+LEFT JOIN APP.MI_DIM_FUENTE_REGISTRO fu ON fu.ID_FUENTE = f.ID_FUENTE
+WHERE f.COD_MA = :cod_ma
+;
 ```
 
 Multas por oficina OD (F1):
@@ -238,16 +276,6 @@ LEFT JOIN APP.MI_DIM_OD d
   ON d.ID_OD = v.ID_OD
 GROUP BY d.COD_OD, d.NOMBRE
 ORDER BY 1;
-```
-
-Buscar una multa concreta:
-
-```sql
-SELECT f.*, fu.NOMBRE AS FUENTE_NOMBRE
-FROM APP.MI_FACT_MULTA_COERCITIVA f
-LEFT JOIN APP.MI_DIM_FUENTE_REGISTRO fu ON fu.ID_FUENTE = f.ID_FUENTE
-WHERE f.COD_MA = :cod_ma
-;
 ```
 
 Etapas de un proyecto (F2):
@@ -291,7 +319,10 @@ Cifras orientativas tras `./init.sh` (esquema `APP`). Cambian con cada corrida.
 
 | Objeto | Filas (aprox.) |
 |---|---|
-| `MI_FACT_MULTA_COERCITIVA` | ~1 801 |
+| `MI_FACT_MC_CSEP` | ~990 |
+| `MI_FACT_MC_OD` | ~281 |
+| `MI_FACT_MC_SISUD` | ~534 |
+| `MI_FACT_MULTA_COERCITIVA` | ~1 271 (= CSEP+OD) |
 | · `CAGR` (F2) | ~986 |
 | · `SISUD_VW` (F5) | ~530 |
 | · `OD_SHEETS` (F1) | ~281 |
