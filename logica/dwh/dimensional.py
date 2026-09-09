@@ -1,4 +1,18 @@
-"""Fase 5 — construcción del modelo dimensional en memoria (lineamiento sec. 3)."""
+"""Fase 5 — modelo dimensional en memoria (dims + 3 facts evidencia + DET etapas).
+
+Flujo de construir_modelo:
+  1) Arma DIMs (tiempo, estado, UIT, órgano, OD, fuente, administrado, materia)
+  2) Por cada bloque canónico llama _build_fact_multas → MI_FACT_MC_CSEP / _OD / _SISUD
+  3) Arma MI_DET_ETAPA_MC desde etapas CSEP
+
+Grano evidencia: 1 fila = 1 multa de UNA fuente (ID_FUENTE distingue el universo).
+Lookups = dict en memoria (como Map<clave, id> en Java), no SQL JOIN.
+
+El fact de NEGOCIO enriquecido (CUM/CAM a la derecha) NO se arma aquí:
+  → Oracle SQL 07_enrich_sheets_sisud.sql tras cargar_dw.
+
+ID_* = -1 (ND) significa "NO ESPECIFICADO".
+"""
 
 from __future__ import annotations
 
@@ -12,7 +26,7 @@ from .catalogos import MI_DIM_ESTADO as SEMILLAS_ESTADO, MI_DIM_PARAMETRO_UIT as
 from .constantes import SEMILLAS_FUENTE_REGISTRO
 from .homologacion import homologar_estado, vacio
 
-ND = -1
+ND = -1  # surrogate "NO ESPECIFICADO" en todas las FKs
 MESES = (
     "ENERO",
     "FEBRERO",
@@ -154,6 +168,7 @@ def _build_dim_tiempo() -> pd.DataFrame:
 
 
 def _build_dim_estado(df_multas: pd.DataFrame) -> pd.DataFrame:
+    """Catálogo de estados: semillas fijas + valores vistos en datos (homologados)."""
     seen: set[tuple[str, str]] = set()
     rows = [
         {
@@ -368,6 +383,7 @@ def _build_dim_administrado(df_multas: pd.DataFrame) -> pd.DataFrame:
 
 
 def _lk_estado(dim_estado: pd.DataFrame) -> dict[tuple[str, str], int]:
+    """Map (TIPO_ESTADO, CODIGO) → ID_ESTADO. Analogía Java: Map<Pair, Integer>."""
     return {
         (r.TIPO_ESTADO, r.CODIGO): int(r.ID_ESTADO)
         for r in dim_estado.itertuples(index=False)
@@ -375,6 +391,7 @@ def _lk_estado(dim_estado: pd.DataFrame) -> dict[tuple[str, str], int]:
 
 
 def _lk_simple(dim: pd.DataFrame, col_key: str, col_id: str = None) -> dict[str, int]:
+    """Map clave de negocio → surrogate ID (órgano, OD, fuente, UIT, administrado…)."""
     col_id = col_id or f"ID_{col_key.split('_')[0] if col_key != 'SIGLA' else 'ORGANO'}"
     if col_key == "NOMBRE":
         col_id = "ID_MATERIA"
@@ -397,6 +414,7 @@ def _lk_simple(dim: pd.DataFrame, col_key: str, col_id: str = None) -> dict[str,
 
 
 def _resolve_estado(lk: dict, val, tipo_default: str) -> int:
+    """Texto origen → homologar_estado → lookup dim → ID_ESTADO (o ND)."""
     if vacio(val):
         return ND
     t, c = homologar_estado(val, tipo_default)
@@ -415,6 +433,12 @@ def _build_fact_multas(
     dim_od: pd.DataFrame,
     dim_fuente: pd.DataFrame,
 ) -> pd.DataFrame:
+    """Arma UN fact de evidencia a partir de un bloque canónico (CSEP, OD o SISUD).
+
+    Por cada fila: resuelve FKs (admin, órgano, OD, fuente, estados, UIT, tiempo)
+    y copia medidas/fechas/attrs. No hace join con otras fuentes.
+    """
+    # Lookups en memoria (equivalente a Map.get en Java)
     lk_a = _lk_simple(dim_admin, "COD_ADMINISTRADO")
     lk_o = _lk_simple(dim_org, "SIGLA")
     lk_e = _lk_estado(dim_est)
@@ -430,10 +454,12 @@ def _build_fact_multas(
         id_mc = len(rows) + 1
         id_admin = ND
         id_mat = ND
+        # Administrado: clave sintética NOM-{razon_normalizada}
         if not vacio(r.get("ADMINISTRADO")):
             norm = _norm_text(r.get("ADMINISTRADO"))[:40]
             id_admin = lk_a.get(f"NOM-{norm}", ND)
 
+        # Territorio CSEP: COORD; fallback: última parte del expediente si es sigla conocida
         sigla = None
         if not vacio(r.get("COORD")):
             sigla = str(r.get("COORD")).strip().upper()[:30]
@@ -441,11 +467,13 @@ def _build_fact_multas(
             sigla = _sigla_csep_desde_expediente(r.get("NUMERO_EXPEDIENTE"), csep_known)
         id_org = lk_o.get(sigla, ND) if sigla else ND
 
+        # Estados: Sheets usan ESTADO_MC; SISUD usa ESTADO_MULTA
         est_mul_val = r.get("ESTADO_MC") if not vacio(r.get("ESTADO_MC")) else r.get("ESTADO_MULTA")
         id_est_res = _resolve_estado(lk_e, r.get("ESTADO_RESOLUCION"), "RESOLUCION")
         id_est_mul = _resolve_estado(lk_e, est_mul_val, "MULTA")
         id_est_pago = _resolve_estado(lk_e, r.get("ESTADO_PAGO_MC"), "PAGO")
 
+        # UIT del año de firma (o notificación) → MONTO_S_CALC = UIT × valor_UIT
         anio = _anio_fecha(r.get("F_FIRMA_RES_MC")) or _anio_fecha(r.get("F_NOTIF_DCG"))
         id_uit = lk_u.get(anio, ND) if anio else ND
         valor_uit = UIT_MEF.get(anio) if anio else None
@@ -461,6 +489,7 @@ def _build_fact_multas(
         fuente = _normalizar_codigo_fuente(r.get("FUENTE_ORIGEN", "CAGR"))
         id_fuente = lk_f.get(fuente, ND)
 
+        # Territorio OD (solo filas F1 con COD_OD)
         id_od = ND
         if not vacio(r.get("COD_OD")):
             id_od = lk_od.get(str(r.get("COD_OD")).strip().upper(), ND)
@@ -576,6 +605,7 @@ def construir_modelo(
     df_etapas: pd.DataFrame,
 ) -> dict[str, pd.DataFrame]:
     """Fase 5: 3 facts evidencia + dims + etapas. El enriquecido se llena en Oracle (07)."""
+    # df_all solo para poblar dims que miran valores distintos (estado, administrado)
     df_all = pd.concat([df_csep, df_od, df_sisud], ignore_index=True, sort=False)
 
     dim_tiempo = _build_dim_tiempo()
@@ -587,10 +617,11 @@ def construir_modelo(
     dim_fuente = _build_dim_fuente()
     dim_admin = _build_dim_administrado(df_all)
 
+    # Misma firma de dims; tres llamadas = tres universos de evidencia
     args = (dim_admin, dim_organo, dim_materia, dim_estado, dim_uit, dim_od, dim_fuente)
-    fact_csep = _build_fact_multas(df_csep, *args)
-    fact_od = _build_fact_multas(df_od, *args)
-    fact_sisud = _build_fact_multas(df_sisud, *args)
+    fact_csep = _build_fact_multas(df_csep, *args)    # → MI_FACT_MC_CSEP
+    fact_od = _build_fact_multas(df_od, *args)        # → MI_FACT_MC_OD
+    fact_sisud = _build_fact_multas(df_sisud, *args)  # → MI_FACT_MC_SISUD
     det_etapas = _build_det_etapas(df_etapas, fact_csep, dim_fuente)
 
     return {

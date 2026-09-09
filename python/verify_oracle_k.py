@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
-"""Verificacion Oracle K1-K5 tras la carga DW (harness Win).
+"""DEPRECATED — usar python/verify_dw.py.
 
-Reemplaza el heredoc de init.sh adaptado a Windows: mismo alcance de chequeos,
-esquema dinamico (SELECT USER FROM dual). Credenciales placeholder -> AVISO y
-salida 0 (omite sin fallar).
-
-Uso: python python/verify_oracle_k.py
+Histórico: verificación K1–K5 / QA / VW en Oracle. El DW canónico ya no publica
+esos objetos; el harness (init.sh / init.bat) valida con verify_dw.py.
 """
 
 from __future__ import annotations

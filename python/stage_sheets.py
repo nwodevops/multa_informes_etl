@@ -1,9 +1,11 @@
 """Orquesta el staging de Google Sheets (F1 ODs / F2 CSEP) hacia H2 con hop-run.
 
+Se usa desde scripts shell/bat o como parte de la corrida Hop (antes de «Run Python»).
+No es main.py: solo llena STG_*; la transformación DW empieza cuando Hop llama a main.py.
+
 Windows (rama windows): reemplaza scripts/stage_ods_sheets.sh y
-scripts/stage_csep_sheets.sh ejecutandose desde cmd.exe. Los pipelines de Hop
-(pl_stage_*_sheet.hpl) y los catalogos docs/inputs/f1_ods_sheets.json /
-f2_csep_sheets.json no cambian; solo se reimplementa el orquestador.
+scripts/stage_csep_sheets.sh. Pipelines Hop (pl_stage_*_sheet.hpl) y catálogos
+docs/inputs/f1_ods_sheets.json / f2_csep_sheets.json no cambian.
 """
 
 from __future__ import annotations

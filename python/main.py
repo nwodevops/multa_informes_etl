@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 """ENTRY POINT capa lógica post-staging (orquestación delgada).
 
-Lineamientos PROPUESTA_ADAPTADA_ETL.md — Fases 2–7:
+Quién lo llama:
+  - Apache Hop: acción Shell «Run Python» en wf_main.hwf / wf_main_win.hwf
+  - Harness: ./init.sh o init.bat (mismo comando)
+
+Qué NO hace: no lee Sheets/SISUD fuente, no homologa, no arma facts.
+Eso ya pasó en Hop→STG_* y en logica/dwh/*.
+
+Flujo interno:
   1. SETUP   : root + variables de project-config.json
-  2. ENTRADA : io/leer_h2.py -> DataFrames (nombres = claves de LECTURAS)
-  3. LOGICA  : único .py en logica/ -> PROF_*, DICCIONARIO, DF_*, DIM_*, FACT_*
-  4. SALIDA  : wipe canónico Oracle (dims/facts/DET + MI_DQ_HALLAZGO + enrich 07)
-               + MI_AUD_*; QA/K quedan en memoria (no se publican a Oracle)
+  2. ENTRADA : io/leer_h2.py → DataFrames (claves = LECTURAS)
+  3. LOGICA  : único .py en logica/ → PROF_*, DF_*, MI_DIM_*, MI_FACT_*, …
+  4. SALIDA  : cargar_dw (estrella + DQ + enrich 07) + cargar_aud (MI_AUD_*)
+               QA/K quedan en memoria (no se publican a Oracle)
 
 Contrato: python/CONTRATO.md
 Uso: .venv/bin/python python/main.py
@@ -24,10 +31,14 @@ if str(HERE) not in sys.path:
 
 from config import load_vars, project_root  # noqa: E402
 
+# DataFrame obligatorio que debe dejar logica/ejecutar.py.
+# Es el resumen de una corrida (conteos, fase, carga y hallazgos) y sirve
+# como evidencia en memoria/log; si falta, main.py aborta antes de Oracle.
 SALIDA_DF = "RESULTADO"
 
 
 def _load(name: str, path: Path):
+    """Carga un .py por ruta (sin instalar el paquete)."""
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
         raise ImportError(f"No se pudo cargar {path}")
@@ -37,6 +48,7 @@ def _load(name: str, path: Path):
 
 
 def _es_salida(nombre: str) -> bool:
+    """True si el nombre del DataFrame es una salida exportable del contrato."""
     if nombre == SALIDA_DF or nombre == "DICCIONARIO":
         return True
     return any(
@@ -61,14 +73,18 @@ def _es_salida(nombre: str) -> bool:
 
 
 def main() -> int:
+    # STEP 1: localizar la raíz del repo y cargar variables de configuración.
     root = project_root()
     variables = load_vars(root)
 
+    # STEP 2: leer las tablas STG_* que Hop dejó en H2.
+    # Claves típicas: GS1 (F2), GS2 (F1), ETAPAS, ORA (F5), DIC_*
     leer = _load("leer_h2", HERE / "io" / "leer_h2.py")
     datos = leer.leer_h2(root, variables)
     if not datos:
         raise SystemExit("leer_h2() no devolvió DataFrames; revisa LECTURAS en python/io/leer_h2.py")
 
+    # STEP 3: localizar y validar el único archivo .py de logica/.
     logica_dir = root / "logica"
     archivos = sorted(p for p in logica_dir.glob("*.py") if p.name != "__init__.py")
     if not archivos:
@@ -86,6 +102,8 @@ def main() -> int:
     if str(logica_dir) not in sys.path:
         sys.path.insert(0, str(logica_dir))
 
+    # STEP 4: inyectar los DataFrames de entrada y ejecutar la lógica.
+    # La lógica deja allí las variables de salida, incluido RESULTADO.
     ns: dict = {
         "__name__": "__logica__",
         "__file__": str(archivos[0]),
@@ -94,11 +112,16 @@ def main() -> int:
     ns.update(datos)
     exec(compile(archivos[0].read_text(encoding="utf-8"), str(archivos[0]), "exec"), ns)
 
+    # STEP 5: recolectar automáticamente los DataFrames cuyo nombre siga el contrato:
+    # RESULTADO/DICCIONARIO o uno de los prefijos PROF_, DF_, MI_DIM_, etc.
+    # Esta detección solo arma el catálogo de salidas en memoria; todavía no
+    # decide qué tablas se publican en Oracle (ese filtro ocurre más abajo).
     salidas: dict[str, pd.DataFrame] = {}
     for nombre, val in ns.items():
         if _es_salida(nombre) and isinstance(val, pd.DataFrame):
             salidas[nombre] = val
 
+    # STEP 6: verificar que la lógica produjo el resumen obligatorio.
     if SALIDA_DF not in salidas:
         raise SystemExit(
             f"La logica no dejo el DataFrame '{SALIDA_DF}'. Ver python/CONTRATO.md"
@@ -107,7 +130,8 @@ def main() -> int:
     for nombre, df in salidas.items():
         print(f"Salida {nombre}: {len(df)} filas x {len(df.columns)} columnas")
 
-    # Estrella + bitácora DQ a Oracle (QA/K quedan en memoria / RESULTADO).
+    # STEP 7: seleccionar y publicar en Oracle únicamente estrella + DQ.
+    # Estrella + DQ a Oracle. QA/K NO se publican (solo memoria / RESULTADO).
     tablas_dw = {
         k: v
         for k, v in salidas.items()
@@ -118,9 +142,11 @@ def main() -> int:
         and not k.startswith(("MI_QA_", "MI_INDICADOR_"))
     }
     if tablas_dw:
+        # wipe + DDL + INSERT evidencia/dims + enrich SQL 07 → MI_FACT_MULTA_COERCITIVA
         cargar = _load("cargar_dw", HERE / "io" / "cargar_dw.py")
         cargar.cargar_dw(tablas_dw, root)
 
+        # Foto cruda 1:1 del staging (usa `datos` de leer_h2, no los facts)
         aud = _load("cargar_aud", HERE / "audit" / "cargar_aud.py")
         aud.cargar_aud(datos, root)
 

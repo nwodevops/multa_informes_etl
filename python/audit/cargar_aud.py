@@ -1,4 +1,16 @@
-"""Foto cruda de staging → Oracle MI_AUD_* (fuera de la estrella Kimball)."""
+"""Foto cruda de staging → Oracle MI_AUD_* (fuera de la estrella Kimball).
+
+Lo llama python/main.py DESPUÉS de cargar_dw, pasando los DataFrames de leer_h2
+(no los facts). Sirve para contrastar “qué bajó Hop” vs “qué quedó en MI_FACT_*”.
+
+Mapeo STG lógico → tabla audit:
+  GS1    → MI_AUD_F2_CSEP_MULTAS
+  ETAPAS → MI_AUD_F2_CSEP_ETAPAS
+  GS2    → MI_AUD_F1_OD_MULTAS
+  ORA    → MI_AUD_F5_SISUD_VW
+
+Todas las columnas se guardan como VARCHAR2 (foto 1:1 textual) + FECHA_CARGA.
+"""
 
 from __future__ import annotations
 
@@ -12,7 +24,7 @@ from config import load_vars, project_root, require_live_conn
 ESQUEMA_DEFAULT = "APP"
 ESQUEMA = ESQUEMA_DEFAULT
 
-# STG (leer_h2) → tabla audit 1:1
+# Clave de leer_h2 → tabla Oracle de auditoría
 MAPEO_AUD: dict[str, str] = {
     "GS1": "MI_AUD_F2_CSEP_MULTAS",
     "ETAPAS": "MI_AUD_F2_CSEP_ETAPAS",
@@ -42,6 +54,7 @@ def _bind_schema(cur) -> str:
 
 
 def _safe_col(name: str) -> str:
+    """Nombre de columna Oracle-safe (≤30, sin caracteres raros)."""
     s = "".join(ch if ch.isalnum() or ch == "_" else "_" for ch in str(name).upper())
     if not s or s[0].isdigit():
         s = "C_" + s
@@ -49,6 +62,7 @@ def _safe_col(name: str) -> str:
 
 
 def _as_str(v) -> str | None:
+    """Serializa cualquier valor STG a texto (o None) para VARCHAR2."""
     if v is None:
         return None
     try:
@@ -83,6 +97,7 @@ def _drop_table(cur, tabla: str) -> None:
 
 
 def _create_and_load(cur, tabla: str, df: pd.DataFrame) -> int:
+    """DROP+CREATE+INSERT de una tabla MI_AUD_* a partir de un DataFrame STG."""
     _drop_table(cur, tabla)
     if df is None or df.empty:
         # Tabla mínima para que exista el objeto aunque STG venga vacío
@@ -127,13 +142,15 @@ def cargar_aud(
     stg: dict[str, pd.DataFrame],
     root: Path | None = None,
 ) -> dict[str, int]:
-    """Crea/llena MI_AUD_* desde DataFrames STG (GS1/ETAPAS/GS2/ORA)."""
+    """Punto de entrada desde main.py: crea/llena MI_AUD_* desde STG (GS1/ETAPAS/GS2/ORA)."""
     root = root or project_root()
+    # STEP 8.1: abrir Oracle para guardar la fotografía cruda del staging.
     conn, _cv = _connect(root)
     counts: dict[str, int] = {}
     try:
         cur = conn.cursor()
         try:
+            # STEP 8.2: recorrer el mapeo STG lógico → tabla MI_AUD_*.
             _bind_schema(cur)
             print(f"AUD: foto cruda STG → {ESQUEMA}.MI_AUD_*", flush=True)
             for stg_key, tabla in MAPEO_AUD.items():

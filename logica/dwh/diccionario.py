@@ -1,4 +1,7 @@
-"""Fase 2 — diccionario de datos (STG DIC_* + catálogo institucional)."""
+"""Fase 2 — diccionario de datos (STG DIC_* + catálogo institucional).
+
+Inventario de campos/variables. No homologa valores ni construye el modelo dimensional.
+"""
 
 from __future__ import annotations
 

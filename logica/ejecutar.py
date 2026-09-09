@@ -1,7 +1,16 @@
 # =============================================================================
 # Único .py en logica/ (main.py lo auto-descubre).
 # Lineamientos PROPUESTA_ADAPTADA_ETL.md — Fases 2–7. DW netamente Multas.
-# 3 facts evidencia; enrich Sheets←SISUD en Oracle SQL 07 (cargar_dw). Sin MySQL.
+#
+# Flujo (quién llama a quién):
+#   Hop deja STG_* en H2 → Python lee GS1/GS2/ETAPAS/ORA → este módulo
+#   → dwh.pipeline.ejecutar(...) → DataFrames MI_* en memoria
+#   → cargar_dw.py publica a Oracle + SQL 07 arma el fact enriquecido.
+#
+# Qué NO hace este módulo:
+#   - No lee Sheets/Oracle fuente (eso es Hop).
+#   - No hace el LEFT JOIN Sheet←SISUD (eso es docs/lineamientos/ddl/07_*.sql).
+# Guía: docs/adjuntos/guia-codigo-logica-homologacion-facts.md
 # =============================================================================
 
 from pathlib import Path
@@ -10,6 +19,13 @@ from dwh.pipeline import ejecutar
 
 _root = Path(__file__).resolve().parent.parent
 
+# DataFrames inyectados por el runtime Hop/Python (staging H2 ya cargado):
+#   GS1     = F2 CSEP multas (STG_GS1_CSEP_MULTAS)
+#   GS2     = F1 OD multas   (STG_GS2_OD_MULTAS)
+#   ETAPAS  = F2 etapas      (STG_GS1_ETAPAS)
+#   ORA     = F5 SISUD       (STG_ORA_VW_MULTA_COERCITIVA)
+#   DIC_*   = diccionario legacy (perfilamiento)
+# STEP 4.1: delegar las fases de negocio al pipeline DWH.
 _out = ejecutar(
     GS1,
     GS2,
@@ -20,13 +36,15 @@ _out = ejecutar(
     root=_root,
 )
 
+# STEP 4.2: exponer en el namespace los DataFrames que main.py recolectará.
+# Las salidas QA/K también se exponen, pero main.py decide después si se publican.
 PROF_RESUMEN = _out["PROF_RESUMEN"]
 PROF_HALLAZGO = _out["PROF_HALLAZGO"]
 DICCIONARIO = _out["DICCIONARIO"]
-DF_MULTAS = _out["DF_MULTAS"]
-DF_CSEP = _out["DF_CSEP"]
-DF_OD = _out["DF_OD"]
-DF_SISUD = _out["DF_SISUD"]
+DF_MULTAS = _out["DF_MULTAS"]          # UNION auxiliar CSEP∪OD∪SISUD (calidad/KPIs)
+DF_CSEP = _out["DF_CSEP"]              # bloque canónico F2
+DF_OD = _out["DF_OD"]                  # bloque canónico F1
+DF_SISUD = _out["DF_SISUD"]            # bloque canónico F5
 DF_ETAPAS = _out["DF_ETAPAS"]
 MI_DQ_HALLAZGO = _out["MI_DQ_HALLAZGO"]
 MI_QA_AMARRE = _out["MI_QA_AMARRE"]
@@ -39,6 +57,7 @@ MI_DIM_FUENTE_REGISTRO = _out["MI_DIM_FUENTE_REGISTRO"]
 MI_DIM_MATERIA_SUBSECTOR = _out["MI_DIM_MATERIA_SUBSECTOR"]
 MI_DIM_ESTADO = _out["MI_DIM_ESTADO"]
 MI_DIM_PARAMETRO_UIT = _out["MI_DIM_PARAMETRO_UIT"]
+# Tres facts de EVIDENCIA (1 fila = 1 multa de UNA fuente). El de NEGOCIO se arma en SQL 07.
 MI_FACT_MC_CSEP = _out["MI_FACT_MC_CSEP"]
 MI_FACT_MC_OD = _out["MI_FACT_MC_OD"]
 MI_FACT_MC_SISUD = _out["MI_FACT_MC_SISUD"]

@@ -1,4 +1,10 @@
-"""Fase 7 — indicadores K1–K5 sobre el modelo dimensional (lineamiento sec. 5)."""
+"""Fase 7 — indicadores K1–K5 sobre el modelo dimensional (lineamiento sec. 5).
+
+Se calculan en memoria a partir de facts evidencia + DQ/amarre.
+Según política de carga vigente pueden NO publicarse a Oracle (wipe canónico).
+
+K1 cobertura | K2 plazos ciclo | K3 cobranza | K4 verif. post-MC | K5 calidad/amarre
+"""
 
 from __future__ import annotations
 

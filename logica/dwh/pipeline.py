@@ -1,4 +1,18 @@
-"""Orquesta lineamientos Fase 2–7: perfil, diccionario, integración, calidad, dimensional, indicadores."""
+"""Orquesta lineamientos Fase 2–7: perfil → integrar → calidad → dimensional → indicadores.
+
+Analogía Java: un PipelineService.run() que encadena steps y devuelve un Map<String, DataFrame>.
+
+Orden fijo (no reordenar sin revisar dependencias):
+  1) perfilamiento / diccionario   — diagnóstico de inputs
+  2) integrar                      — homologar + rename → 3 bloques canónicos (+ etapas)
+  3) concat DF_MULTAS              — UNION auxiliar solo para calidad/KPIs (no es el fact)
+  4) aplicar_calidad               — marca defectos; NO borra filas
+  5) construir_modelo              — DIMs + 3 facts evidencia + DET etapas
+  6) calcular_indicadores          — K1–K5 en memoria
+
+El fact de negocio enriquecido (MI_FACT_MULTA_COERCITIVA) NO se construye aquí:
+lo arma Oracle con docs/lineamientos/ddl/07_enrich_sheets_sisud.sql tras cargar_dw.
+"""
 
 from __future__ import annotations
 
@@ -24,6 +38,7 @@ def ejecutar(
     dic_variables: pd.DataFrame | None = None,
     root: Path | None = None,
 ) -> dict[str, pd.DataFrame]:
+    """Ejecuta Fases 2–7 y devuelve todos los DataFrames de salida (clave = nombre lógico/tabla)."""
     tablas = {
         "GS1": gs1,
         "GS2": gs2,
@@ -33,17 +48,29 @@ def ejecutar(
         "DIC_VARIABLES": dic_variables if dic_variables is not None else pd.DataFrame(),
     }
 
+    # STEP 1: diagnosticar las entradas y construir el diccionario.
+    # Estas salidas describen las fuentes; todavía no modifican los hechos.
     prof_resumen, prof_hallazgo = perfilar_todas(tablas)
     diccionario = armar_diccionario(tablas, root=root)
 
+    # STEP 2: homologar y llevar cada fuente a su bloque canónico.
+    # CSEP, OD y SISUD permanecen separados; aquí no se hace JOIN entre fuentes.
     df_csep, df_od, df_sisud, df_etapas = integrar(gs1, gs2, etapas, ora)
+
+    # STEP 3: formar una UNION auxiliar para calidad y KPIs.
+    # DF_MULTAS no es el fact de negocio ni reemplaza los facts de evidencia.
     df_sheets = pd.concat([df_csep, df_od], ignore_index=True, sort=False)
     df_multas = pd.concat([df_sheets, df_sisud], ignore_index=True, sort=False)
 
-    # Calidad sobre df_multas (UNION auxiliar); facts evidencia se construyen sin FG_CONFORME.
+    # STEP 4: aplicar calidad y amarre H9 con cuarentena blanda.
+    # Se marcan defectos en DQ/FG_CONFORME; las filas no se eliminan.
+    # Los facts evidencia se construyen desde df_csep/od/sisud (sin depender de FG_CONFORME).
     df_multas, dq_hallazgo, qa_amarre, qa_amarre_det = aplicar_calidad(df_multas, df_sisud)
+
+    # STEP 5: construir dimensiones, facts de evidencia y detalle de etapas.
     modelo = construir_modelo(df_csep, df_od, df_sisud, df_etapas)
 
+    # STEP 6: calcular indicadores en memoria usando evidencia y hallazgos.
     fact_evidencia = pd.concat(
         [
             modelo["MI_FACT_MC_CSEP"],
@@ -63,6 +90,7 @@ def ejecutar(
 
     n_conf_m = int((df_multas.get("FG_CONFORME") == "S").sum()) if len(df_multas) else 0
 
+    # STEP 7: crear el resumen obligatorio de la corrida.
     resultado = pd.DataFrame(
         [
             {
@@ -104,5 +132,5 @@ def ejecutar(
         "MI_INDICADOR_RESULTADO": indicadores,
         "RESULTADO": resultado,
     }
-    out.update(modelo)
+    out.update(modelo)  # agrega MI_DIM_* + MI_FACT_MC_* + MI_DET_ETAPA_MC
     return out

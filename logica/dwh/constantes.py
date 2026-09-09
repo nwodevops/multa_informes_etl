@@ -1,4 +1,9 @@
-"""Constantes de corrida y mapa de fuentes F1/F2/F5 (multas). Semilla GAPPS (F4) histórica."""
+"""Constantes de corrida y mapa de fuentes F1/F2/F5 (multas). Semilla GAPPS (F4) histórica.
+
+ID_CARGA / FECHA_CARGA: se fijan al importar el módulo (una corrida = un id).
+FUENTE_REGISTRO: alias staging Hop → código de linaje que viaja en FUENTE_ORIGEN / ID_FUENTE.
+VACIOS: tokens que homologacion.vacio() trata como null (errores típicos de Sheets).
+"""
 
 from __future__ import annotations
 
@@ -7,9 +12,11 @@ from datetime import datetime
 ID_CARGA = datetime.now().strftime("%Y%m%d%H%M%S")
 FECHA_CARGA = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+# Tokens de planilla / Excel que NO son dato real
 VACIOS = {"", "#N/A", "#NA", "N/A", "NA", "NULL", "NONE", "-", "—", "#REF!", "#VALUE!"}
 
-# F1=familia Sheets OD (GS2), F2=GS1 CSEP Sheets (FUENTE_REGISTRO CAGR), F5=ORA
+# Clave Hop/staging → código linaje en DF / DIM_FUENTE_REGISTRO
+# F1=Sheets OD (GS2), F2=Sheets CSEP (GS1, código histórico CAGR), F5=ORA
 FUENTE_REGISTRO = {
     "GS2": "OD_SHEETS",
     "GS1": "CAGR",

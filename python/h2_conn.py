@@ -1,6 +1,11 @@
 """JDBC a H2 mem:csep. Compartido: capa STG (CREATE) y capa lógica (SELECT).
 
+Quién lo usa:
+  - create_stg.py / introspect → DDL STG_*
+  - io/leer_h2.py → SELECT post-staging (main.py)
+
 No hay reglas de negocio ni introspección aquí.
+Requiere jaydebeapi + jar en h2/lib/h2-*.jar y DB_H2_* en project-config.
 """
 
 from __future__ import annotations
@@ -11,6 +16,7 @@ H2_DRIVER = "org.h2.Driver"
 
 
 def find_h2_jar(root: Path) -> Path:
+    """Localiza el driver JDBC en h2/lib/."""
     lib = root / "h2" / "lib"
     jars = sorted(lib.glob("h2-*.jar"))
     if jars:

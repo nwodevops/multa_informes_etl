@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Verifica conteos en Oracle DW canónico (misma conexión que cargar_dw.py).
 
+Utilidad post-corrida / smoke: no transforma datos.
 Uso: .venv/bin/python python/verify_dw.py
 """
 
@@ -18,6 +19,7 @@ from config import load_vars, project_root, require_live_conn  # noqa: E402
 ESQUEMA_DEFAULT = "APP"
 ESQUEMA = ESQUEMA_DEFAULT
 
+# Tablas mínimas que deben existir tras una corrida exitosa de main.py
 TABLAS_NUCLEO = (
     "MI_FACT_MC_CSEP",
     "MI_FACT_MC_OD",

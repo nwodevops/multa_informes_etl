@@ -1,4 +1,13 @@
-"""Fase 4 — reglas R01–R05 y bitácora MI_DQ_HALLAZGO (lineamiento sec. 4)."""
+"""Fase 4 — reglas R01–R05, DQ_HALLAZGO y amarre H9 (lineamiento sec. 4).
+
+Principio (cuarentena blanda): los defectos se MARCAN (FG_CONFORME=N + hallazgo);
+NO se eliminan filas. La observación también es parte del entregable auditable.
+
+Amarre (_amarre): compara CONJUNTOS de claves entre Sheets y SISUD
+(resolución_norm|MONTO_UIT). Mide % de match; no hace INNER JOIN ni reduce el fact.
+
+Analogía Java: Validator que agrega ConstraintViolation sin lanzar excepción fatal.
+"""
 
 from __future__ import annotations
 
@@ -199,10 +208,15 @@ def _amarre(
     df_multas: pd.DataFrame,
     df_sisud: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Resumen MI_QA_AMARRE + detalle de claves sin match (MI_QA_AMARRE_DETALLE)."""
+    """Compara sets de claves (H9). Devuelve resumen % + detalle SOLO_IZQ / SOLO_DER.
+
+    Puente principal de negocio: RES_MONTO_Sheets_vs_SISUD
+    (misma clave que usa SQL 07 para el enrich, pero aquí solo se MIDE).
+    """
     puentes: list[tuple[str, pd.Series, pd.Series, str]] = []
     if not df_multas.empty:
         excel = df_multas[df_multas["FUENTE_ORIGEN"].isin(list(_FUENTES_SHEET))]
+        # Coherencia interna Sheets: ¿hay COD_MA sin expediente o viceversa?
         if "COD_MA" in excel.columns and "NUMERO_EXPEDIENTE" in excel.columns:
             puentes.append(
                 (
@@ -215,6 +229,7 @@ def _amarre(
         sisud = df_sisud if df_sisud is not None else pd.DataFrame()
         if sisud.empty and "FUENTE_ORIGEN" in df_multas.columns:
             sisud = df_multas[df_multas["FUENTE_ORIGEN"] == "SISUD_VW"]
+        # Correspondencia planillas ↔ núcleo (resolución normalizada + monto UIT)
         if not excel.empty and sisud is not None and not sisud.empty:
             puentes.append(
                 (

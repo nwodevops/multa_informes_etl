@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """Crea tablas STG_* en H2 a partir de inputs.yaml. No extrae filas.
 
+Lo llama Hop (acción Shell previa al stage) o el harness antes de cargar datos.
 CAPA STG/DDL — no importar python/io ni logica/.
-Uso (desde la raíz del proyecto, H2 ya levantado tras Reset):
+
+Flujo:
+  inputs.yaml → introspect (oracle|sheets|excel) → CREATE TABLE STG_* en H2
+
+Uso (H2 ya levantado tras Reset):
   .venv/bin/python python/create_stg.py
 
 sources: [] -> no-op exit 0 (smoke test del arquetipo).
@@ -22,6 +27,7 @@ from config import load_sources, load_vars, project_root, require_live_conn  # n
 from introspect import excel, oracle, sheets  # noqa: E402
 from introspect.h2_ddl import apply_h2, create_table_sql, write_script  # noqa: E402
 
+# type en inputs.yaml → función que deduce columnas del origen
 HANDLERS = {
     "oracle": oracle.introspect,
     "sheets": sheets.introspect,

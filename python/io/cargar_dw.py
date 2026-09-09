@@ -1,7 +1,15 @@
-"""Carga Oracle DW canónica: wipe MI_*/VW_* → DDL 01+02+DQ(+05) → INSERT → enrich 07.
+"""Carga Oracle DW canónica — invocada por python/main.py tras logica/.
 
-Publica estrella + MI_DQ_HALLAZGO (R01–R05). No publica MI_QA_* ni indicadores K ni vistas.
-MI_AUD_* lo carga python/audit/ tras esta función.
+Orden:
+  1) wipe MI_*/VW_* del esquema sesión (APP local / REPOCSEP remote)
+  2) DDL 01_dimensiones + 02_hechos (+ MI_DQ_HALLAZGO)
+  3) INSERT dims + 3 facts evidencia + DET + DQ
+  4) enrich SQL 07 → MI_FACT_MULTA_COERCITIVA (Sheet manda + CUM/CAM)
+
+No publica MI_QA_* ni indicadores K ni vistas VW_MC_*.
+MI_AUD_* lo carga python/audit/cargar_aud.py después (también desde main.py).
+
+DDL: docs/lineamientos/ddl/
 """
 
 from __future__ import annotations
@@ -18,6 +26,7 @@ ESQUEMA_DEFAULT = "APP"
 ESQUEMA = ESQUEMA_DEFAULT
 DDL_DIR = "docs/lineamientos/ddl"
 
+# --- Catálogo de objetos del modelo canónico ---
 TABLAS_DIM = (
     "MI_DIM_TIEMPO",
     "MI_DIM_ADMINISTRADO",
@@ -51,11 +60,12 @@ INSERT_ORDEN = (
     *TABLAS_EVIDENCIA,
     "MI_DET_ETAPA_MC",
     "MI_DQ_HALLAZGO",
-    # MI_FACT_MULTA_COERCITIVA lo llena 07_enrich_sheets_sisud.sql
+    # MI_FACT_MULTA_COERCITIVA NO se inserta desde pandas: lo llena SQL 07
 )
 
 
 def _connect(root: Path):
+    """Conexión oracledb al destino DW (connection id Hop: oracle_dw)."""
     variables = load_vars(root)
     cv = require_live_conn("oracle_dw", variables)
     try:
@@ -415,22 +425,30 @@ def _insert_df(cur, tabla: str, df: pd.DataFrame, skip_identity: bool = True) ->
 
 
 def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict[str, int]:
-    """Wipe canónico + DDL estrella + INSERT + enrich 07. Devuelve COUNT por tabla."""
+    """Punto de entrada desde main.py: wipe + DDL + INSERT evidencia + enrich 07.
+
+    `tablas` viene filtrado por main (MI_DIM_*, MI_FACT_MC_*, MI_DET_*, MI_DQ_HALLAZGO).
+    Devuelve COUNT por tabla publicada (incluye MI_FACT_MULTA_COERCITIVA post-enrich).
+    """
     root = root or project_root()
     if not tablas:
         print("AVISO: no hay tablas para cargar a BD_CURSOR.", flush=True)
         return {}
 
+    # STEP 7.1: abrir Oracle y alinear el esquema con el usuario de la sesión.
     conn, cv = _connect(root)
     counts: dict[str, int] = {}
     try:
         cur = conn.cursor()
         try:
             _bind_schema(cur)
+            # STEP 7.2: limpiar objetos MI_*/VW_* y recrear estrella + DQ.
             _prepare_schema(cur, root)
             _apply_column_comments(cur, root)
             conn.commit()
 
+            # STEP 7.3: insertar dimensiones, facts de evidencia, detalle y DQ.
+            # INSERT_ORDEN respeta las dependencias de las claves foráneas.
             for tabla in INSERT_ORDEN:
                 df = tablas.get(tabla)
                 if df is None:
@@ -442,10 +460,12 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
                 ok = "OK" if n_bd == n_df else "REVISAR"
                 print(f"DW: {tabla}: {n_df} filas -> {n_bd} en BD ({ok})", flush=True)
 
+            # STEP 7.4: ejecutar SQL 07 para construir el fact de negocio enriquecido.
             n_enriq = _run_enrich_sheets_sisud(cur, root)
             counts["MI_FACT_MULTA_COERCITIVA"] = n_enriq
             conn.commit()
 
+            # STEP 7.5: comparar conteos esperados contra lo persistido en Oracle.
             _verificar_post_carga(cur, counts, cv)
             conn.commit()
         finally:

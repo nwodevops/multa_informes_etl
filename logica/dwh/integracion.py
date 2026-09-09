@@ -1,7 +1,18 @@
 """Fase 3 — integración por universo: F2 CSEP, F1 OD, F5 SISUD + etapas.
 
-Tres dataframes de evidencia (sin merge enriquecido). el hecho enriquecido se arma en Oracle SQL
-después de cargar MI_FACT_MC_CSEP / _OD / _SISUD.
+Qué hace:
+  1) aplicar_homologacion (tipificar valores)
+  2) rename origen → columnas canónicas (equivalencias de NOMBRE de campo)
+  3) recortar al molde COLS_MULTAS / COLS_ETAPAS
+
+Qué NO hace:
+  - No hace JOIN/merge entre F1, F2 y F5.
+  - El hecho enriquecido (Sheet + CUM/CAM) se arma en Oracle SQL 07.
+
+Analogía Java: Mapper por fuente → DTO canónico común; tres listas separadas.
+
+Códigos FUENTE_ORIGEN (constantes.FUENTE_REGISTRO):
+  GS1/ETAPAS → CAGR (F2) | GS2 → OD_SHEETS (F1) | ORA → SISUD_VW (F5)
 """
 
 from __future__ import annotations
@@ -11,6 +22,7 @@ import pandas as pd
 from .constantes import FUENTE_REGISTRO, ID_CARGA
 from .homologacion import aplicar_homologacion
 
+# Molde canónico pre-FACT (ANEXO_MAPEO_CAMPOS). Todo lo que no esté aquí se descarta.
 COLS_MULTAS = [
     "ID_CARGA",
     "FUENTE_ORIGEN",
@@ -76,11 +88,13 @@ COLS_ETAPAS = [
 
 
 def _renombrar(df: pd.DataFrame, mapeo: dict[str, str]) -> pd.DataFrame:
+    """Aplica solo las claves del mapeo que existan en el DataFrame (rename seguro)."""
     exist = {k: v for k, v in mapeo.items() if k in df.columns}
     return df.rename(columns=exist)
 
 
 def _a_canonico(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
+    """Fija ID_CARGA, completa columnas faltantes con NA y recorta al molde `cols`."""
     out = df.copy()
     out.insert(0, "ID_CARGA", ID_CARGA)
     for c in cols:
@@ -90,7 +104,9 @@ def _a_canonico(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
 
 
 def _integrar_gs2(gs2: pd.DataFrame, cod_od: str | None = None) -> pd.DataFrame:
+    """F1 OD Sheets → bloque canónico OD_SHEETS (territorio por COD_OD)."""
     h = aplicar_homologacion(gs2, FUENTE_REGISTRO["GS2"])
+    # Equivalencias de NOMBRE Sheet OD → canónico
     m = {
         "FN_MC": "F_NOTIF_DCG",
         "FN_RES_MC": "F_NOTIF_RES_MC",
@@ -99,7 +115,7 @@ def _integrar_gs2(gs2: pd.DataFrame, cod_od: str | None = None) -> pd.DataFrame:
         "AMERIT_MC": "AMERITA_MC",
         "REQ_VERIF_CAMPO": "REQUIERE_VERIF_CAMPO",
         "EXP_INF_INCUMP": "NUMERO_EXPEDIENTE",
-        "MULTA_UIT": "MONTO_UIT",
+        "MULTA_UIT": "MONTO_UIT",  # crítico: sin esto el fact queda sin montos F1
         "MULTA_S": "MONTO_S",
     }
     h = _renombrar(h, m)
@@ -114,6 +130,7 @@ def _integrar_gs2(gs2: pd.DataFrame, cod_od: str | None = None) -> pd.DataFrame:
 
 
 def _integrar_gs1(gs1: pd.DataFrame) -> pd.DataFrame:
+    """F2 CSEP Sheets → bloque canónico CAGR (territorio por COORD / COD_UNIDAD)."""
     h = aplicar_homologacion(gs1, FUENTE_REGISTRO["GS1"])
     m = {
         "FN_MC": "F_NOTIF_DCG",
@@ -124,10 +141,11 @@ def _integrar_gs1(gs1: pd.DataFrame) -> pd.DataFrame:
         "REQ_VERIF_CAMPO": "REQUIERE_VERIF_CAMPO",
         "EXP_INF_INCUMP": "NUMERO_EXPEDIENTE",
         "ADM": "ADMINISTRADO",
-        "MULTA_UIT": "MONTO_UIT",
+        "MULTA_UIT": "MONTO_UIT",  # crítico: sin esto el fact queda sin montos F2
         "MULTA_S": "MONTO_S",
     }
     h = _renombrar(h, m)
+    # Territorio CSEP: COORD manda; si vacío, COD_UNIDAD del catálogo de staging
     if "COORD" in gs1.columns:
         h["COORD"] = gs1["COORD"].values
     if "COD_UNIDAD" in gs1.columns:
@@ -138,6 +156,7 @@ def _integrar_gs1(gs1: pd.DataFrame) -> pd.DataFrame:
 
 
 def _integrar_ora(ora: pd.DataFrame) -> pd.DataFrame:
+    """F5 SISUD → bloque canónico SISUD_VW (ya trae CUM/CAM; MONTO_MULTA = UIT)."""
     if ora is None or ora.empty:
         return _a_canonico(pd.DataFrame(), COLS_MULTAS)
     h = aplicar_homologacion(ora, FUENTE_REGISTRO["ORA"])
@@ -153,6 +172,7 @@ def _integrar_ora(ora: pd.DataFrame) -> pd.DataFrame:
 
 
 def _integrar_etapas(etapas: pd.DataFrame) -> pd.DataFrame:
+    """F2-ET etapas → molde COLS_ETAPAS (detalle 1:N del proyecto CSEP)."""
     h = aplicar_homologacion(etapas, FUENTE_REGISTRO["ETAPAS"])
     m = {
         "NRO_ETAPA_MC": "NRO_ETAPA",
@@ -175,7 +195,7 @@ def integrar(
     etapas: pd.DataFrame,
     ora: pd.DataFrame,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Devuelve (df_csep, df_od, df_sisud, df_etapas). Sin enrich Sheets←SISUD."""
+    """Devuelve (df_csep, df_od, df_sisud, df_etapas). Tres evidencias + etapas; sin enrich."""
     df_csep = _integrar_gs1(gs1)
     df_od = _integrar_gs2(gs2, None)
     df_sisud = _integrar_ora(ora)

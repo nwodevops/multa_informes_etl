@@ -1,4 +1,7 @@
-"""Fase 2 — perfilamiento de tablas STG (nulos, duplicados, formatos, H1–H9)."""
+"""Fase 2 — perfilamiento de tablas STG (nulos, duplicados, formatos, H1–H9).
+
+Diagnóstico de inputs: no tipifica ni arma facts. Sale PROF_RESUMEN / PROF_HALLAZGO.
+"""
 
 from __future__ import annotations
 
