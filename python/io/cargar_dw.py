@@ -258,10 +258,10 @@ def _run_enrich_sheets_sisud(cur, root: Path) -> int:
             f"falta {path} (en {ddl_dir}: {', '.join(listing) or 'vacío/inexistente'})"
         )
     if not all(_table_exists(cur, t) for t in TABLAS_EVIDENCIA):
-        raise RuntimeError("faltan facts evidencia para enrich Sheets←SISUD")
+        raise RuntimeError("faltan facts evidencia para enrich Sheets-SISUD")
     if not _table_exists(cur, "MI_FACT_MULTA_COERCITIVA"):
         raise RuntimeError("falta MI_FACT_MULTA_COERCITIVA")
-    print("DW: aplicando enrich Sheets←SISUD (07)...", flush=True)
+    print("DW: aplicando enrich Sheets-SISUD (07)...", flush=True)
     try:
         for stmt in _split_sql(path.read_text(encoding="utf-8")):
             u = stmt.upper().strip()
@@ -270,7 +270,7 @@ def _run_enrich_sheets_sisud(cur, root: Path) -> int:
             cur.execute(stmt)
     except Exception as exc:
         print(f"ERROR enrich 07: {exc}", flush=True)
-        raise RuntimeError(f"falló enrich Sheets←SISUD (07): {exc}") from exc
+        raise RuntimeError(f"falló enrich Sheets-SISUD (07): {exc}") from exc
     cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.MI_FACT_MULTA_COERCITIVA")
     n = int(cur.fetchone()[0])
     cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.MI_FACT_MC_CSEP")

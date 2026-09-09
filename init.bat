@@ -48,6 +48,7 @@ echo HOP_RUN=%HOP_RUN%>> "%RUN_LOG%"
 echo HOP_PROJECT=%HOP_PROJECT%>> "%RUN_LOG%"
 echo.>> "%RUN_LOG%"
 echo %GREEN%==>%NC% HOP_RUN=%HOP_RUN%
+set PYTHONIOENCODING=utf-8
 
 call :step "Validando feature_list.json (max. una in_progress)"
 "%PY%" -c "import json,sys; d=json.loads(open('feature_list.json',encoding='utf-8').read()); act=[f for f in d.get('features',[]) if f.get('status')=='in_progress']; print(f'features: {len(d.get(\"features\",[]))}, in_progress: {len(act)}') if len(act)<=1 else sys.exit(f'mas de una feature in_progress: {[f[\"id\"] for f in act]}')" >> "%RUN_LOG%" 2>&1
@@ -108,6 +109,20 @@ if /I "%HOP_RUN%"=="hop-run" (
 call "%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_excel.hpl" -r local >> "%RUN_LOG%" 2>&1
 :after_excel
 
+call :step "Staging F2 CSEP Google Sheets (unidades activas)"
+call scripts\stage_csep_sheets.cmd >> "%RUN_LOG%" 2>&1
+if errorlevel 1 (
+    call :fail "stage_csep_sheets.cmd failed"
+    exit /b 1
+)
+
+call :step "Staging F1 ODs Google Sheets (31 oficinas)"
+call scripts\stage_ods_sheets.cmd >> "%RUN_LOG%" 2>&1
+if errorlevel 1 (
+    call :fail "stage_ods_sheets.cmd failed"
+    exit /b 1
+)
+
 call :step "Staging Oracle SISUD (Hop directo)"
 if /I "%HOP_RUN%"=="hop-run" (
     where hop-run >nul 2>&1
@@ -145,9 +160,19 @@ if errorlevel 1 (
     call :fail "no hay salida MI_DIM_* en el log"
     exit /b 1
 )
-findstr /C:"Salida MI_FACT_MULTA_COERCITIVA" "%LOG%" >nul 2>&1
+findstr /C:"Salida MI_FACT_MC_CSEP" "%LOG%" >nul 2>&1
 if errorlevel 1 (
-    call :fail "no hay salida MI_FACT_MULTA_COERCITIVA en el log"
+    call :fail "no hay salida MI_FACT_MC_CSEP en el log"
+    exit /b 1
+)
+findstr /C:"Salida MI_FACT_MC_OD" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida MI_FACT_MC_OD en el log"
+    exit /b 1
+)
+findstr /C:"Salida MI_FACT_MC_SISUD" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida MI_FACT_MC_SISUD en el log"
     exit /b 1
 )
 findstr /C:"Salida MI_INDICADOR_RESULTADO" "%LOG%" >nul 2>&1
@@ -183,20 +208,13 @@ if errorlevel 1 (
 )
 
 call :step "Verificacion Oracle K1-K5"
-"%PY%" -c "import sys; sys.path.insert(0,'python'); from config import require_live_conn, load_vars; from pathlib import Path; require_live_conn('oracle_dw',load_vars(Path('.')))" >nul 2>&1
+"%PY%" python\verify_oracle_k.py >> "%RUN_LOG%" 2>&1
 if errorlevel 1 (
-    call :warn "Oracle DW omitido (credenciales placeholder)"
-) else (
-    echo %GREEN%==>%NC% Oracle DW configurado, verificando indicadores...
-    echo ==> Oracle DW configurado, verificando indicadores...>> "%RUN_LOG%"
-"%PY%" -c "import sys; sys.path.insert(0,'python'); import oracledb; from config import require_live_conn, load_vars; from pathlib import Path; cv=require_live_conn('oracle_dw',load_vars(Path('.'))); dsn=oracledb.makedsn(cv['host'],int(cv['port'] or '1521'),service_name=cv['database']); conn=oracledb.connect(user=cv['username'],password=cv['password'],dsn=dsn); cur=conn.cursor(); cur.execute('SELECT COUNT(*) FROM APP.MI_INDICADOR_RESULTADO'); print(f'MI_INDICADOR_RESULTADO: {cur.fetchone()[0]} filas en Oracle'); cur.execute('SELECT DISTINCT COD_INDICADOR FROM APP.MI_INDICADOR_RESULTADO ORDER BY 1'); codes={r[0] for r in cur.fetchall()}; missing=sorted({'K1','K2','K3','K4','K5'}-codes); raise SystemExit(f'faltan indicadores en Oracle: {missing}') if missing else None; print('Indicadores K1-K5 presentes'); cur.execute(\"SELECT COUNT(*) FROM all_tables WHERE owner='APP' AND table_name='MI_FACT_INFORME_SUPERVISION'\"); n=cur.fetchone()[0]; raise SystemExit('APP.MI_FACT_INFORME_SUPERVISION aun existe') if n else None; print('MI_FACT_INFORME_SUPERVISION: inexistente'); cur.execute(\"SELECT COUNT(*) FROM all_tab_columns WHERE owner='APP' AND table_name='MI_FACT_MULTA_COERCITIVA' AND column_name='ID_INFORME'\"); n=cur.fetchone()[0]; raise SystemExit('ID_INFORME aun existe') if n else None; print('ID_INFORME: inexistente en MI_FACT_MULTA_COERCITIVA')" >> "%RUN_LOG%" 2>&1
-    if errorlevel 1 (
-        call :fail "Verificacion Oracle K1-K5 fallo"
-        exit /b 1
-    )
-    findstr /C:"MI_INDICADOR_RESULTADO:" "%RUN_LOG%"
-    findstr /C:"Indicadores K1-K5" "%RUN_LOG%"
+    call :fail "Verificacion Oracle K1-K5 fallo"
+    exit /b 1
 )
+findstr /C:"MI_INDICADOR_RESULTADO:" "%RUN_LOG%"
+findstr /C:"Indicadores K1-K5" "%RUN_LOG%"
 
 (
   echo.
