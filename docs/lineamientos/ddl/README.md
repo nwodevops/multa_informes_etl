@@ -1,7 +1,7 @@
 # DDL — DWH OEFA (Oracle BD_CURSOR)
 
 Scripts de creación según `PROPUESTA_ADAPTADA_ETL.md`. Runtime: wipe + DDL + INSERT en
-`python/io/cargar_dw.py` (modelo **canónico flaco**).
+`python/io/cargar_dw.py` (estrella + bitácora `MI_DQ_HALLAZGO`).
 
 Guía de lectura: [`../../adjuntos/guia-leer-modelo-dimensional.md`](../../adjuntos/guia-leer-modelo-dimensional.md).  
 Audit 1:1: [`audit/README.md`](audit/README.md).
@@ -11,16 +11,17 @@ Audit 1:1: [`audit/README.md`](audit/README.md).
 1. **Wipe canónico** — DROP todas `VW_MC_%`/`VW_FCT_%` y todas `MI_%`.
 2. **`01_dimensiones.sql`** — 8 dims (+ miembro ND `-1`).
 3. **`02_hechos.sql`** — 3 facts evidencia + `MI_FACT_MULTA_COERCITIVA` (vacío hasta `07`) + `MI_DET_ETAPA_MC`.
-4. **`05_comentarios.sql`** — comentarios (best-effort; ignora objetos ausentes).
-5. **INSERT** Python — dims + evidencia + DET.
-6. **`07_enrich_sheets_sisud.sql`** — enriquecido Sheet←SISUD.
-7. **`python/audit/cargar_aud.py`** — `MI_AUD_*` foto cruda STG (CREATE dinámico).
+4. **`MI_DQ_HALLAZGO`** — desde `03_bitacora.sql` filtrado (sin `MI_QA_*`).
+5. **`05_comentarios.sql`** — comentarios (best-effort; ignora objetos ausentes).
+6. **INSERT** Python — dims + evidencia + DET + `MI_DQ_HALLAZGO`.
+7. **`07_enrich_sheets_sisud.sql`** — enriquecido Sheet←SISUD.
+8. **`python/audit/cargar_aud.py`** — `MI_AUD_*` foto cruda STG (CREATE dinámico).
 
-## Histórico TDR (no aplicados por runtime)
+## Histórico TDR / no publicados en runtime
 
-| Script | Contenido | Nota |
+| Script / objeto | Contenido | Nota |
 |---|---|---|
-| `03_bitacora.sql` | DQ + QA amarre | Calculado en Python; **no** se publica a Oracle |
+| `03_bitacora.sql` (`MI_QA_*`) | Amarre H9 | Se calcula en Python; **no** se publica a Oracle |
 | `04_indicadores.sql` | K1–K5 | Idem |
 | `06_vistas.sql` | `VW_MC_*` | **Deprecado**; consultar `MI_FACT_*` directo |
 

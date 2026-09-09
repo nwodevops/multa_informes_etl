@@ -24,6 +24,7 @@ TABLAS_NUCLEO = (
     "MI_FACT_MC_SISUD",
     "MI_FACT_MULTA_COERCITIVA",
     "MI_DET_ETAPA_MC",
+    "MI_DQ_HALLAZGO",
     "MI_AUD_F1_OD_MULTAS",
     "MI_AUD_F2_CSEP_MULTAS",
     "MI_AUD_F2_CSEP_ETAPAS",
@@ -31,7 +32,6 @@ TABLAS_NUCLEO = (
 )
 
 PROHIBIDAS = (
-    "MI_DQ_HALLAZGO",
     "MI_QA_AMARRE",
     "MI_QA_AMARRE_DETALLE",
     "MI_INDICADOR_RESULTADO",
@@ -98,7 +98,7 @@ def main() -> int:
             print(f"AVISO: tablas consultoría aún en esquema: {', '.join(leftover)}")
             rc = 1
         else:
-            print("DQ/QA/K en Oracle: ausentes (OK)")
+            print("QA/K en Oracle: ausentes (OK); MI_DQ_HALLAZGO es canónico")
 
     return rc
 

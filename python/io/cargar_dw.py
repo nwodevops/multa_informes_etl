@@ -1,6 +1,6 @@
-"""Carga Oracle DW canónica: wipe MI_*/VW_* → DDL 01+02(+05) → INSERT estrella → enrich 07.
+"""Carga Oracle DW canónica: wipe MI_*/VW_* → DDL 01+02+DQ(+05) → INSERT → enrich 07.
 
-No aplica 03/04/06 (DQ/QA/K y vistas). Esos se calculan en Python en memoria.
+Publica estrella + MI_DQ_HALLAZGO (R01–R05). No publica MI_QA_* ni indicadores K ni vistas.
 MI_AUD_* lo carga python/audit/ tras esta función.
 """
 
@@ -50,6 +50,7 @@ INSERT_ORDEN = (
     *TABLAS_DIM,
     *TABLAS_EVIDENCIA,
     "MI_DET_ETAPA_MC",
+    "MI_DQ_HALLAZGO",
     # MI_FACT_MULTA_COERCITIVA lo llena 07_enrich_sheets_sisud.sql
 )
 
@@ -95,7 +96,12 @@ def _model_complete(cur) -> bool:
 def _verificar_post_carga(cur, counts: dict[str, int], cv: dict[str, str]) -> None:
     dest = _destino_label(cv)
     print(f"DW: destino {dest}", flush=True)
-    for tabla in (*TABLAS_EVIDENCIA, "MI_FACT_MULTA_COERCITIVA", "MI_DET_ETAPA_MC"):
+    for tabla in (
+        *TABLAS_EVIDENCIA,
+        "MI_FACT_MULTA_COERCITIVA",
+        "MI_DET_ETAPA_MC",
+        "MI_DQ_HALLAZGO",
+    ):
         if tabla not in counts and not _table_exists(cur, tabla):
             continue
         cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.{tabla}")
@@ -201,18 +207,38 @@ def _drop_model(cur) -> None:
         _drop_table(cur, tabla)
 
 
+def _run_dq_hallazgo_ddl(cur, root: Path, tablespace: str | None = None) -> None:
+    """Aplica solo MI_DQ_HALLAZGO (+ índices) desde 03_bitacora.sql; omite MI_QA_*."""
+    path = root / DDL_DIR / "03_bitacora.sql"
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    print("DW: aplicando MI_DQ_HALLAZGO (03 filtrado, sin MI_QA_*)...", flush=True)
+    for stmt in _split_sql(path.read_text(encoding="utf-8")):
+        u = stmt.upper()
+        if u.startswith("COMMIT") or not u.strip():
+            continue
+        if "MI_QA_AMARRE" in u:
+            continue
+        if "MI_DQ_HALLAZGO" not in u and "IX_DQ_" not in u:
+            continue
+        if tablespace:
+            stmt = _inject_tablespace(stmt, tablespace)
+        cur.execute(stmt)
+
+
 def _prepare_schema(cur, root: Path) -> None:
-    """Wipe total → CREATE solo estrella (01+02). Sin bitácora/KPIs/vistas."""
+    """Wipe total → CREATE estrella (01+02) + MI_DQ_HALLAZGO. Sin QA/KPIs/vistas."""
     ddl_root = root / DDL_DIR
     ts = _user_tablespace(cur)
     print(
-        f"DW: wipe canónico MI_*/VW_* → DDL 01+02 (TABLESPACE {ts})...",
+        f"DW: wipe canónico MI_*/VW_* → DDL 01+02+DQ (TABLESPACE {ts})...",
         flush=True,
     )
     _drop_model(cur)
     for name in ("01_dimensiones.sql", "02_hechos.sql"):
         print(f"DW: aplicando {name}...", flush=True)
         _run_ddl_file(cur, ddl_root / name, ts)
+    _run_dq_hallazgo_ddl(cur, root, ts)
 
 
 def _run_enrich_sheets_sisud(cur, root: Path) -> int:

@@ -5,9 +5,9 @@
   "entorno": "windows-exclusive",
   "reglas": {
     "una_feature_activa": "Como máximo un item con status in_progress",
-    "verificacion": "Windows: .\\switch-env.ps1 remote + init.bat o wf_main_win.hwf → HARNESS OK / Success",
+    "verificacion": "Windows: .\\switch-env.ps1 remote + init.bat o wf_main_win.hwf → Success; Linux: ./switch-env.sh local|remote + wf_main.hwf → Success",
     "trazabilidad": "Implementador escribe progress/impl_<id>.md; revisor progress/review_<id>.md",
-    "rama": "Esta rama windows es exclusiva para ejecución en Windows; Linux usa main"
+    "rama": "windows = ejecución Win remota; linux = harness/desarrollo Linux; feature_list compartido entre ambas"
   },
   "features": [
     {
@@ -158,7 +158,8 @@
       "passes": true,
       "criterio": "Vistas VW_MC_CSEP|OD|SISUD vía MI_DIM_FUENTE_REGISTRO (F1+F2+F5; sin VW_MC_GAPPS); no sumar universos por defecto; ./init.sh HARNESS OK",
       "doc": "docs/lineamientos/ddl/06_vistas.sql",
-      "evidencia": "progress/impl_mejoras-kimball-2-7.md"
+      "evidencia": "progress/impl_mejoras-kimball-2-7.md",
+      "nota": "Histórico TDR: 06_vistas.sql queda en repo pero ya no se aplica; wipe canónico elimina VW_MC_*/VW_FCT_* (ver dw-wipe-canonico-aud)"
     },
     {
       "id": "amarre-h9-detalle",
@@ -226,16 +227,25 @@
       "title": "Atributos operativos Sheet (JEFE, UF, etapas, resultado, estados texto) en facts CSEP + enriquecida",
       "status": "done",
       "passes": true,
-      "criterio": "P0 en MI_FACT_MC_CSEP/OD/SISUD + MI_FACT_MULTA_COERCITIVA; caso 0153 → JEFE=MEJIA, HOMERO; VW_MC_* exponen cols; corrida linux OK 990/281/1271",
+      "criterio": "P0 en MI_FACT_MC_CSEP/OD/SISUD + MI_FACT_MULTA_COERCITIVA; caso 0153 → JEFE=MEJIA, HOMERO; corrida linux OK 990/281/1271",
       "doc": "docs/lineamientos/ddl/02_hechos.sql"
+    },
+    {
+      "id": "dw-wipe-canonico-aud",
+      "title": "DW Oracle: wipe MI_*/VW_* + DDL 01+02+DQ(+05) + enrich 07 + MI_AUD_* 1:1",
+      "status": "done",
+      "passes": true,
+      "criterio": "Oracle: estrella (dims/facts/DET) + MI_DQ_HALLAZGO + enrich; sin 04/06 ni MI_QA_*/K en runtime; MI_AUD_* = conteos STG; linux wf_main OK 990/281/534/1271",
+      "doc": "python/CONTRATO.md",
+      "nota": "04/06 y MI_QA_* quedan fuera de Oracle; MI_DQ_HALLAZGO restaurado (R01–R05)"
     },
     {
       "id": "fase-remote-deploy",
       "title": "Despliegue remoto Windows (REPOCSEP → 10.6.0.15:1532/dvoefacore)",
       "status": "in_progress",
-      "criterio": "git pull + switch-env.ps1 remote + wf_main_win/init.bat → Success + DW POST-CARGA 990/281/534/1271 + K1–K5",
+      "criterio": "git pull + switch-env.ps1 remote + wf_main_win/init.bat → Success; POST-CARGA CSEP/OD/SISUD/enriquecida ≈ 990/281/534/1271; MI_AUD_* = STG; MI_DQ_HALLAZGO presente; sin VW_MC_* ni MI_QA_/MI_INDICADOR_*",
       "doc": "environments/remote.json",
-      "nota": "Tras merge linux (facts evidencia + wipe canónico): re-corrida WIN con client_secret.json"
+      "nota": "Re-corrida Win tras wipe + MI_AUD_* + MI_DQ_HALLAZGO; requiere client_secret.json"
     }
   ]
 }

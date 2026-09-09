@@ -75,7 +75,7 @@ Prefijo de tablas: **`MI_`**. Esquema típico: `APP` (local) o `REPOCSEP` (remot
    · MI_AUD_F1_OD_MULTAS / MI_AUD_F2_CSEP_MULTAS / MI_AUD_F2_CSEP_ETAPAS / MI_AUD_F5_SISUD_VW
 
    Calidad / KPIs: se calculan en la corrida Python (memoria / RESULTADO).
-   No se publican a Oracle (no hay MI_DQ_*, MI_QA_*, MI_INDICADOR_* en destino).
+   Se publican a Oracle: `MI_DQ_HALLAZGO` (R01–R05). No se publican `MI_QA_*` ni `MI_INDICADOR_*`.
 ```
 
 Cómo se arma el enriquecido (lookup): [`../lineamientos/extra/manual-como-se-arma-el-fact.md`](../lineamientos/extra/manual-como-se-arma-el-fact.md).
@@ -153,7 +153,7 @@ Columnas útiles para orientarte:
 | `MI_AUD_F2_CSEP_ETAPAS` | Una fila cruda de etapas CSEP | Auditoría 1:1 vs hoja etapas F2 |
 | `MI_AUD_F5_SISUD_VW` | Una fila cruda de la vista SISUD | Auditoría 1:1 vs origen F5 |
 
-> DQ / QA amarre / KPIs K1–K5 se calculan en la corrida ETL (memoria). **No** hay tablas `MI_DQ_*` / `MI_QA_*` / `MI_INDICADOR_*` en Oracle.
+> R01–R05 se materializan en Oracle como `MI_DQ_HALLAZGO`. QA amarre / KPIs K1–K5 se calculan en la corrida ETL (memoria). **No** hay tablas `MI_QA_*` / `MI_INDICADOR_*` en Oracle.
 
 ### Clave especial: `-1`
 

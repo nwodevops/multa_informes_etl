@@ -13,8 +13,8 @@ CAPA POST-STAGING (lineamientos Fases 2–7)
   python/io/leer_h2.py      ENTRADA: H2 STG_* → DataFrames
   logica/ejecutar.py        delega a logica/dwh/
   logica/dwh/               perfil … dimensional (3 facts) … calidad/indicadores (memoria)
-  python/io/cargar_dw.py    SALIDA estrella: wipe canónico MI_*/VW_* + DDL 01+02(+05)
-                            + INSERT dims/facts/DET + SQL 07 enrich
+  python/io/cargar_dw.py    SALIDA: wipe canónico MI_*/VW_* + DDL 01+02+DQ(+05)
+                            + INSERT dims/facts/DET/MI_DQ_HALLAZGO + SQL 07 enrich
   python/audit/cargar_aud.py  MI_AUD_* 1:1 desde STG (fuera de estrella)
 ```
 
@@ -33,12 +33,13 @@ Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F5 SISUD. **Sin MySQL.*
 
 ## Salida
 
-### Publicada en Oracle (canónico flaco)
+### Publicada en Oracle (canónico)
 
 | Nombre | Qué es |
 |---|---|
 | `MI_DIM_*` / `MI_FACT_MC_CSEP` / `_OD` / `_SISUD` / `MI_DET_ETAPA_MC` | Estrella evidencia |
 | `MI_FACT_MULTA_COERCITIVA` | Negocio enrich SQL 07 (solo Oracle) |
+| `MI_DQ_HALLAZGO` | Bitácora R01–R05 (cuarentena blanda; no elimina filas) |
 | `MI_AUD_F1_OD_MULTAS` / `MI_AUD_F2_CSEP_MULTAS` / `MI_AUD_F2_CSEP_ETAPAS` / `MI_AUD_F5_SISUD_VW` | Foto cruda STG 1:1 |
 
 ### Solo memoria de corrida (no Oracle)
@@ -46,12 +47,12 @@ Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F5 SISUD. **Sin MySQL.*
 | Nombre | Fase | Qué es |
 |---|---|---|
 | `PROF_*` / `DICCIONARIO` / `DF_*` | 2–4 | Intermedios |
-| `MI_DQ_HALLAZGO` / `MI_QA_AMARRE*` | 4 | Calidad + amarre H9 |
+| `MI_QA_AMARRE*` | 4 | Amarre H9 (resumen/detalle) |
 | `MI_INDICADOR_RESULTADO` | 7 | KPIs K1–K5 |
 | `RESULTADO` | 2–7 | Resumen de corrida |
 
-Carga Oracle: wipe **todas** `MI_*` y `VW_MC_*`/`VW_FCT_*` → DDL **solo** `01`+`02` (+ comentarios `05`) → INSERT estrella → enrich `07` → `python/audit` recrea `MI_AUD_*`.  
-**No** se aplican `03`/`04`/`06` en runtime (históricos TDR en `docs/lineamientos/ddl/`).
+Carga Oracle: wipe **todas** `MI_*` y `VW_MC_*`/`VW_FCT_*` → DDL `01`+`02` + `MI_DQ_HALLAZGO` (03 filtrado) (+ comentarios `05`) → INSERT estrella/DQ → enrich `07` → `python/audit` recrea `MI_AUD_*`.  
+**No** se aplican `04`/`06` ni tablas `MI_QA_*` en runtime.
 
 Windows/REPOCSEP: cleanup manual de vistas/`MI_*` viejos una vez; luego el wipe canónico mantiene el esquema flaco. Linux/Docker: wipe total cada corrida.
 

@@ -74,7 +74,8 @@ flowchart TB
 | **Hecho negocio** | `MI_FACT_MULTA_COERCITIVA` | Sheets + CUM/CAM (enrich SQL 07) |
 | **Detalle** | `MI_DET_ETAPA_MC` | Etapas del flujo interno (1:N; FK a evidencia CSEP) |
 | **Audit** | `MI_AUD_F1_*` / `F2_*` / `F5_*` | Foto cruda STG 1:1 (fuera de estrella) |
-| **Consultoría (memoria)** | DQ / QA / K | Calculados en Python; **no** se publican a Oracle |
+| **Calidad** | `MI_DQ_HALLAZGO` | Bitácora R01–R05 (cuarentena blanda) |
+| **Consultoría (memoria)** | QA / K | Amarre H9 e indicadores; **no** se publican a Oracle |
 
 ---
 
@@ -190,7 +191,7 @@ Se calculan en `logica/dwh/indicadores.py` y quedan en memoria / `RESULTADO`. **
 
 ## 6. Orden de carga
 
-Wipe canónico (todas `MI_*` / `VW_*`) → DDL `01`+`02` (+`05`) → INSERT dims + 3 facts evidencia + DET → enrich `07` → `MI_AUD_*`.
+Wipe canónico (todas `MI_*` / `VW_*`) → DDL `01`+`02` + `MI_DQ_HALLAZGO` (+`05`) → INSERT dims + 3 facts evidencia + DET + DQ → enrich `07` → `MI_AUD_*`.
 
 DDL runtime: [`01_dimensiones.sql`](../lineamientos/ddl/01_dimensiones.sql) → [`02_hechos.sql`](../lineamientos/ddl/02_hechos.sql) → [`07_enrich_sheets_sisud.sql`](../lineamientos/ddl/07_enrich_sheets_sisud.sql).  
 `03`/`04`/`06` = histórico TDR; no los aplica `cargar_dw`. Audit: [`ddl/audit/`](../lineamientos/ddl/audit/).
