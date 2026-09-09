@@ -28,6 +28,7 @@ TABLAS = (
 
 
 def main() -> int:
+    global ESQUEMA
     root = project_root()
     cv = require_live_conn("oracle_dw", load_vars(root))
 
@@ -42,8 +43,9 @@ def main() -> int:
     except Exception:
         pass
 
+    dest = f"{cv['username']}@{cv['host']}:{cv['port']}/{cv['database']}"
+    dsn = oracledb.makedsn(cv["host"], int(cv["port"] or "1521"), service_name=cv["database"])
     with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as conn:
-        global ESQUEMA
         cur = conn.cursor()
         cur.execute("SELECT USER FROM dual")
         ESQUEMA = str(cur.fetchone()[0])
@@ -73,7 +75,7 @@ def main() -> int:
                 for cod, n in rows:
                     print(f"  {cod}: {n}")
             else:
-                print("MI_INDICADOR_RESULTADO: 0 filas — ejecuta ./init.sh o wf_main.hwf")
+                print("MI_INDICADOR_RESULTADO: 0 filas — ejecuta init.bat o wf_main_win.hwf")
         except Exception as exc:
             print(f"Indicadores: ERROR {exc}")
 

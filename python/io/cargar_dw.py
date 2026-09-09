@@ -9,7 +9,9 @@ import pandas as pd
 
 from config import load_vars, project_root, require_live_conn
 
-ESQUEMA = "APP"
+# Local suele ser APP; remote Win es REPOCSEP. En runtime se alinea a USER.
+ESQUEMA_DEFAULT = "APP"
+ESQUEMA = ESQUEMA_DEFAULT
 DDL_DIR = "docs/lineamientos/ddl"
 
 TABLAS_DIM = (
@@ -80,6 +82,16 @@ def _connect(root: Path):
 
 def _destino_label(cv: dict[str, str]) -> str:
     return f"{cv['username']}@{cv['host']}:{cv['port']}/{cv['database']} esquema {ESQUEMA}"
+
+
+def _bind_schema(cur) -> str:
+    """Alinea ESQUEMA al USER de la sesión (APP local / REPOCSEP remote)."""
+    global ESQUEMA
+    cur.execute("SELECT USER FROM DUAL")
+    ESQUEMA = str(cur.fetchone()[0])
+    if ESQUEMA.upper() != ESQUEMA_DEFAULT.upper():
+        print(f"DW: esquema sesión = {ESQUEMA} (no {ESQUEMA_DEFAULT})")
+    return ESQUEMA
 
 
 def _table_exists(cur, tabla: str) -> bool:
@@ -195,8 +207,13 @@ def _drop_model(cur) -> None:
         """
     )
     for (nombre,) in cur.fetchall():
-        cur.execute(f"DROP VIEW {ESQUEMA}.{nombre}")
-        print(f"DW: DROP VIEW {nombre}")
+        try:
+            cur.execute(f"DROP VIEW {ESQUEMA}.{nombre}")
+            print(f"DW: DROP VIEW {nombre}")
+        except Exception as exc:
+            if "ORA-00942" not in str(exc):
+                raise
+            print(f"AVISO: DROP VIEW {nombre}: {exc}")
 
     cur.execute(
         "SELECT table_name FROM user_tables WHERE table_name LIKE 'MI_%'"
@@ -389,6 +406,7 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
     try:
         cur = conn.cursor()
         try:
+            _bind_schema(cur)
             _prepare_schema(cur, root)
             _apply_column_comments(cur, root)
             conn.commit()
