@@ -26,6 +26,6 @@ INSERT INTO DEMO_TABLA_EJEMPLO (ID, TXNOMBRE, FEALTA) VALUES
 -- ============================================================
 -- >>> DDL PROPIO DEL PROYECTO (reemplazar/ampliar lo de arriba) <<<
 -- Ejemplo:
---   CREATE TABLE PUBLIC.MI_TABLA (...);
+--   CREATE TABLE PUBLIC.DW_M_TABLA (...);
 --   CREATE INDEX ... ;
 -- ============================================================

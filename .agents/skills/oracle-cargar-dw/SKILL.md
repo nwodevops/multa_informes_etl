@@ -1,7 +1,7 @@
 ---
 name: oracle-cargar-dw
 description: >-
-  Carga del modelo dimensional a Oracle desde Python (oracledb): wipe MI_*/VW_*,
+  Carga del modelo dimensional a Oracle desde Python (oracledb): wipe DW_M_*/VW_*,
   DDL formal numerado, TABLESPACE con cuota, coerción de tipos, orden FK,
   identity skip. Usar al implementar cargar_dw.py, depurar ORA-01950/ORA-12899
   o extender tablas DIM_/FACT_/INDICADOR_*.
@@ -10,17 +10,17 @@ description: >-
 # Carga Oracle DW (Python)
 
 Módulo: `python/io/cargar_dw.py`. Patrón **full refresh canónico**: cada corrida
-borra el modelo `MI_*` / vistas `VW_MC_*` (y `VW_FCT_*` residuales), recrea desde
+borra el modelo `DW_M_*` / vistas `VW_MC_*` (y `VW_FCT_*` residuales), recrea desde
 DDL `01`–`04`+`06`, INSERT tipado, enrich `07`, log `COUNT(*)`.
 
 ## Flujo `_prepare_schema` / `cargar_dw`
 
-1. DROP vistas `VW_MC_%` / `VW_FCT_%` y tablas `MI_%` (orden hijos→padres).
+1. DROP vistas `VW_MC_%` / `VW_FCT_%` y tablas `DW_M_%` (orden hijos→padres).
 2. Aplicar DDL `01`→`02`→`03`→`04` (con TABLESPACE).
 3. Aplicar `06_vistas.sql` (`VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA`).
 4. Aplicar `05_comentarios.sql` (`COMMENT ON`).
 5. INSERT dims → facts evidencia → DET → DQ/QA → indicadores.
-6. Ejecutar **`07_enrich_sheets_sisud.sql`** → `MI_FACT_MULTA_COERCITIVA`.
+6. Ejecutar **`07_enrich_sheets_sisud.sql`** → `DW_M_FACT_MULTA_COERCITIVA`.
 
 No hay migraciones ALTER ni `_ensure_*`: el esquema es siempre el DDL vigente.
 
@@ -39,8 +39,8 @@ cur.execute("SELECT tablespace_name FROM user_ts_quotas WHERE ...")
 ## Orden INSERT
 
 ```
-DIM_* → MI_FACT_MC_* → DET_* → DQ_* / QA_* → MI_INDICADOR_RESULTADO
-luego: 07 enrich → MI_FACT_MULTA_COERCITIVA
+DIM_* → DW_M_FACT_MC_* → DET_* → DQ_* / QA_* → DW_M_INDICADOR_RESULTADO
+luego: 07 enrich → DW_M_FACT_MULTA_COERCITIVA
 ```
 
 ## Coerción de tipos (`_coerce_for_oracle`)
@@ -62,10 +62,10 @@ No pasar float a columna VARCHAR (DPY-3013).
 ## Verificación
 
 ```
-DW: MI_FACT_MC_CSEP: ~990 filas -> N en BD (OK)
-DW: MI_FACT_MC_OD: ~281 filas -> N en BD (OK)
-DW: MI_FACT_MC_SISUD: ~534 filas -> N en BD (OK)
-# enrich 07 → MI_FACT_MULTA_COERCITIVA ~1271 (CSEP∪OD)
+DW: DW_M_FACT_MC_CSEP: ~990 filas -> N en BD (OK)
+DW: DW_M_FACT_MC_OD: ~281 filas -> N en BD (OK)
+DW: DW_M_FACT_MC_SISUD: ~534 filas -> N en BD (OK)
+# enrich 07 → DW_M_FACT_MULTA_COERCITIVA ~1271 (CSEP∪OD)
 ```
 
 Criterio: `n_bd == n_df` por tabla de evidencia. Enriquecido se valida por COUNT post-07.

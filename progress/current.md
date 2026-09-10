@@ -6,12 +6,12 @@
 |---|---|
 | ID | `fase-remote-deploy` |
 | Status | `in_progress` |
-| Criterio Win | `wf_main_win` / `init.bat` → Success + POST-CARGA + `MI_AUD_*` + `MI_DQ_HALLAZGO`; sin VW/QA/K |
+| Criterio Win | `wf_main_win` / `init.bat` → Success + POST-CARGA + `DW_M_AUD_*` + `DW_M_DQ_HALLAZGO`; sin VW/QA/K |
 
 ## Hecho reciente
 
 - Harness alineado al DW canónico: `init.sh` / `init.bat` / `CHECKPOINTS.md` / `docs/verification.md`.
-- Oracle: estrella + `MI_DQ_HALLAZGO` + `MI_AUD_*`. QA/K solo memoria.
+- Oracle: estrella + `DW_M_DQ_HALLAZGO` + `DW_M_AUD_*`. QA/K solo memoria.
 
 ## Plan
 

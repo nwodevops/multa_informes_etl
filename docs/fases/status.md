@@ -29,13 +29,13 @@ flowchart TB
 
   subgraph py [Python logica/dwh/]
     F2b["Fase 2–7: perfil … indicadores"]
-    EV["3 facts evidencia<br/>MI_FACT_MC_CSEP / _OD / _SISUD"]
+    EV["3 facts evidencia<br/>DW_M_FACT_MC_CSEP / _OD / _SISUD"]
   end
 
   subgraph oracle [Oracle BD_CURSOR]
     LOAD["cargar_dw TRUNCATE+INSERT"]
     ENR["07_enrich_sheets_sisud.sql"]
-    FACT["MI_FACT_MULTA_COERCITIVA"]
+    FACT["DW_M_FACT_MULTA_COERCITIVA"]
     VW["VW_MC_* + VW_MC_ENRIQUECIDA"]
   end
 
@@ -58,10 +58,10 @@ flowchart TB
 | **1** | Entorno Python: leer H2, conectar BD_CURSOR, invocado desde Hop | **Listo** | `python/main.py`, `leer_h2.py`, `cargar_dw.py`, `.venv`, `wf_main.hwf` |
 | **2** | Perfilamiento + diccionario de las fuentes de multa; evidencia H1–H9 | **Implementado** | `logica/dwh/perfilamiento.py`, `diccionario.py` → `PROF_*`, `DICCIONARIO` |
 | **3** | Homologación + dataframes intermedios tipificados (F1/F2/F5, sin merge a un solo fact) | **Implementado** | `homologacion.py`, `integracion.py` → `df_csep` / `df_od` / `df_sisud` / `DF_ETAPAS` |
-| **4** | R01–R05, `MI_DQ_HALLAZGO`, % amarre H9 | **Implementado** | `calidad.py` |
-| **5** | `DIM_*`, 3× `MI_FACT_MC_*`, `MI_DET_ETAPA_MC` en memoria | **Implementado** | `dimensional.py` |
-| **6** | Carga TRUNCATE+INSERT + enrich 07 → `MI_FACT_MULTA_COERCITIVA` | **Implementado** | `python/io/cargar_dw.py`, `ddl/07_enrich_sheets_sisud.sql` |
-| **7** | KPIs `MI_INDICADOR_RESULTADO` K1–K5 | **Implementado** | `logica/dwh/indicadores.py`, `ddl/04_indicadores.sql` |
+| **4** | R01–R05, `DW_M_DQ_HALLAZGO`, % amarre H9 | **Implementado** | `calidad.py` |
+| **5** | `DIM_*`, 3× `DW_M_FACT_MC_*`, `DW_M_DET_ETAPA_MC` en memoria | **Implementado** | `dimensional.py` |
+| **6** | Carga TRUNCATE+INSERT + enrich 07 → `DW_M_FACT_MULTA_COERCITIVA` | **Implementado** | `python/io/cargar_dw.py`, `ddl/07_enrich_sheets_sisud.sql` |
+| **7** | KPIs `DW_M_INDICADOR_RESULTADO` K1–K5 | **Implementado** | `logica/dwh/indicadores.py`, `ddl/04_indicadores.sql` |
 | **8** | Power BI contra BD_CURSOR | **Fuera de alcance** | No se realizará en este repo |
 
 ---
@@ -73,9 +73,9 @@ flowchart LR
   STG["STG_* H2"]
   P2["PROF_RESUMEN<br/>PROF_HALLAZGO<br/>DICCIONARIO"]
   P3["df_csep / df_od / df_sisud<br/>DF_ETAPAS"]
-  P4["FG_CONFORME<br/>MI_DQ_HALLAZGO<br/>MI_QA_AMARRE*"]
-  P5["MI_DIM_* / MI_FACT_MC_*"]
-  P7["MI_INDICADOR_RESULTADO"]
+  P4["FG_CONFORME<br/>DW_M_DQ_HALLAZGO<br/>DW_M_QA_AMARRE*"]
+  P5["DW_M_DIM_* / DW_M_FACT_MC_*"]
+  P7["DW_M_INDICADOR_RESULTADO"]
   ORA["Oracle: evidencia + 07 enrich<br/>+ VW_MC_*"]
 
   STG --> P2 --> P3 --> P4 --> P5 --> P7 --> ORA
@@ -85,11 +85,11 @@ flowchart LR
 |---|---|---|
 | `PROF_RESUMEN` / `PROF_HALLAZGO` / `DICCIONARIO` | 2 | No — memoria + log |
 | Intermedios F1/F2/F5 + `DF_ETAPAS` | 3–4 | No (incluye `FG_CONFORME`) |
-| `MI_DQ_HALLAZGO` | 4 | Sí |
-| `MI_QA_AMARRE` / `MI_QA_AMARRE_DETALLE` | 4 | Sí |
-| `MI_DIM_*` / `MI_FACT_MC_CSEP` / `_OD` / `_SISUD` / `MI_DET_ETAPA_MC` | 5–6 | Sí |
-| `MI_FACT_MULTA_COERCITIVA` | 6 (SQL 07) | Sí — (CSEP∪OD) LEFT JOIN SISUD |
-| `MI_INDICADOR_RESULTADO` | 7 | Sí |
+| `DW_M_DQ_HALLAZGO` | 4 | Sí |
+| `DW_M_QA_AMARRE` / `DW_M_QA_AMARRE_DETALLE` | 4 | Sí |
+| `DW_M_DIM_*` / `DW_M_FACT_MC_CSEP` / `_OD` / `_SISUD` / `DW_M_DET_ETAPA_MC` | 5–6 | Sí |
+| `DW_M_FACT_MULTA_COERCITIVA` | 6 (SQL 07) | Sí — (CSEP∪OD) LEFT JOIN SISUD |
+| `DW_M_INDICADOR_RESULTADO` | 7 | Sí |
 | `VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA` | 6 | Sí (vistas) |
 | `RESULTADO` | 2–7 | No — resumen de corrida |
 
@@ -127,11 +127,11 @@ Destino del modelo dimensional (`DB_ORA_DW_*` / esquema `APP` local o `REPOCSEP`
 
 | Grupo | Tablas / vistas |
 |---|---|
-| Dimensiones | `MI_DIM_TIEMPO`, `MI_DIM_ADMINISTRADO`, `MI_DIM_ORGANO_UNIDAD` (~11), `MI_DIM_OD`, `MI_DIM_FUENTE_REGISTRO`, `MI_DIM_MATERIA_SUBSECTOR`, `MI_DIM_ESTADO`, `MI_DIM_PARAMETRO_UIT` |
-| Hechos evidencia | `MI_FACT_MC_CSEP`, `MI_FACT_MC_OD`, `MI_FACT_MC_SISUD`, `MI_DET_ETAPA_MC` |
-| Hecho negocio | `MI_FACT_MULTA_COERCITIVA` (SQL 07) |
-| Calidad | `MI_DQ_HALLAZGO`, `MI_QA_AMARRE`, `MI_QA_AMARRE_DETALLE` |
-| Indicadores | `MI_INDICADOR_RESULTADO` (K1–K5) |
+| Dimensiones | `DW_M_DIM_TIEMPO`, `DW_M_DIM_ADMINISTRADO`, `DW_M_DIM_ORGANO_UNIDAD` (~11), `DW_M_DIM_OD`, `DW_M_DIM_FUENTE_REGISTRO`, `DW_M_DIM_MATERIA_SUBSECTOR`, `DW_M_DIM_ESTADO`, `DW_M_DIM_PARAMETRO_UIT` |
+| Hechos evidencia | `DW_M_FACT_MC_CSEP`, `DW_M_FACT_MC_OD`, `DW_M_FACT_MC_SISUD`, `DW_M_DET_ETAPA_MC` |
+| Hecho negocio | `DW_M_FACT_MULTA_COERCITIVA` (SQL 07) |
+| Calidad | `DW_M_DQ_HALLAZGO`, `DW_M_QA_AMARRE`, `DW_M_QA_AMARRE_DETALLE` |
+| Indicadores | `DW_M_INDICADOR_RESULTADO` (K1–K5) |
 | Vistas reporte | `VW_MC_CSEP`, `VW_MC_OD`, `VW_MC_SISUD`, `VW_MC_ENRIQUECIDA` |
 
 ```mermaid
@@ -140,7 +140,7 @@ flowchart LR
     STG8["STG_* Sheets F1/F2 + F5"]
   end
   subgraph oranow [BD_CURSOR hoy]
-    MI["MI_FACT_MC_* + enrich + VW_MC_*"]
+    MI["DW_M_FACT_MC_* + enrich + VW_MC_*"]
   end
   STG8 --> MI
 ```
@@ -166,7 +166,7 @@ flowchart LR
 
 | Antes (medallion TDR) | Ahora (lineamientos) |
 |---|---|
-| `logica/fase1/` → `INT_*`, `QA_*` | `logica/dwh/` → `PROF_*`, intermedios, `MI_*` |
+| `logica/fase1/` → `INT_*`, `QA_*` | `logica/dwh/` → `PROF_*`, intermedios, `DW_M_*` |
 | `output/fase1.xlsx` + carga `INT_*` Oracle | `cargar_dw.py` → evidencia + enrich + `VW_MC_*` |
 | Modelo por universo sin cruce | 3 facts evidencia + enrich Sheet←SISUD; amarre H9 `RES_MONTO_Sheets_vs_SISUD` |
 

@@ -1,6 +1,6 @@
 # Inputs del ETL — alcance actual
 
-Inventario de las fuentes que alimentan el pipeline **Hop → H2 (`STG_*`) → Python → Oracle DW (`MI_*`)**.
+Inventario de las fuentes que alimentan el pipeline **Hop → H2 (`STG_*`) → Python → Oracle DW (`DW_M_*`)**.
 
 Este data warehouse es **solo Multas**. F3 (informes de supervisión / `CSEP_INFORMES_VIEW`) **no entra** en Hop, Kimball ni Oracle.
 
@@ -19,7 +19,7 @@ Detalle campo a campo: [`../lineamientos/ANEXO_MAPEO_CAMPOS.md`](../lineamientos
 | **10 unidades CSEP** | F2 — Google Sheets multas + etapas (10 activas) | Catálogo JSON + Hop |
 | **Vista institucional multas** | F5 — Oracle SISUD | En uso |
 
-**Fuera de alcance:** F3 — Oracle SISUD informes; **F4 — MySQL GAPP** (`T_MVC_MULTACOERCITIVA_MC`); consolidados F1 (`CONSOLIDADO MEDIDAS ADMINISTRATIVAS` / `… CSEP`); unidad CODE (solo en `MI_DIM_OD`, sin sheet).
+**Fuera de alcance:** F3 — Oracle SISUD informes; **F4 — MySQL GAPP** (`T_MVC_MULTACOERCITIVA_MC`); consolidados F1 (`CONSOLIDADO MEDIDAS ADMINISTRATIVAS` / `… CSEP`); unidad CODE (solo en `DW_M_DIM_OD`, sin sheet).
 
 ---
 
@@ -46,8 +46,8 @@ flowchart LR
   end
 
   subgraph py [Python → Oracle]
-    EV["MI_FACT_MC_CSEP / _OD / _SISUD"]
-    ENR["07 enrich → MI_FACT_MULTA_COERCITIVA"]
+    EV["DW_M_FACT_MC_CSEP / _OD / _SISUD"]
+    ENR["07 enrich → DW_M_FACT_MULTA_COERCITIVA"]
   end
 
   F1 --> STG
@@ -63,13 +63,13 @@ flowchart LR
 
 | ID | Nombre corto | Dominio | Pestaña | Tipo | Origen | Tabla STG | Pipeline Hop | Uso en el DW |
 |---|---|---|---|---|---|---|---|---|
-| **F1** | Familia OD | **Multas** | `5) Multas Coercitivas` | Google Sheets | [`f1_ods_sheets.json`](f1_ods_sheets.json) | `STG_GS2_OD_MULTAS` (+ `COD_OD`) | `pl_stage_od_sheet.hpl` vía `scripts/stage_ods_sheets.sh` | Evidencia `MI_FACT_MC_OD` + enriquecido; `ID_OD` |
-| **F2** | CSEP multas | **Multas** | `1) Multas coercitivas` | Google Sheets | [`f2_csep_sheets.json`](f2_csep_sheets.json) | `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | `pl_stage_csep_sheet.hpl` vía `scripts/stage_csep_sheets.sh` | Evidencia `MI_FACT_MC_CSEP` + enriquecido (`JEFE`/`UF`/…); `ID_ORGANO` |
-| **F2-ET** | CSEP etapas | **Multas** (detalle) | `2) Etapas` | Google Sheets | mismo catálogo F2 | `STG_GS1_ETAPAS` | `pl_stage_csep_etapa.hpl` vía `stage_csep_sheets.sh` | Detalle `MI_DET_ETAPA_MC` |
+| **F1** | Familia OD | **Multas** | `5) Multas Coercitivas` | Google Sheets | [`f1_ods_sheets.json`](f1_ods_sheets.json) | `STG_GS2_OD_MULTAS` (+ `COD_OD`) | `pl_stage_od_sheet.hpl` vía `scripts/stage_ods_sheets.sh` | Evidencia `DW_M_FACT_MC_OD` + enriquecido; `ID_OD` |
+| **F2** | CSEP multas | **Multas** | `1) Multas coercitivas` | Google Sheets | [`f2_csep_sheets.json`](f2_csep_sheets.json) | `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | `pl_stage_csep_sheet.hpl` vía `scripts/stage_csep_sheets.sh` | Evidencia `DW_M_FACT_MC_CSEP` + enriquecido (`JEFE`/`UF`/…); `ID_ORGANO` |
+| **F2-ET** | CSEP etapas | **Multas** (detalle) | `2) Etapas` | Google Sheets | mismo catálogo F2 | `STG_GS1_ETAPAS` | `pl_stage_csep_etapa.hpl` vía `stage_csep_sheets.sh` | Detalle `DW_M_DET_ETAPA_MC` |
 | **F2-DIC** | Diccionario | Apoyo | `DIC_TABLAS` / `DIC_VARIABLES` | Excel legacy | `input_excel/legacy/CAGR_…xlsx` | `STG_GS1_DIC_*` | `pl_stage_excel.hpl` | Perfilamiento / diccionario |
-| **F5** | SISUD vista MC | **Multas** | — | Oracle | `SISUD.VW_MULTA_COERCITIVA` | `STG_ORA_VW_MULTA_COERCITIVA` | `pl_stage_oracle.hpl` | Evidencia `MI_FACT_MC_SISUD`; lookup CUM/CAM al enriquecido |
+| **F5** | SISUD vista MC | **Multas** | — | Oracle | `SISUD.VW_MULTA_COERCITIVA` | `STG_ORA_VW_MULTA_COERCITIVA` | `pl_stage_oracle.hpl` | Evidencia `DW_M_FACT_MC_SISUD`; lookup CUM/CAM al enriquecido |
 
-Códigos de universo en staging/integración (`FUENTE_ORIGEN`): F1 = **`OD_SHEETS`**, F2 = **`CAGR`**, F5 = **`SISUD_VW`**. En el DW: **`ID_FUENTE`** → `MI_DIM_FUENTE_REGISTRO`. Territorio F2: `COORD` / `MI_DIM_ORGANO_UNIDAD`. Territorio F1: **`MI_DIM_OD`**. Reportes: `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` / **`VW_MC_ENRIQUECIDA`**. Cómo se arma el enriquecido: [`../lineamientos/extra/manual-como-se-arma-el-fact.md`](../lineamientos/extra/manual-como-se-arma-el-fact.md).
+Códigos de universo en staging/integración (`FUENTE_ORIGEN`): F1 = **`OD_SHEETS`**, F2 = **`CAGR`**, F5 = **`SISUD_VW`**. En el DW: **`ID_FUENTE`** → `DW_M_DIM_FUENTE_REGISTRO`. Territorio F2: `COORD` / `DW_M_DIM_ORGANO_UNIDAD`. Territorio F1: **`DW_M_DIM_OD`**. Reportes: `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` / **`VW_MC_ENRIQUECIDA`**. Cómo se arma el enriquecido: [`../lineamientos/extra/manual-como-se-arma-el-fact.md`](../lineamientos/extra/manual-como-se-arma-el-fact.md).
 
 Auth Google: `client_secret.json` en la raíz del proyecto (**gitignored**). Cada spreadsheet debe estar compartido con el service account.
 
@@ -121,7 +121,7 @@ Auth Google: `client_secret.json` en la raíz del proyecto (**gitignored**). Cad
 | `DF_MULTAS` | F1 (31 ODs en `GS2`) + F2 CSEP + F5 (`FUENTE_ORIGEN`: `OD_SHEETS` / `CAGR` / `SISUD_VW`) |
 | `DF_ETAPAS` | F2-ET (Sheets CSEP) |
 
-Mapa: [`../../logica/dwh/constantes.py`](../../logica/dwh/constantes.py) (`STG_FUENTE`, mapa de códigos → `MI_DIM_FUENTE_REGISTRO`).
+Mapa: [`../../logica/dwh/constantes.py`](../../logica/dwh/constantes.py) (`STG_FUENTE`, mapa de códigos → `DW_M_DIM_FUENTE_REGISTRO`).
 
 En el DW el linaje es **`ID_FUENTE`** (no hay VARCHAR `FUENTE_REGISTRO` en el hecho). Reportes: vistas `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD`.
 
@@ -132,7 +132,7 @@ En el DW el linaje es **`ID_FUENTE`** (no hay VARCHAR `FUENTE_REGISTRO` en el he
 Los archivos [`f1_ods_sheets.json`](f1_ods_sheets.json) y [`f2_csep_sheets.json`](f2_csep_sheets.json) son **contrato de inputs**:
 
 - Cambiar `cod_od` / `cod_unidad` / `nombre` / `spreadsheet_id` / `activo` implica semántica de dim y staging.
-- `nombre` de F2 alimenta `MI_DIM_ORGANO_UNIDAD.DESCRIPCION`.
+- `nombre` de F2 alimenta `DW_M_DIM_ORGANO_UNIDAD.DESCRIPCION`.
 - No editar a mano en corridas ad hoc sin commit; el harness y el DW dependen de ellos.
 
 ## SLA / reintentos Google Sheets

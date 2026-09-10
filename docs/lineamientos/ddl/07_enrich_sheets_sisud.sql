@@ -1,15 +1,15 @@
 --------------------------------------------------------------------------------
 -- 07_enrich_sheets_sisud.sql
--- Tras DELETE+INSERT de MI_FACT_MC_CSEP / _OD / _SISUD:
--- arma MI_FACT_MULTA_COERCITIVA = (CSEP ∪ OD) LEFT JOIN SISUD
+-- Tras DELETE+INSERT de DW_M_FACT_MC_CSEP / _OD / _SISUD:
+-- arma DW_M_FACT_MULTA_COERCITIVA = (CSEP ∪ OD) LEFT JOIN SISUD
 -- clave: resolución normalizada (sin ceros a la izquierda del correlativo) + MONTO_UIT.
 -- Empates SISUD: primera fila por CUM/CAM (ROW_NUMBER).
 -- Idempotente: DELETE hecho enriquecido + INSERT (DML → rollback si falla INSERT).
 --------------------------------------------------------------------------------
 
-DELETE FROM MI_FACT_MULTA_COERCITIVA;
+DELETE FROM DW_M_FACT_MULTA_COERCITIVA;
 
-INSERT INTO MI_FACT_MULTA_COERCITIVA (
+INSERT INTO DW_M_FACT_MULTA_COERCITIVA (
     COD_MA, COD_PROY_MC, NUMERO_EXPEDIENTE, EXP_RES_MC, N_RES_MC,
     CUM, CAM, NUMERO_REGISTRO_SIGED,
     ID_ADMINISTRADO, ID_ORGANO, ID_MATERIA,
@@ -39,9 +39,9 @@ norm AS (
                  || '|' || TO_CHAR(ROUND(s.MONTO_UIT, 4), 'FM999999990.0000')
         END AS CLAVE_JOIN
     FROM (
-        SELECT * FROM MI_FACT_MC_CSEP
+        SELECT * FROM DW_M_FACT_MC_CSEP
         UNION ALL
-        SELECT * FROM MI_FACT_MC_OD
+        SELECT * FROM DW_M_FACT_MC_OD
     ) s
 ),
 sisud_dedup AS (
@@ -65,7 +65,7 @@ sisud_dedup AS (
                     END
                 ORDER BY t.CUM NULLS LAST, t.CAM NULLS LAST, t.ID_MC
             ) AS RN
-        FROM MI_FACT_MC_SISUD t
+        FROM DW_M_FACT_MC_SISUD t
     ) z
     WHERE z.RN = 1 AND z.CLAVE_JOIN IS NOT NULL
 )

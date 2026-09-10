@@ -5,7 +5,7 @@ Cómo está armado este ETL hoy, con foco en qué hace exactamente la capa de l�
 
 Estado: capa lógica alineada a [`lineamientos/PROPUESTA_ADAPTADA_ETL.md`](lineamientos/PROPUESTA_ADAPTADA_ETL.md)
 **Fases 2–7** (`logica/dwh/` → perfilamiento … indicadores) y carga Oracle vía `python/io/cargar_dw.py`
-(`MI_*`, vistas `VW_MC_*`, QA amarre). Guía del modelo: [`modelo-kimball.md`](modelo-kimball.md).
+(`DW_M_*`, vistas `VW_MC_*`, QA amarre). Guía del modelo: [`modelo-kimball.md`](modelo-kimball.md).
 TDR: [`TDR REQ 3629-2026.pdf`](TDR%20REQ%203629-2026.pdf).
 
 ## Vista general
@@ -42,7 +42,7 @@ flowchart TB
   end
 
   subgraph destino [Destino]
-    OUT["Oracle APP@BD_CURSOR<br/>MI_FACT_MC_* + enrich 07 + VW_MC_*"]
+    OUT["Oracle APP@BD_CURSOR<br/>DW_M_FACT_MC_* + enrich 07 + VW_MC_*"]
   end
 
   GS --> YAML
@@ -86,7 +86,7 @@ flowchart TB
 
   subgraph io [I O generico, no se toca por proyecto]
     LEER["io/leer_h2.py<br/>LECTURAS: nombre a query"]
-    DW["io/cargar_dw.py<br/>TRUNCATE+INSERT MI_*"]
+    DW["io/cargar_dw.py<br/>TRUNCATE+INSERT DW_M_*"]
   end
 
   subgraph zona [Zona de pegado, se reemplaza por proyecto]
@@ -113,7 +113,7 @@ flowchart TB
 2. **Entrada**: carga `python/io/leer_h2.py` por ruta, llama a `leer_h2(root, variables)`.
 3. **Lógica**: lista los `.py` de `logica/` (raíz del proyecto) y hace `exec` del único que encuentra,
    con los DataFrames y `pd` inyectados en el namespace.
-4. **Salida**: verifica `RESULTADO` y, si hay tablas `MI_*`, llama a `cargar_dw.py` (TRUNCATE+INSERT a Oracle).
+4. **Salida**: verifica `RESULTADO` y, si hay tablas `DW_M_*`, llama a `cargar_dw.py` (TRUNCATE+INSERT a Oracle).
 
 El paso 3 es el corazón del arquetipo: `main.py` **auto-descubre** el archivo de lógica y
 **falla a propósito** si hay cero o más de uno. Esa restricción es la que hace que las
@@ -166,8 +166,8 @@ sequenceDiagram
   H2-->>LEER: filas
   LEER-->>MAIN: dict de DataFrames
   MAIN->>LOG: exec del unico .py
-  LOG-->>MAIN: RESULTADO + MI_*
-  MAIN->>DW: TRUNCATE INSERT MI_* VW_MC_*
+  LOG-->>MAIN: RESULTADO + DW_M_*
+  MAIN->>DW: TRUNCATE INSERT DW_M_* VW_MC_*
 ```
 
 Los escritores a BD consultan `COUNT(*)` **después** del `INSERT`. Contar el DataFrame en

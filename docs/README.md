@@ -24,7 +24,7 @@ Orden de lectura recomendado:
 | [`fases/`](fases/) | Status por fase |
 | [`harness/`](harness/) | Roles y plataforma Hop/H2 |
 | [`lineamientos/`](lineamientos/) | Propuesta, implementación F2–F7, DDL, anexos |
-| [`lineamientos/ddl/`](lineamientos/ddl/) | DDL Oracle `MI_*` (usado por `cargar_dw.py`) |
+| [`lineamientos/ddl/`](lineamientos/ddl/) | DDL Oracle `DW_M_*` (usado por `cargar_dw.py`) |
 | [`lineamientos/extra/`](lineamientos/extra/) | Manual fact + inventario fuentes |
 | [`credenciales/`](credenciales/) | Referencia humana local/remote (no secretos en git) |
 

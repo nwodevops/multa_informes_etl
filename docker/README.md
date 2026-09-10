@@ -1,6 +1,6 @@
 # Docker — dashboards indicadores (opción C)
 
-Apache Superset en contenedor, con `oracledb`, para visualizar `MI_INDICADOR_RESULTADO`  
+Apache Superset en contenedor, con `oracledb`, para visualizar `DW_M_INDICADOR_RESULTADO`  
 contra el **Oracle DW local** (`app@localhost:1524/BD_CURSOR`).  
 Rama: `linux`. Windows / Power BI → rama `windows`.
 
@@ -8,7 +8,7 @@ Rama: `linux`. Windows / Power BI → rama `windows`.
 
 - Docker + Docker Compose
 - Oracle local arriba (el mismo de `./switch-env.sh local` + `./init.sh`)
-- Datos cargados: `APP.MI_INDICADOR_RESULTADO` (tras un ETL local OK)
+- Datos cargados: `APP.DW_M_INDICADOR_RESULTADO` (tras un ETL local OK)
 
 ## Arranque
 
@@ -38,7 +38,7 @@ Password = `DB_ORA_DW_PASSWORD` de `environments/local.json` (no commitear).
 
 ## Dataset / gráfico
 
-1. **Datasets → + Dataset** → base Oracle → schema `APP` → tabla `MI_INDICADOR_RESULTADO`
+1. **Datasets → + Dataset** → base Oracle → schema `APP` → tabla `DW_M_INDICADOR_RESULTADO`
 2. **Charts → + Chart** → Bar / Table  
    - Dimensiones: `COD_INDICADOR`, `ANIO`, `METRICA`  
    - Métrica: `SUM(VALOR)` o `AVG(VALOR)`
@@ -48,7 +48,7 @@ SQL de prueba en SQL Lab:
 
 ```sql
 SELECT COD_INDICADOR, METRICA, ANIO, ID_ORGANO, VALOR, UNIDAD
-FROM APP.MI_INDICADOR_RESULTADO
+FROM APP.DW_M_INDICADOR_RESULTADO
 ORDER BY COD_INDICADOR, ANIO, ID_ORGANO
 ```
 

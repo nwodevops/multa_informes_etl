@@ -17,12 +17,12 @@ Debe terminar con **`HARNESS OK`**. El script:
 2. Resetea H2 y aplica DDL (`reset_and_create.sh`).
 3. Crea tablas `STG_*` (`python/create_stg.py`).
 4. Carga Sheets F1/F2 + Excel DIC + Oracle SISUD vía Hop / scripts (**sin MySQL**).
-5. Ejecuta `python/main.py` y comprueba salidas PROF/DIM/FACT evidencia + `MI_DQ_HALLAZGO` + INDICADOR (memoria).
+5. Ejecuta `python/main.py` y comprueba salidas PROF/DIM/FACT evidencia + `DW_M_DQ_HALLAZGO` + INDICADOR (memoria).
 6. Valida Oracle canónico:
    - hechos evidencia + enriquecida (= CSEP+OD); `ID_TIEMPO_FIRMA`; sin F3 / sin `FUENTE_REGISTRO` VARCHAR
-   - `MI_DQ_HALLAZGO` presente; `MI_AUD_*` alineados a STG
-   - **sin** `VW_MC_*`, **sin** `MI_QA_*`, **sin** `MI_INDICADOR_*` en Oracle
-   - `MI_DIM_ORGANO_UNIDAD` ≤ 20 (~11 CSEP+ND)
+   - `DW_M_DQ_HALLAZGO` presente; `DW_M_AUD_*` alineados a STG
+   - **sin** `VW_MC_*`, **sin** `DW_M_QA_*`, **sin** `DW_M_INDICADOR_*` en Oracle
+   - `DW_M_DIM_ORGANO_UNIDAD` ≤ 20 (~11 CSEP+ND)
 
 Windows remoto: `.\switch-env.ps1 remote` + `init.bat` / `wf_main_win.hwf` → `python\verify_dw.py`.
 
@@ -47,28 +47,28 @@ Si el log Hop dice N filas pero tu cliente SQL muestra 0, casi siempre estás en
 
 ```sql
 -- Evidencia por universo (no sumar como un solo censo)
-SELECT COUNT(*) FROM APP.MI_FACT_MC_CSEP;
-SELECT COUNT(*) FROM APP.MI_FACT_MC_OD;
-SELECT COUNT(*) FROM APP.MI_FACT_MC_SISUD;
+SELECT COUNT(*) FROM APP.DW_M_FACT_MC_CSEP;
+SELECT COUNT(*) FROM APP.DW_M_FACT_MC_OD;
+SELECT COUNT(*) FROM APP.DW_M_FACT_MC_SISUD;
 -- Negocio enriquecido (= CSEP + OD; CUM/CAM desde SISUD)
-SELECT COUNT(*) FROM APP.MI_FACT_MULTA_COERCITIVA;
+SELECT COUNT(*) FROM APP.DW_M_FACT_MULTA_COERCITIVA;
 
 SELECT fu.CODIGO, COUNT(*)
-FROM APP.MI_FACT_MULTA_COERCITIVA f
-JOIN APP.MI_DIM_FUENTE_REGISTRO fu ON fu.ID_FUENTE = f.ID_FUENTE
+FROM APP.DW_M_FACT_MULTA_COERCITIVA f
+JOIN APP.DW_M_DIM_FUENTE_REGISTRO fu ON fu.ID_FUENTE = f.ID_FUENTE
 GROUP BY fu.CODIGO ORDER BY 1;
 
 -- Bitácora de calidad (publicada)
-SELECT REGLA_CODIGO, COUNT(*) FROM APP.MI_DQ_HALLAZGO
+SELECT REGLA_CODIGO, COUNT(*) FROM APP.DW_M_DQ_HALLAZGO
 GROUP BY REGLA_CODIGO ORDER BY 1;
 
 -- Auditoría 1:1
-SELECT COUNT(*) FROM APP.MI_AUD_F2_CSEP_MULTAS;
-SELECT COUNT(*) FROM APP.MI_AUD_F1_OD_MULTAS;
+SELECT COUNT(*) FROM APP.DW_M_AUD_F2_CSEP_MULTAS;
+SELECT COUNT(*) FROM APP.DW_M_AUD_F1_OD_MULTAS;
 
 -- Attrs operativos F2 (ejemplo)
 SELECT COD_MA, JEFE, UF, ETA_REG_PROY_MC, CUM, CAM
-FROM APP.MI_FACT_MULTA_COERCITIVA
+FROM APP.DW_M_FACT_MULTA_COERCITIVA
 WHERE N_RES_MC LIKE '%0153-2026%';
 ```
 

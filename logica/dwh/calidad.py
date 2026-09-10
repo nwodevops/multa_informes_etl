@@ -15,7 +15,7 @@ from datetime import datetime
 
 import pandas as pd
 
-from .catalogos import MI_DIM_PARAMETRO_UIT
+from .catalogos import DW_M_DIM_PARAMETRO_UIT
 from .constantes import ID_CARGA
 from .homologacion import clave_join_res_monto, vacio
 
@@ -85,7 +85,7 @@ def _anio_fecha(v) -> int | None:
 def _uit_anio(anio: int | None) -> float | None:
     if anio is None:
         return None
-    return MI_DIM_PARAMETRO_UIT.get(anio)
+    return DW_M_DIM_PARAMETRO_UIT.get(anio)
 
 
 def _validar_multas(df: pd.DataFrame) -> tuple[pd.Series, list[dict]]:
@@ -295,7 +295,7 @@ def aplicar_calidad(
     df_multas: pd.DataFrame,
     df_sisud: pd.DataFrame | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Marca conformidad, arma MI_DQ_HALLAZGO, MI_QA_AMARRE y detalle. No elimina filas."""
+    """Marca conformidad, arma DW_M_DQ_HALLAZGO, DW_M_QA_AMARRE y detalle. No elimina filas."""
     multas = df_multas.copy()
     hallazgos: list[dict] = []
 

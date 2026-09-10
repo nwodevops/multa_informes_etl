@@ -11,8 +11,8 @@ Eso ya pasó en Hop→STG_* y en logica/dwh/*.
 Flujo interno:
   1. SETUP   : root + variables de project-config.json
   2. ENTRADA : io/leer_h2.py → DataFrames (claves = LECTURAS)
-  3. LOGICA  : único .py en logica/ → PROF_*, DF_*, MI_DIM_*, MI_FACT_*, …
-  4. SALIDA  : cargar_dw (estrella + DQ + enrich 07) + cargar_aud (MI_AUD_*)
+  3. LOGICA  : único .py en logica/ → PROF_*, DF_*, DW_M_DIM_*, DW_M_FACT_*, …
+  4. SALIDA  : cargar_dw (estrella + DQ + enrich 07) + cargar_aud (DW_M_AUD_*)
                QA/K quedan en memoria (no se publican a Oracle)
 
 Contrato: python/CONTRATO.md
@@ -62,12 +62,12 @@ def _es_salida(nombre: str) -> bool:
             "FACT_",
             "DET_",
             "IND_",
-            "MI_DIM_",
-            "MI_FACT_",
-            "MI_DET_",
-            "MI_DQ_",
-            "MI_QA_",
-            "MI_INDICADOR_",
+            "DW_M_DIM_",
+            "DW_M_FACT_",
+            "DW_M_DET_",
+            "DW_M_DQ_",
+            "DW_M_QA_",
+            "DW_M_INDICADOR_",
         )
     )
 
@@ -113,7 +113,7 @@ def main() -> int:
     exec(compile(archivos[0].read_text(encoding="utf-8"), str(archivos[0]), "exec"), ns)
 
     # STEP 5: recolectar automáticamente los DataFrames cuyo nombre siga el contrato:
-    # RESULTADO/DICCIONARIO o uno de los prefijos PROF_, DF_, MI_DIM_, etc.
+    # RESULTADO/DICCIONARIO o uno de los prefijos PROF_, DF_, DW_M_DIM_, etc.
     # Esta detección solo arma el catálogo de salidas en memoria; todavía no
     # decide qué tablas se publican en Oracle (ese filtro ocurre más abajo).
     salidas: dict[str, pd.DataFrame] = {}
@@ -136,13 +136,13 @@ def main() -> int:
         k: v
         for k, v in salidas.items()
         if (
-            k.startswith(("DIM_", "FACT_", "DET_", "MI_DIM_", "MI_FACT_", "MI_DET_"))
-            or k == "MI_DQ_HALLAZGO"
+            k.startswith(("DIM_", "FACT_", "DET_", "DW_M_DIM_", "DW_M_FACT_", "DW_M_DET_"))
+            or k == "DW_M_DQ_HALLAZGO"
         )
-        and not k.startswith(("MI_QA_", "MI_INDICADOR_"))
+        and not k.startswith(("DW_M_QA_", "DW_M_INDICADOR_"))
     }
     if tablas_dw:
-        # wipe + DDL + INSERT evidencia/dims + enrich SQL 07 → MI_FACT_MULTA_COERCITIVA
+        # wipe + DDL + INSERT evidencia/dims + enrich SQL 07 → DW_M_FACT_MULTA_COERCITIVA
         cargar = _load("cargar_dw", HERE / "io" / "cargar_dw.py")
         cargar.cargar_dw(tablas_dw, root)
 
@@ -151,7 +151,7 @@ def main() -> int:
         aud.cargar_aud(datos, root)
 
     print(
-        "Listo (H2 -> logica -> Oracle canónico dims/facts/DET/DQ/enrich + MI_AUD_*). "
+        "Listo (H2 -> logica -> Oracle canónico dims/facts/DET/DQ/enrich + DW_M_AUD_*). "
         "QA/K solo en memoria de corrida."
     )
     return 0

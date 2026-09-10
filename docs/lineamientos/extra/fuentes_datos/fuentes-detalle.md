@@ -21,8 +21,8 @@
 | **F4** | `gappsdb.T_MVC_MULTACOERCITIVA_MC` | MySQL GAPP | Tabla transaccional MC | **Fuera de ingestión** (solo semilla `GAPPS` en dim) |
 | **F5** | `SISUD.VW_MULTA_COERCITIVA` | Oracle SISUD | Vista institucional MC | `STG_ORA_VW_MULTA_COERCITIVA` |
 
-> **Linaje en DW:** `ID_FUENTE` → `MI_DIM_FUENTE_REGISTRO.CODIGO` (F1=`OD_SHEETS`, F2=`CAGR`, F5=`SISUD_VW`; `GAPPS` = semilla histórica F4). El VARCHAR `FUENTE_REGISTRO` ya no existe en el hecho. Reportes: vistas `VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA`.  
-> Unidad F2: `COORD` / `MI_DIM_ORGANO_UNIDAD.SIGLA` + `DESCRIPCION` desde catálogo (solo 10 CSEP + ND).  
+> **Linaje en DW:** `ID_FUENTE` → `DW_M_DIM_FUENTE_REGISTRO.CODIGO` (F1=`OD_SHEETS`, F2=`CAGR`, F5=`SISUD_VW`; `GAPPS` = semilla histórica F4). El VARCHAR `FUENTE_REGISTRO` ya no existe en el hecho. Reportes: vistas `VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA`.  
+> Unidad F2: `COORD` / `DW_M_DIM_ORGANO_UNIDAD.SIGLA` + `DESCRIPCION` desde catálogo (solo 10 CSEP + ND).  
 > **Auth Google:** `client_secret.json` (gitignored); cada spreadsheet compartido con el service account.
 
 > **Nota de volumen:** conteos de referencia actuales ≈ CSEP~990, OD~281, SISUD~534, enriquecido~1271 (varían con sheets vivos).
@@ -74,7 +74,7 @@ Convención de hoja: fila 1 = sección, fila 2 = descripción, **fila 3 = códig
 
 ### 2.2 Catálogos auxiliares en la plantilla OD (histórico / no stageados)
 
-Las hojas `M_FERIADO`, `M_UBIGEO`, `M_PARAMETROS` existían en el Excel de diagnóstico (a menudo con `IMPORTRANGE` roto). **El ETL F1 vigente no las carga**; la UIT se siembra desde catálogo MEF en Python (`MI_DIM_PARAMETRO_UIT`). Territorio OD se resuelve con `MI_DIM_OD` + `COD_OD` del catálogo JSON.
+Las hojas `M_FERIADO`, `M_UBIGEO`, `M_PARAMETROS` existían en el Excel de diagnóstico (a menudo con `IMPORTRANGE` roto). **El ETL F1 vigente no las carga**; la UIT se siembra desde catálogo MEF en Python (`DW_M_DIM_PARAMETRO_UIT`). Territorio OD se resuelve con `DW_M_DIM_OD` + `COD_OD` del catálogo JSON.
 
 ---
 
@@ -97,7 +97,7 @@ Antes: un Excel CAGR (Agricultura). **Hoy:** 10 spreadsheets sectoriales (`f2_cs
 
 Misma convención de encabezados que F1 (fila 3 = códigos). Rango Hop multas: `'1) Multas coercitivas'!A3:AV`. Etapas: `'2) Etapas'!A2:L` (header fila 2).
 
-`COD_UNIDAD` se inyecta post-carga en STG; `COORD` del sheet alimenta `MI_DIM_ORGANO_UNIDAD` (`SIGLA` + `DESCRIPCION` desde el catálogo).
+`COD_UNIDAD` se inyecta post-carga en STG; `COORD` del sheet alimenta `DW_M_DIM_ORGANO_UNIDAD` (`SIGLA` + `DESCRIPCION` desde el catálogo).
 
 ### 3.1 Hoja `1) Multas coercitivas` (48 columnas)
 
@@ -178,7 +178,7 @@ Respaldo con literales `TIMESTAMP'YYYY-MM-DD HH24:MI:SS'` propios de Oracle. Gra
 
 | Campo | Tipo | Descripción | Observación |
 |---|---|---|---|
-| `IDADMINISTRADO` | Texto | Código del administrado | `ADM13002` — clave natural de `MI_DIM_ADMINISTRADO` |
+| `IDADMINISTRADO` | Texto | Código del administrado | `ADM13002` — clave natural de `DW_M_DIM_ADMINISTRADO` |
 | `TXADMINISTRADO` | Texto | Razón social | `MAPLE GAS CORPORATION DEL PERU S.R.L.` |
 | `IDSUBUNIDAD` | Texto | Código de la subunidad (UF) | `SUR22764` — clave natural de `DIM_UNIDAD_FISCALIZABLE` |
 | `IDUF_SIG` | Texto | Código UF en SIG | `UF0002810` |
@@ -219,7 +219,7 @@ Nulos en la muestra; se conservan por trazabilidad del ciclo completo.
 
 ## 5. F4 — MySQL gappsdb · `T_MVC_MULTACOERCITIVA_MC` (**fuera de ingestión**)
 
-Inventario histórico del diagnóstico. **No se stagea ni se carga** en el ETL vigente; solo permanece la semilla `GAPPS` en `MI_DIM_FUENTE_REGISTRO`. Fechas como cadena
+Inventario histórico del diagnóstico. **No se stagea ni se carga** en el ETL vigente; solo permanece la semilla `GAPPS` en `DW_M_DIM_FUENTE_REGISTRO`. Fechas como cadena
 `YYYY-MM-DD [HH:MM:SS]`. Grano (histórico): **un registro de MC en la app** (con auditoría).
 
 | Campo | Tipo | Descripción | Observación real |
@@ -282,8 +282,8 @@ resolución de MC** (un expediente puede repetirse con varias medidas y CUM).
 | Estado multa | `ESTADO_MC` | `ESTADO_MC`/`AUX_EST_MC` | `FG_ESTADOMULTA` | `ESTADO_MULTA` | — | `ID_ESTADO_MULTA` |
 | Verificación post-MC | `F_VERIF_POST_MC`, `DOC_VERIF_MC` | idem | `FE_F_VERIF_POST_MC`, `TX_DOC_VERIF_MC` | — | — | `F_VERIF_POST_MC`, `DOC_VERIF_MC` |
 | SIGED | `SIGED` | `SIGED`, `EXP_SIGED_DOC` | `TX_EXP_SIGED_DOC` | `NUMERO_REGISTRO` | — | `SIGED` |
-| Proyecto / etapas | — | `COD_PROY_MC`, hoja `2) Etapas` | `TX_PASOACTUAL` | — | — | `MI_DET_ETAPA_MC` |
-| Territorio / unidad | `COD_OD` (inyectado) → `MI_DIM_OD` | `COORD` / `COD_UNIDAD` → `MI_DIM_ORGANO_UNIDAD` (+ `DESCRIPCION`) | — | — | — | dims órgano / OD |
+| Proyecto / etapas | — | `COD_PROY_MC`, hoja `2) Etapas` | `TX_PASOACTUAL` | — | — | `DW_M_DET_ETAPA_MC` |
+| Territorio / unidad | `COD_OD` (inyectado) → `DW_M_DIM_OD` | `COORD` / `COD_UNIDAD` → `DW_M_DIM_ORGANO_UNIDAD` (+ `DESCRIPCION`) | — | — | — | dims órgano / OD |
 | Universo (`CODIGO`) | `OD_SHEETS` | `CAGR` | `GAPPS` (semilla) | `SISUD_VW` | — | `ID_FUENTE` → dims / `VW_MC_*` |
 
 ---
@@ -299,8 +299,8 @@ resolución de MC** (un expediente puede repetirse con varias medidas y CUM).
 | H5 | Lógica de negocio en fórmulas Excel | `WORKDAY.INTL`, `ArrayFormula`, `INDEX/MATCH` | Migración de reglas a la capa DWH documentada |
 | H6 | Catálogos / IMPORTRANGE históricos | Plantillas Excel con `#REF!` (no stageados) | UIT desde MEF; DIC desde Excel legacy |
 | H7 | Dos layouts de registro de MC | F1 (32 col OD) vs F2 (48 col CSEP) | 3 facts evidencia + enrich; attrs F2 en hechos |
-| H8 | Estados como texto libre | `INCUMPLIDO` (F1/F2), `ACTIVO`/`INACTIVO` (F5) | `MI_DIM_ESTADO` con homologación |
-| H9 | Claves de cruce sin correspondencia total | Sheets↔SISUD por resolución+monto | `RES_MONTO_Sheets_vs_SISUD` → `MI_QA_AMARRE*` / K5 |
+| H8 | Estados como texto libre | `INCUMPLIDO` (F1/F2), `ACTIVO`/`INACTIVO` (F5) | `DW_M_DIM_ESTADO` con homologación |
+| H9 | Claves de cruce sin correspondencia total | Sheets↔SISUD por resolución+monto | `RES_MONTO_Sheets_vs_SISUD` → `DW_M_QA_AMARRE*` / K5 |
 
 ---
 

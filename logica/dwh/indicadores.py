@@ -372,7 +372,7 @@ def calcular_indicadores(
     qa_amarre: pd.DataFrame,
     dim_org: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
-    """Calcula K1–K5 en memoria listos para MI_INDICADOR_RESULTADO."""
+    """Calcula K1–K5 en memoria listos para DW_M_INDICADOR_RESULTADO."""
     _ = dim_org
     rows: list[dict] = []
     rows.extend(_k1_cobertura(fact_mc))

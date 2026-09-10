@@ -1,13 +1,13 @@
-"""Foto cruda de staging → Oracle MI_AUD_* (fuera de la estrella Kimball).
+"""Foto cruda de staging → Oracle DW_M_AUD_* (fuera de la estrella Kimball).
 
 Lo llama python/main.py DESPUÉS de cargar_dw, pasando los DataFrames de leer_h2
-(no los facts). Sirve para contrastar “qué bajó Hop” vs “qué quedó en MI_FACT_*”.
+(no los facts). Sirve para contrastar “qué bajó Hop” vs “qué quedó en DW_M_FACT_*”.
 
 Mapeo STG lógico → tabla audit:
-  GS1    → MI_AUD_F2_CSEP_MULTAS
-  ETAPAS → MI_AUD_F2_CSEP_ETAPAS
-  GS2    → MI_AUD_F1_OD_MULTAS
-  ORA    → MI_AUD_F5_SISUD_VW
+  GS1    → DW_M_AUD_F2_CSEP_MULTAS
+  ETAPAS → DW_M_AUD_F2_CSEP_ETAPAS
+  GS2    → DW_M_AUD_F1_OD_MULTAS
+  ORA    → DW_M_AUD_F5_SISUD_VW
 
 Todas las columnas se guardan como VARCHAR2 (foto 1:1 textual) + FECHA_CARGA.
 """
@@ -26,10 +26,10 @@ ESQUEMA = ESQUEMA_DEFAULT
 
 # Clave de leer_h2 → tabla Oracle de auditoría
 MAPEO_AUD: dict[str, str] = {
-    "GS1": "MI_AUD_F2_CSEP_MULTAS",
-    "ETAPAS": "MI_AUD_F2_CSEP_ETAPAS",
-    "GS2": "MI_AUD_F1_OD_MULTAS",
-    "ORA": "MI_AUD_F5_SISUD_VW",
+    "GS1": "DW_M_AUD_F2_CSEP_MULTAS",
+    "ETAPAS": "DW_M_AUD_F2_CSEP_ETAPAS",
+    "GS2": "DW_M_AUD_F1_OD_MULTAS",
+    "ORA": "DW_M_AUD_F5_SISUD_VW",
 }
 
 VARCHAR_LEN = 4000
@@ -97,7 +97,7 @@ def _drop_table(cur, tabla: str) -> None:
 
 
 def _create_and_load(cur, tabla: str, df: pd.DataFrame) -> int:
-    """DROP+CREATE+INSERT de una tabla MI_AUD_* a partir de un DataFrame STG."""
+    """DROP+CREATE+INSERT de una tabla DW_M_AUD_* a partir de un DataFrame STG."""
     _drop_table(cur, tabla)
     if df is None or df.empty:
         # Tabla mínima para que exista el objeto aunque STG venga vacío
@@ -142,7 +142,7 @@ def cargar_aud(
     stg: dict[str, pd.DataFrame],
     root: Path | None = None,
 ) -> dict[str, int]:
-    """Punto de entrada desde main.py: crea/llena MI_AUD_* desde STG (GS1/ETAPAS/GS2/ORA)."""
+    """Punto de entrada desde main.py: crea/llena DW_M_AUD_* desde STG (GS1/ETAPAS/GS2/ORA)."""
     root = root or project_root()
     # STEP 8.1: abrir Oracle para guardar la fotografía cruda del staging.
     conn, _cv = _connect(root)
@@ -150,9 +150,9 @@ def cargar_aud(
     try:
         cur = conn.cursor()
         try:
-            # STEP 8.2: recorrer el mapeo STG lógico → tabla MI_AUD_*.
+            # STEP 8.2: recorrer el mapeo STG lógico → tabla DW_M_AUD_*.
             _bind_schema(cur)
-            print(f"AUD: foto cruda STG → {ESQUEMA}.MI_AUD_*", flush=True)
+            print(f"AUD: foto cruda STG → {ESQUEMA}.DW_M_AUD_*", flush=True)
             for stg_key, tabla in MAPEO_AUD.items():
                 df = stg.get(stg_key)
                 if df is None:

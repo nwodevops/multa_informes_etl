@@ -2,7 +2,7 @@
 
 ## Cambio
 
-`MI_DIM_ORGANO_UNIDAD` deja de incorporar siglas derivadas de `NUMERO_EXPEDIENTE` / valores libres de `COORD` fuera de catálogo.
+`DW_M_DIM_ORGANO_UNIDAD` deja de incorporar siglas derivadas de `NUMERO_EXPEDIENTE` / valores libres de `COORD` fuera de catálogo.
 
 - Semilla: 10 `cod_unidad` activos de `docs/inputs/f2_csep_sheets.json` + ND.
 - Hecho: `ID_ORGANO` por `COORD` → `COD_UNIDAD` → último token de expediente **solo si** es CSEP conocida; si no, `-1`.
@@ -17,4 +17,4 @@
 
 ## Verificación
 
-`./init.sh` → HARNESS OK; `COUNT(*)` de `MI_DIM_ORGANO_UNIDAD` ≈ 11.
+`./init.sh` → HARNESS OK; `COUNT(*)` de `DW_M_DIM_ORGANO_UNIDAD` ≈ 11.

@@ -20,29 +20,29 @@ Fuentes activas: **F1 + F2 (+etapas) + F5**. F3 OUT. F4 fuera de ingestión (sem
 
 ## Fase 4 — Calidad
 
-**Salida:** `FG_CONFORME`; `MI_DQ_HALLAZGO`; `MI_QA_AMARRE` + `MI_QA_AMARRE_DETALLE` (H9).
+**Salida:** `FG_CONFORME`; `DW_M_DQ_HALLAZGO`; `DW_M_QA_AMARRE` + `DW_M_QA_AMARRE_DETALLE` (H9).
 
 **Reglas:** R01 completitud (Sheets `COD_MA`, SISUD `CUM`/`CAM` — sin GAPPS), R02 CUM/CAM, R03 temporal, R04 UIT≥0, R05 UIT↔soles.
 
 **Puente H9:** `RES_MONTO_Sheets_vs_SISUD`.
 
-**Principio:** no eliminar filas; marcar y registrar en `MI_DQ_HALLAZGO`.
+**Principio:** no eliminar filas; marcar y registrar en `DW_M_DQ_HALLAZGO`.
 
 ## Fase 5 — Modelo dimensional (evidencia)
 
-**Salida:** 8× `MI_DIM_*`, tres facts `MI_FACT_MC_CSEP` / `_OD` / `_SISUD`, `MI_DET_ETAPA_MC`.
+**Salida:** 8× `DW_M_DIM_*`, tres facts `DW_M_FACT_MC_CSEP` / `_OD` / `_SISUD`, `DW_M_DET_ETAPA_MC`.
 
 **Avance:** ningún hecho sin dimensión (`ID_* = -1` si falta lookup); órgano solo CSEP+ND.
 
 ## Fase 6 — Carga Oracle + enrich
 
-**Salida:** TRUNCATE+INSERT de evidencia/dims/QA/KPIs; SQL `07_enrich_sheets_sisud.sql` → `MI_FACT_MULTA_COERCITIVA`; vistas `VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA`.
+**Salida:** TRUNCATE+INSERT de evidencia/dims/QA/KPIs; SQL `07_enrich_sheets_sisud.sql` → `DW_M_FACT_MULTA_COERCITIVA`; vistas `VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA`.
 
 **Avance:** `COUNT(*)` Oracle = filas DataFrame (evidencia); enriquecido ≈ CSEP+OD (~1271 ref.).
 
 ## Fase 7 — Indicadores
 
-**Salida:** `MI_INDICADOR_RESULTADO` con K1–K5.
+**Salida:** `DW_M_INDICADOR_RESULTADO` con K1–K5.
 
 | Código | Métrica |
 |---|---|
@@ -50,7 +50,7 @@ Fuentes activas: **F1 + F2 (+etapas) + F5**. F3 OUT. F4 fuera de ingestión (sem
 | K2 | `PROM_DIAS_NOTIF_FIRMA` |
 | K3 | `RATIO_COBRANZA_SOLES`, `RATIO_COBRANZA_UIT` |
 | K4 | `TASA_VERIF_POST_MC` |
-| K5 | `PCT_CONFORME` (por regla), `PCT_AMARRE` (puentes; detalle en `MI_QA_AMARRE_DETALLE`) |
+| K5 | `PCT_CONFORME` (por regla), `PCT_AMARRE` (puentes; detalle en `DW_M_QA_AMARRE_DETALLE`) |
 
 **Avance:** reproducible; presencia de K1–K5; DDL `04_indicadores.sql`.
 

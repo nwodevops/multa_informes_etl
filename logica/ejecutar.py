@@ -4,7 +4,7 @@
 #
 # Flujo (quién llama a quién):
 #   Hop deja STG_* en H2 → Python lee GS1/GS2/ETAPAS/ORA → este módulo
-#   → dwh.pipeline.ejecutar(...) → DataFrames MI_* en memoria
+#   → dwh.pipeline.ejecutar(...) → DataFrames DW_M_* en memoria
 #   → cargar_dw.py publica a Oracle + SQL 07 arma el fact enriquecido.
 #
 # Qué NO hace este módulo:
@@ -46,21 +46,21 @@ DF_CSEP = _out["DF_CSEP"]              # bloque canónico F2
 DF_OD = _out["DF_OD"]                  # bloque canónico F1
 DF_SISUD = _out["DF_SISUD"]            # bloque canónico F5
 DF_ETAPAS = _out["DF_ETAPAS"]
-MI_DQ_HALLAZGO = _out["MI_DQ_HALLAZGO"]
-MI_QA_AMARRE = _out["MI_QA_AMARRE"]
-MI_QA_AMARRE_DETALLE = _out["MI_QA_AMARRE_DETALLE"]
-MI_DIM_TIEMPO = _out["MI_DIM_TIEMPO"]
-MI_DIM_ADMINISTRADO = _out["MI_DIM_ADMINISTRADO"]
-MI_DIM_ORGANO_UNIDAD = _out["MI_DIM_ORGANO_UNIDAD"]
-MI_DIM_OD = _out["MI_DIM_OD"]
-MI_DIM_FUENTE_REGISTRO = _out["MI_DIM_FUENTE_REGISTRO"]
-MI_DIM_MATERIA_SUBSECTOR = _out["MI_DIM_MATERIA_SUBSECTOR"]
-MI_DIM_ESTADO = _out["MI_DIM_ESTADO"]
-MI_DIM_PARAMETRO_UIT = _out["MI_DIM_PARAMETRO_UIT"]
+DW_M_DQ_HALLAZGO = _out["DW_M_DQ_HALLAZGO"]
+DW_M_QA_AMARRE = _out["DW_M_QA_AMARRE"]
+DW_M_QA_AMARRE_DETALLE = _out["DW_M_QA_AMARRE_DETALLE"]
+DW_M_DIM_TIEMPO = _out["DW_M_DIM_TIEMPO"]
+DW_M_DIM_ADMINISTRADO = _out["DW_M_DIM_ADMINISTRADO"]
+DW_M_DIM_ORGANO_UNIDAD = _out["DW_M_DIM_ORGANO_UNIDAD"]
+DW_M_DIM_OD = _out["DW_M_DIM_OD"]
+DW_M_DIM_FUENTE_REGISTRO = _out["DW_M_DIM_FUENTE_REGISTRO"]
+DW_M_DIM_MATERIA_SUBSECTOR = _out["DW_M_DIM_MATERIA_SUBSECTOR"]
+DW_M_DIM_ESTADO = _out["DW_M_DIM_ESTADO"]
+DW_M_DIM_PARAMETRO_UIT = _out["DW_M_DIM_PARAMETRO_UIT"]
 # Tres facts de EVIDENCIA (1 fila = 1 multa de UNA fuente). El de NEGOCIO se arma en SQL 07.
-MI_FACT_MC_CSEP = _out["MI_FACT_MC_CSEP"]
-MI_FACT_MC_OD = _out["MI_FACT_MC_OD"]
-MI_FACT_MC_SISUD = _out["MI_FACT_MC_SISUD"]
-MI_DET_ETAPA_MC = _out["MI_DET_ETAPA_MC"]
-MI_INDICADOR_RESULTADO = _out["MI_INDICADOR_RESULTADO"]
+DW_M_FACT_MC_CSEP = _out["DW_M_FACT_MC_CSEP"]
+DW_M_FACT_MC_OD = _out["DW_M_FACT_MC_OD"]
+DW_M_FACT_MC_SISUD = _out["DW_M_FACT_MC_SISUD"]
+DW_M_DET_ETAPA_MC = _out["DW_M_DET_ETAPA_MC"]
+DW_M_INDICADOR_RESULTADO = _out["DW_M_INDICADOR_RESULTADO"]
 RESULTADO = _out["RESULTADO"]

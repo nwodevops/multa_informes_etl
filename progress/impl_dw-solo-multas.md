@@ -8,7 +8,7 @@
 F3 (INFORMES / `CSEP_INFORMES_VIEW`) sale de Hop, H2, Python, Kimball y Oracle. El DW queda **solo Multas** (F1, F2, F4, F5 + etapas). Fase 3 del lineamiento (`integracion.py`) se mantiene con `DF_MULTAS` + `DF_ETAPAS`.
 
 - Hop: sin `pl_stage_informes.hpl`; `wf_main` / `wf_main_win` van de Stage Oracle VW a Stage MySQL.
-- Python: sin `LECTURAS INFORMES`, `DF_INFORMES`, `MI_FACT_INFORME_SUPERVISION`, `ID_INFORME`, K1 `N_INFORMES`.
+- Python: sin `LECTURAS INFORMES`, `DF_INFORMES`, `DW_M_FACT_INFORME_SUPERVISION`, `ID_INFORME`, K1 `N_INFORMES`.
 - Oracle vivo: `cargar_dw.py` hace DROP FK/tabla/índice/columna de informes antes del TRUNCATE.
 - `init.sh` / `verify_dw.py`: fallan si reaparece el hecho informe o `ID_INFORME`.
 
@@ -31,15 +31,15 @@ Hop **no** ejecuta `pl_stage_informes`. Staging:
 Python (log `./init.sh`):
 
 - `DF_MULTAS` 571 · `DF_ETAPAS` 55 · **cero** `DF_INFORMES`
-- `MI_FACT_MULTA_COERCITIVA` 571 · `MI_DET_ETAPA_MC` 55 · **cero** `MI_FACT_INFORME_SUPERVISION`
-- `MI_INDICADOR_RESULTADO` 152 (K1–K5; K1 solo `N_MULTAS`)
+- `DW_M_FACT_MULTA_COERCITIVA` 571 · `DW_M_DET_ETAPA_MC` 55 · **cero** `DW_M_FACT_INFORME_SUPERVISION`
+- `DW_M_INDICADOR_RESULTADO` 152 (K1–K5; K1 solo `N_MULTAS`)
 
 Oracle `app@localhost:1524/BD_CURSOR` esquema APP:
 
-- `MI_FACT_MULTA_COERCITIVA` = 571
-- `MI_INDICADOR_RESULTADO` = 152 (K1: 34, K2: 10, K3: 66, K4: 33, K5: 9)
-- `MI_FACT_INFORME_SUPERVISION`: **inexistente**
-- `MI_FACT_MULTA_COERCITIVA.ID_INFORME`: **inexistente**
+- `DW_M_FACT_MULTA_COERCITIVA` = 571
+- `DW_M_INDICADOR_RESULTADO` = 152 (K1: 34, K2: 10, K3: 66, K4: 33, K5: 9)
+- `DW_M_FACT_INFORME_SUPERVISION`: **inexistente**
+- `DW_M_FACT_MULTA_COERCITIVA.ID_INFORME`: **inexistente**
 
 Sandbox SISUD local: `localhost:1525/CSEP` (F5). DW: `localhost:1524/BD_CURSOR`.
 

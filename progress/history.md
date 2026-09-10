@@ -16,21 +16,21 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 
 **Evidencia:**
 
-- Smoke: `MI_INDICADOR_RESULTADO` ~585 filas en Oracle; segunda corrida reproducible.
+- Smoke: `DW_M_INDICADOR_RESULTADO` ~585 filas en Oracle; segunda corrida reproducible.
 - Docs: `docs/lineamientos/implementacion-fase-*.md`, `docs/fase1-3/status.md`.
 
 **Siguiente feature pendiente:** `fase-8-powerbi` (Power BI; validación manual).
 
 ---
 
-## 2026-08-19 — Fase 7 cerrada (regresión MI_INDICADOR_RESULTADO)
+## 2026-08-19 — Fase 7 cerrada (regresión DW_M_INDICADOR_RESULTADO)
 
 **Feature:** `fase-7-indicadores` → `done`
 
 **Evidencia wf_main (21:57):**
 
-- `MI_INDICADOR_RESULTADO: 585 filas -> 585 en BD (OK)`
-- POST-CARGA APP.MI_INDICADOR_RESULTADO = 585; K1–K5 presentes
+- `DW_M_INDICADOR_RESULTADO: 585 filas -> 585 en BD (OK)`
+- POST-CARGA APP.DW_M_INDICADOR_RESULTADO = 585; K1–K5 presentes
 - Destino: `app@localhost:1524/BD_CURSOR` esquema APP
 
 **Notas:** Regresión «tabla vacía» resuelta — cliente SQL debe usar puerto **1524** (ver `impl_fase-7-indicadores.md`).
@@ -52,7 +52,7 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 - `environments/remote.json` rellenado; `project-config.json` = local vía `./switch-env.sh local`.
 - Plantillas `environments/*.example.json`; secretos en `.gitignore`.
 
-**Evidencia:** `./init.sh` → **HARNESS OK** (585 filas `MI_INDICADOR_RESULTADO`, K1–K5).
+**Evidencia:** `./init.sh` → **HARNESS OK** (585 filas `DW_M_INDICADOR_RESULTADO`, K1–K5).
 
 **Siguiente:** `fase-8-powerbi` (`pending`).
 
@@ -72,14 +72,14 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 
 ---
 
-## 2026-08-25 — Rename DW MI_ cerrado
+## 2026-08-25 — Rename DW DW_M_ cerrado
 
 **Feature:** `fase-rename-dw` → `done`
 
 **Cambios:**
 
-- DROP legacy sin `MI_` + constraints renombrados (fix `ORA-02264`).
-- `main.py` exporta/carga `MI_DIM_*` / `MI_FACT_*` / `MI_DQ_*`.
+- DROP legacy sin `DW_M_` + constraints renombrados (fix `ORA-02264`).
+- `main.py` exporta/carga `DW_M_DIM_*` / `DW_M_FACT_*` / `DW_M_DQ_*`.
 - `init.sh` greps alineados; evidencia Linux: **HARNESS OK**.
 
 **Evidencia:** [`progress/impl_fase-rename-dw.md`](impl_fase-rename-dw.md) — 53288 informes, 571 multas, 585 indicadores, K1–K5.
@@ -124,7 +124,7 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 **Cambios:**
 
 - F3 (`CSEP_INFORMES_VIEW`) fuera de Hop, H2, Python, Kimball y Oracle.
-- Estrella única: `MI_FACT_MULTA_COERCITIVA` + `MI_DET_ETAPA_MC`. K1 solo `N_MULTAS`.
+- Estrella única: `DW_M_FACT_MULTA_COERCITIVA` + `DW_M_DET_ETAPA_MC`. K1 solo `N_MULTAS`.
 - Esquema vivo: DROP tabla informe, FK e `ID_INFORME`.
 
 **Evidencia:** [`progress/impl_dw-solo-multas.md`](impl_dw-solo-multas.md) — `./init.sh` → **HARNESS OK**; 571 multas, 152 indicadores; hecho informe inexistente.
@@ -133,7 +133,7 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 
 ## 2026-09-06 — mejoras Kimball 2–7
 
-- Vistas VW_MC_*, MI_QA_AMARRE(+DETALLE), DROP FUENTE_REGISTRO, ID_TIEMPO_FIRMA, alertas conteo init.sh, anti-patrones en guía.
+- Vistas VW_MC_*, DW_M_QA_AMARRE(+DETALLE), DROP FUENTE_REGISTRO, ID_TIEMPO_FIRMA, alertas conteo init.sh, anti-patrones en guía.
 - ./init.sh → HARNESS OK (QA detalle 3078; órgano 11; sin VARCHAR FUENTE_REGISTRO).
 - Evidencia: progress/impl_mejoras-kimball-2-7.md
 

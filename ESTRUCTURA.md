@@ -76,7 +76,7 @@ etl_cursor/
 │   │   └── sheets.py                    #   handler opcional (inputs type sheets)
 │   └── io/                              #   CAPA post-staging: I/O
 │       ├── leer_h2.py                   #     ENTRADA: H2 STG_* → DataFrames
-│       └── cargar_dw.py                 #     SALIDA: wipe+DDL+INSERT MI_* → Oracle DW
+│       └── cargar_dw.py                 #     SALIDA: wipe+DDL+INSERT DW_M_* → Oracle DW
 │
 ├── logica/                              # Zona de pegado: un solo .py (+ paquete dwh/)
 │   ├── LEEME.md

@@ -47,7 +47,7 @@ def main() -> int:
         tables = [row[0] for row in cur.fetchall()]
 
         if not tables:
-            print("dw_csv: sin tablas MI_*/STG_* en esquema", user.upper())
+            print("dw_csv: sin tablas DW_M_*/STG_* en esquema", user.upper())
             return 0
 
         total = 0

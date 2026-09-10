@@ -2,8 +2,8 @@
 
 Flujo de construir_modelo:
   1) Arma DIMs (tiempo, estado, UIT, órgano, OD, fuente, administrado, materia)
-  2) Por cada bloque canónico llama _build_fact_multas → MI_FACT_MC_CSEP / _OD / _SISUD
-  3) Arma MI_DET_ETAPA_MC desde etapas CSEP
+  2) Por cada bloque canónico llama _build_fact_multas → DW_M_FACT_MC_CSEP / _OD / _SISUD
+  3) Arma DW_M_DET_ETAPA_MC desde etapas CSEP
 
 Grano evidencia: 1 fila = 1 multa de UNA fuente (ID_FUENTE distingue el universo).
 Lookups = dict en memoria (como Map<clave, id> en Java), no SQL JOIN.
@@ -22,7 +22,7 @@ from datetime import date, datetime
 
 import pandas as pd
 
-from .catalogos import MI_DIM_ESTADO as SEMILLAS_ESTADO, MI_DIM_PARAMETRO_UIT as UIT_MEF, ODS_OEFA
+from .catalogos import DW_M_DIM_ESTADO as SEMILLAS_ESTADO, DW_M_DIM_PARAMETRO_UIT as UIT_MEF, ODS_OEFA
 from .constantes import SEMILLAS_FUENTE_REGISTRO
 from .homologacion import homologar_estado, vacio
 
@@ -99,7 +99,7 @@ def _anio_fecha(v) -> int | None:
 
 
 def _id_tiempo_fecha(v) -> int:
-    """Clave AAAAMMDD de MI_DIM_TIEMPO; -1 si no hay fecha o fuera del rango sembrado (2015–2026)."""
+    """Clave AAAAMMDD de DW_M_DIM_TIEMPO; -1 si no hay fecha o fuera del rango sembrado (2015–2026)."""
     if vacio(v):
         return ND
     try:
@@ -619,22 +619,22 @@ def construir_modelo(
 
     # Misma firma de dims; tres llamadas = tres universos de evidencia
     args = (dim_admin, dim_organo, dim_materia, dim_estado, dim_uit, dim_od, dim_fuente)
-    fact_csep = _build_fact_multas(df_csep, *args)    # → MI_FACT_MC_CSEP
-    fact_od = _build_fact_multas(df_od, *args)        # → MI_FACT_MC_OD
-    fact_sisud = _build_fact_multas(df_sisud, *args)  # → MI_FACT_MC_SISUD
+    fact_csep = _build_fact_multas(df_csep, *args)    # → DW_M_FACT_MC_CSEP
+    fact_od = _build_fact_multas(df_od, *args)        # → DW_M_FACT_MC_OD
+    fact_sisud = _build_fact_multas(df_sisud, *args)  # → DW_M_FACT_MC_SISUD
     det_etapas = _build_det_etapas(df_etapas, fact_csep, dim_fuente)
 
     return {
-        "MI_DIM_TIEMPO": dim_tiempo,
-        "MI_DIM_ADMINISTRADO": dim_admin,
-        "MI_DIM_ORGANO_UNIDAD": dim_organo,
-        "MI_DIM_OD": dim_od,
-        "MI_DIM_FUENTE_REGISTRO": dim_fuente,
-        "MI_DIM_MATERIA_SUBSECTOR": dim_materia,
-        "MI_DIM_ESTADO": dim_estado,
-        "MI_DIM_PARAMETRO_UIT": dim_uit,
-        "MI_FACT_MC_CSEP": fact_csep,
-        "MI_FACT_MC_OD": fact_od,
-        "MI_FACT_MC_SISUD": fact_sisud,
-        "MI_DET_ETAPA_MC": det_etapas,
+        "DW_M_DIM_TIEMPO": dim_tiempo,
+        "DW_M_DIM_ADMINISTRADO": dim_admin,
+        "DW_M_DIM_ORGANO_UNIDAD": dim_organo,
+        "DW_M_DIM_OD": dim_od,
+        "DW_M_DIM_FUENTE_REGISTRO": dim_fuente,
+        "DW_M_DIM_MATERIA_SUBSECTOR": dim_materia,
+        "DW_M_DIM_ESTADO": dim_estado,
+        "DW_M_DIM_PARAMETRO_UIT": dim_uit,
+        "DW_M_FACT_MC_CSEP": fact_csep,
+        "DW_M_FACT_MC_OD": fact_od,
+        "DW_M_FACT_MC_SISUD": fact_sisud,
+        "DW_M_DET_ETAPA_MC": det_etapas,
     }

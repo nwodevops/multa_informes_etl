@@ -76,7 +76,7 @@
     },
     {
       "id": "fase-rename-dw",
-      "title": "Rename DW tables to MI_ prefix (MI_DIM_*, MI_FACT_*, MI_DET_*, MI_DQ_*, MI_INDICADOR_RESULTADO)",
+      "title": "Rename DW tables to DW_M_ prefix (DW_M_DIM_*, DW_M_FACT_*, DW_M_DET_*, DW_M_DQ_*, DW_M_INDICADOR_RESULTADO)",
       "status": "done",
       "criterio": "All 11 DW tables renamed across DDL, Python, docs; ./init.sh → HARNESS OK",
       "doc": "docs/lineamientos/ddl/",
@@ -107,13 +107,13 @@
       "id": "dw-solo-multas",
       "title": "DW netamente Multas: quitar F3 (informes) end-to-end",
       "status": "done",
-      "criterio": "CHECKPOINTS.md; ./init.sh HARNESS OK sin pl_stage_informes ni MI_FACT_INFORME_SUPERVISION",
+      "criterio": "CHECKPOINTS.md; ./init.sh HARNESS OK sin pl_stage_informes ni DW_M_FACT_INFORME_SUPERVISION",
       "doc": "docs/inputs/README.md",
       "evidencia": "progress/impl_dw-solo-multas.md"
     },
     {
       "id": "f1-ods-ica-puno",
-      "title": "F1 familia OD (Ica, Lambayeque, Puno) + MI_DIM_OD 31 oficinas",
+      "title": "F1 familia OD (Ica, Lambayeque, Puno) + DW_M_DIM_OD 31 oficinas",
       "status": "done",
       "criterio": "3 Excel en STG; FACT con ID_OD resuelto para LAM/ICA; dim sembrada 31+ND; FUENTE_REGISTRO=OD_EXCEL en esas filas; ./init.sh HARNESS OK; docs/inputs describe convención para el resto",
       "doc": "docs/inputs/README.md"
@@ -136,15 +136,15 @@
     },
     {
       "id": "dim-organo-descripcion-csep",
-      "title": "MI_DIM_ORGANO_UNIDAD.DESCRIPCION (nombre largo CSEP desde catálogo)",
+      "title": "DW_M_DIM_ORGANO_UNIDAD.DESCRIPCION (nombre largo CSEP desde catálogo)",
       "status": "done",
       "passes": true,
-      "criterio": "Columna DESCRIPCION en MI_DIM_ORGANO_UNIDAD; CMIN→Minería etc. desde f2_csep_sheets.json; 10 unidades sembradas; carga Oracle OK",
+      "criterio": "Columna DESCRIPCION en DW_M_DIM_ORGANO_UNIDAD; CMIN→Minería etc. desde f2_csep_sheets.json; 10 unidades sembradas; carga Oracle OK",
       "doc": "docs/lineamientos/ANEXO_MAPEO_CAMPOS.md"
     },
     {
       "id": "dim-organo-csep-limpia",
-      "title": "MI_DIM_ORGANO_UNIDAD limpia: solo CSEP (+ ND), sin siglas de expediente",
+      "title": "DW_M_DIM_ORGANO_UNIDAD limpia: solo CSEP (+ ND), sin siglas de expediente",
       "status": "done",
       "passes": true,
       "criterio": "Dim órgano sembrada desde f2_csep_sheets.json (+ ND); hechos F2 resuelven ID_ORGANO por COORD/COD_UNIDAD; siglas de expediente no hinchan la dim; reportes CAGR filtrables; ./init.sh HARNESS OK",
@@ -156,7 +156,7 @@
       "title": "Vistas Oracle de multas por universo (ID_FUENTE)",
       "status": "done",
       "passes": true,
-      "criterio": "Vistas VW_MC_CSEP|OD|SISUD vía MI_DIM_FUENTE_REGISTRO (F1+F2+F5; sin VW_MC_GAPPS); no sumar universos por defecto; ./init.sh HARNESS OK",
+      "criterio": "Vistas VW_MC_CSEP|OD|SISUD vía DW_M_DIM_FUENTE_REGISTRO (F1+F2+F5; sin VW_MC_GAPPS); no sumar universos por defecto; ./init.sh HARNESS OK",
       "doc": "docs/lineamientos/ddl/06_vistas.sql",
       "evidencia": "progress/impl_mejoras-kimball-2-7.md",
       "nota": "Histórico TDR: 06_vistas.sql queda en repo pero ya no se aplica; wipe canónico elimina VW_MC_*/VW_FCT_* (ver dw-wipe-canonico-aud)"
@@ -166,7 +166,7 @@
       "title": "Detalle usable de no-amarre H9 (pares/motivos además de K5)",
       "status": "done",
       "passes": true,
-      "criterio": "MI_QA_AMARRE + MI_QA_AMARRE_DETALLE con claves SOLO_IZQ/SOLO_DER y motivo; K5 sigue agregado; documentado; ./init.sh HARNESS OK",
+      "criterio": "DW_M_QA_AMARRE + DW_M_QA_AMARRE_DETALLE con claves SOLO_IZQ/SOLO_DER y motivo; K5 sigue agregado; documentado; ./init.sh HARNESS OK",
       "doc": "docs/modelo-kimball.md",
       "evidencia": "progress/impl_mejoras-kimball-2-7.md"
     },
@@ -181,7 +181,7 @@
     },
     {
       "id": "id-tiempo-firma",
-      "title": "ID_TIEMPO_FIRMA role-playing sobre MI_DIM_TIEMPO",
+      "title": "ID_TIEMPO_FIRMA role-playing sobre DW_M_DIM_TIEMPO",
       "status": "done",
       "passes": true,
       "criterio": "Columna FK en hecho desde F_FIRMA_RES_MC; cortes Q/año sin EXTRACT; ./init.sh HARNESS OK",
@@ -218,7 +218,7 @@
       "title": "3 facts evidencia (CSEP/OD/SISUD) + enrich SQL Oracle (resolución+monto)",
       "status": "done",
       "passes": true,
-      "criterio": "MI_FACT_MC_CSEP/OD/SISUD cargados; MI_FACT_MULTA_COERCITIVA = 07_enrich; 0153/64 → 2 filas con CUM/CAM; puente RES_MONTO; ./init.sh HARNESS OK",
+      "criterio": "DW_M_FACT_MC_CSEP/OD/SISUD cargados; DW_M_FACT_MULTA_COERCITIVA = 07_enrich; 0153/64 → 2 filas con CUM/CAM; puente RES_MONTO; ./init.sh HARNESS OK",
       "doc": "docs/lineamientos/extra/manual-como-se-arma-el-fact.md",
       "evidencia": "progress/impl_facts-evidencia-enrich-sql.md"
     },
@@ -227,25 +227,25 @@
       "title": "Atributos operativos Sheet (JEFE, UF, etapas, resultado, estados texto) en facts CSEP + enriquecida",
       "status": "done",
       "passes": true,
-      "criterio": "P0 en MI_FACT_MC_CSEP/OD/SISUD + MI_FACT_MULTA_COERCITIVA; caso 0153 → JEFE=MEJIA, HOMERO; corrida linux OK 990/281/1271",
+      "criterio": "P0 en DW_M_FACT_MC_CSEP/OD/SISUD + DW_M_FACT_MULTA_COERCITIVA; caso 0153 → JEFE=MEJIA, HOMERO; corrida linux OK 990/281/1271",
       "doc": "docs/lineamientos/ddl/02_hechos.sql"
     },
     {
       "id": "dw-wipe-canonico-aud",
-      "title": "DW Oracle: wipe MI_*/VW_* + DDL 01+02+DQ(+05) + enrich 07 + MI_AUD_* 1:1",
+      "title": "DW Oracle: wipe DW_M_*/VW_* + DDL 01+02+DQ(+05) + enrich 07 + DW_M_AUD_* 1:1",
       "status": "done",
       "passes": true,
-      "criterio": "Oracle: estrella (dims/facts/DET) + MI_DQ_HALLAZGO + enrich; sin 04/06 ni MI_QA_*/K en runtime; MI_AUD_* = conteos STG; linux wf_main OK 990/281/534/1271",
+      "criterio": "Oracle: estrella (dims/facts/DET) + DW_M_DQ_HALLAZGO + enrich; sin 04/06 ni DW_M_QA_*/K en runtime; DW_M_AUD_* = conteos STG; linux wf_main OK 990/281/534/1271",
       "doc": "python/CONTRATO.md",
-      "nota": "04/06 y MI_QA_* quedan fuera de Oracle; MI_DQ_HALLAZGO restaurado (R01–R05)"
+      "nota": "04/06 y DW_M_QA_* quedan fuera de Oracle; DW_M_DQ_HALLAZGO restaurado (R01–R05)"
     },
     {
       "id": "fase-remote-deploy",
       "title": "Despliegue remoto Windows (REPOCSEP → 10.6.0.15:1532/dvoefacore)",
       "status": "in_progress",
-      "criterio": "git pull + switch-env.ps1 remote + wf_main_win/init.bat → Success; POST-CARGA CSEP/OD/SISUD/enriquecida ≈ 990/281/534/1271; MI_AUD_* = STG; MI_DQ_HALLAZGO presente; sin VW_MC_* ni MI_QA_/MI_INDICADOR_*",
+      "criterio": "git pull + switch-env.ps1 remote + wf_main_win/init.bat → Success; POST-CARGA CSEP/OD/SISUD/enriquecida ≈ 990/281/534/1271; DW_M_AUD_* = STG; DW_M_DQ_HALLAZGO presente; sin VW_MC_* ni DW_M_QA_/DW_M_INDICADOR_*",
       "doc": "environments/remote.json",
-      "nota": "Re-corrida Win tras wipe + MI_AUD_* + MI_DQ_HALLAZGO; requiere client_secret.json"
+      "nota": "Re-corrida Win tras wipe + DW_M_AUD_* + DW_M_DQ_HALLAZGO; requiere client_secret.json"
     }
   ]
 }

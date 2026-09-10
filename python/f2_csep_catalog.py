@@ -1,6 +1,6 @@
 """Catálogo F2 CSEP Google Sheets (docs/inputs/f2_csep_sheets.json).
 
-Usado por stage_sheets / Hop y por dimensional (MI_DIM_ORGANO_UNIDAD / SIGLA).
+Usado por stage_sheets / Hop y por dimensional (DW_M_DIM_ORGANO_UNIDAD / SIGLA).
 No descarga datos: solo lee el JSON de unidades activas y spreadsheet_key.
 """
 

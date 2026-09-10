@@ -155,34 +155,34 @@ if errorlevel 1 (
     call :fail "no hay salida PROF_* en el log"
     exit /b 1
 )
-findstr /C:"Salida MI_DIM_" "%LOG%" >nul 2>&1
+findstr /C:"Salida DW_M_DIM_" "%LOG%" >nul 2>&1
 if errorlevel 1 (
-    call :fail "no hay salida MI_DIM_* en el log"
+    call :fail "no hay salida DW_M_DIM_* en el log"
     exit /b 1
 )
-findstr /C:"Salida MI_FACT_MC_CSEP" "%LOG%" >nul 2>&1
+findstr /C:"Salida DW_M_FACT_MC_CSEP" "%LOG%" >nul 2>&1
 if errorlevel 1 (
-    call :fail "no hay salida MI_FACT_MC_CSEP en el log"
+    call :fail "no hay salida DW_M_FACT_MC_CSEP en el log"
     exit /b 1
 )
-findstr /C:"Salida MI_FACT_MC_OD" "%LOG%" >nul 2>&1
+findstr /C:"Salida DW_M_FACT_MC_OD" "%LOG%" >nul 2>&1
 if errorlevel 1 (
-    call :fail "no hay salida MI_FACT_MC_OD en el log"
+    call :fail "no hay salida DW_M_FACT_MC_OD en el log"
     exit /b 1
 )
-findstr /C:"Salida MI_FACT_MC_SISUD" "%LOG%" >nul 2>&1
+findstr /C:"Salida DW_M_FACT_MC_SISUD" "%LOG%" >nul 2>&1
 if errorlevel 1 (
-    call :fail "no hay salida MI_FACT_MC_SISUD en el log"
+    call :fail "no hay salida DW_M_FACT_MC_SISUD en el log"
     exit /b 1
 )
-findstr /C:"Salida MI_DQ_HALLAZGO" "%LOG%" >nul 2>&1
+findstr /C:"Salida DW_M_DQ_HALLAZGO" "%LOG%" >nul 2>&1
 if errorlevel 1 (
-    call :fail "no hay salida MI_DQ_HALLAZGO en el log"
+    call :fail "no hay salida DW_M_DQ_HALLAZGO en el log"
     exit /b 1
 )
-findstr /C:"Salida MI_INDICADOR_RESULTADO" "%LOG%" >nul 2>&1
+findstr /C:"Salida DW_M_INDICADOR_RESULTADO" "%LOG%" >nul 2>&1
 if errorlevel 1 (
-    call :fail "no hay MI_INDICADOR_RESULTADO en el log (memoria de corrida)"
+    call :fail "no hay DW_M_INDICADOR_RESULTADO en el log (memoria de corrida)"
     exit /b 1
 )
 findstr /C:"Salida DF_INFORMES" "%LOG%" >nul 2>&1
@@ -190,9 +190,9 @@ if not errorlevel 1 (
     call :fail "log contiene DF_INFORMES (F3 fuera de alcance)"
     exit /b 1
 )
-findstr /C:"Salida MI_FACT_INFORME" "%LOG%" >nul 2>&1
+findstr /C:"Salida DW_M_FACT_INFORME" "%LOG%" >nul 2>&1
 if not errorlevel 1 (
-    call :fail "log contiene MI_FACT_INFORME (F3 fuera de alcance)"
+    call :fail "log contiene DW_M_FACT_INFORME (F3 fuera de alcance)"
     exit /b 1
 )
 
@@ -218,7 +218,7 @@ if errorlevel 1 (
     call :fail "Verificacion Oracle (verify_dw.py) fallo"
     exit /b 1
 )
-findstr /C:"MI_DQ_HALLAZGO" "%RUN_LOG%"
+findstr /C:"DW_M_DQ_HALLAZGO" "%RUN_LOG%"
 findstr /C:"QA/K en Oracle" "%RUN_LOG%"
 
 (

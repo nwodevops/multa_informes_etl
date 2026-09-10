@@ -2,8 +2,8 @@
 name: auditable-soft-quarantine
 description: >-
   Cuarentena blanda para ETLs auditables: defectos se marcan (FG_CONFORME,
-  MI_DQ_HALLAZGO) en lugar de descartarse porque son parte del entregable. Reglas
-  R01–R05, MI_QA_AMARRE(+DETALLE) entre fuentes sin llave conformada, conteos por capa.
+  DW_M_DQ_HALLAZGO) en lugar de descartarse porque son parte del entregable. Reglas
+  R01–R05, DW_M_QA_AMARRE(+DETALLE) entre fuentes sin llave conformada, conteos por capa.
   Usar en consultorías/TDR donde hay que defender cifras ante un tercero, al
   diseñar calidad de datos o indicadores K5 de amarre.
 ---
@@ -17,8 +17,8 @@ description: >-
 | Pregunta | Si sí → |
 |---|---|
 | ¿Los defectos son hallazgo entregable? | Cuarentena blanda |
-| ¿Hay que defender cifras ante un tercero? | `MI_DQ_HALLAZGO` materializado |
-| ¿Varias fuentes sin llave única? | `MI_QA_AMARRE` + `MI_QA_AMARRE_DETALLE` + KPI K5, no INNER JOIN forzado |
+| ¿Hay que defender cifras ante un tercero? | `DW_M_DQ_HALLAZGO` materializado |
+| ¿Varias fuentes sin llave única? | `DW_M_QA_AMARRE` + `DW_M_QA_AMARRE_DETALLE` + KPI K5, no INNER JOIN forzado |
 
 Si solo hay que limpiar datos y nadie audita → ETL clásico con rechazo es más simple.
 
@@ -28,9 +28,9 @@ Si solo hay que limpiar datos y nadie audita → ETL clásico con rechazo es má
 flowchart LR
   STG["STG_* H2"]
   DF["DF_* integrados"]
-  QA["FG_CONFORME + MI_DQ_HALLAZGO"]
+  QA["FG_CONFORME + DW_M_DQ_HALLAZGO"]
   DIM["DIM_* / FACT_*"]
-  IND["MI_INDICADOR_RESULTADO"]
+  IND["DW_M_INDICADOR_RESULTADO"]
 
   STG --> DF --> QA --> DIM --> IND
 ```
@@ -40,9 +40,9 @@ flowchart LR
 | `STG_*` | Copia 1:1, efímera, VARCHAR tolerante |
 | `DF_*` | Integración + homologación tipada |
 | `FG_CONFORME` | Marca S/N por fila; **no filtra** |
-| `MI_DQ_HALLAZGO` | Bitácora por regla, registro, campo |
+| `DW_M_DQ_HALLAZGO` | Bitácora por regla, registro, campo |
 | `FACT_*` | Carga **todas** las filas; defectos también van al hecho |
-| `MI_INDICADOR_RESULTADO` | K5 reporta % conforme y % amarre |
+| `DW_M_INDICADOR_RESULTADO` | K5 reporta % conforme y % amarre |
 
 ## Reglas de calidad (plantilla R01–R05)
 
@@ -56,17 +56,17 @@ Adaptar descripciones al dominio; mantener códigos estables para K5:
 
 Implementación: `aplicar_calidad()` devuelve dataframes **sin drop** + lista/`DataFrame` de hallazgos.
 
-## MI_QA_AMARRE (fuentes sin llave conformada)
+## DW_M_QA_AMARRE (fuentes sin llave conformada)
 
 - Comparar conjuntos de claves candidatas (expediente, CUM, COD_MA…).
-- Resumen: `PUENTE`, `N_IZQ`, `N_DER`, `N_MATCH`, `PCT_MATCH_IZQ` → `MI_QA_AMARRE`.
-- Detalle usable: `LADO` (`SOLO_IZQ`/`SOLO_DER`), `CLAVE`, `MOTIVO` → `MI_QA_AMARRE_DETALLE`.
+- Resumen: `PUENTE`, `N_IZQ`, `N_DER`, `N_MATCH`, `PCT_MATCH_IZQ` → `DW_M_QA_AMARRE`.
+- Detalle usable: `LADO` (`SOLO_IZQ`/`SOLO_DER`), `CLAVE`, `MOTIVO` → `DW_M_QA_AMARRE_DETALLE`.
 - **No** usar match bajo como filtro de carga; solo diagnóstico + K5.
 
 ## Invariantes a loguear (no bloqueantes)
 
 - `sum(K1 por grano) = COUNT(hecho)` si cada fila cae en un bucket.
-- `COUNT(MI_DQ_HALLAZGO)` coherente con no conformes (puede haber múltiples reglas por registro).
+- `COUNT(DW_M_DQ_HALLAZGO)` coherente con no conformes (puede haber múltiples reglas por registro).
 - Segunda corrida mismo insumo → mismos conteos y KPIs.
 
 ## Anti-patrones
@@ -82,6 +82,6 @@ Una rama por **fase de servicio** del contrato (fase-1, fase-2, fase-3), no carp
 
 ## Referencia en código
 
-- `logica/dwh/calidad.py` — reglas y `MI_QA_AMARRE`(+`_DETALLE`)
+- `logica/dwh/calidad.py` — reglas y `DW_M_QA_AMARRE`(+`_DETALLE`)
 - `logica/dwh/indicadores.py` — K5 `PCT_CONFORME`, `PCT_AMARRE`
-- `docs/lineamientos/ddl/03_bitacora.sql` — `MI_DQ_HALLAZGO`, `MI_QA_AMARRE*`
+- `docs/lineamientos/ddl/03_bitacora.sql` — `DW_M_DQ_HALLAZGO`, `DW_M_QA_AMARRE*`

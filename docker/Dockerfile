@@ -1,4 +1,4 @@
-# Superset + oracledb — dashboards sobre MI_INDICADOR_RESULTADO (opción C Ubuntu)
+# Superset + oracledb — dashboards sobre DW_M_INDICADOR_RESULTADO (opción C Ubuntu)
 # Conecta al Oracle DW local (APP@localhost:1524/BD_CURSOR) vía host.docker.internal.
 
 FROM apache/superset:4.0.2

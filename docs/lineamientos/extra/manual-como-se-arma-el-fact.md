@@ -29,15 +29,15 @@ Hop (Sheets + SISUD) → H2 STG_*
         ↓
    3 facts evidencia en Oracle
         ↓
-   SQL 07: LEFT JOIN → MI_FACT_MULTA_COERCITIVA
+   SQL 07: LEFT JOIN → DW_M_FACT_MULTA_COERCITIVA
 ```
 
 | Tabla | Qué es | Crece… |
 |---|---|---|
-| `MI_FACT_MC_CSEP` | Evidencia F2 (10 Sheets CSEP) | Vertical (más multas CSEP) |
-| `MI_FACT_MC_OD` | Evidencia F1 (Sheets OD) | Vertical (más multas OD) |
-| `MI_FACT_MC_SISUD` | Evidencia F5 (vista Oracle) | Vertical (más filas SISUD) |
-| `MI_FACT_MULTA_COERCITIVA` | Negocio enriquecido | Vertical = F1∪F2; **horizontal** = CUM/CAM |
+| `DW_M_FACT_MC_CSEP` | Evidencia F2 (10 Sheets CSEP) | Vertical (más multas CSEP) |
+| `DW_M_FACT_MC_OD` | Evidencia F1 (Sheets OD) | Vertical (más multas OD) |
+| `DW_M_FACT_MC_SISUD` | Evidencia F5 (vista Oracle) | Vertical (más filas SISUD) |
+| `DW_M_FACT_MULTA_COERCITIVA` | Negocio enriquecido | Vertical = F1∪F2; **horizontal** = CUM/CAM |
 
 Vistas: `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` = evidencia; `VW_MC_ENRIQUECIDA` = negocio.
 
@@ -103,16 +103,16 @@ Esa clave se usa en calidad (puente H9 `RES_MONTO_Sheets_vs_SISUD`) y es el **mi
 
 `dimensional.construir_modelo()`:
 
-1. Arma dimensiones compartidas (`MI_DIM_*`).  
+1. Arma dimensiones compartidas (`DW_M_DIM_*`).  
 2. Llama `_build_fact_multas` **tres veces** (CSEP, OD, SISUD).  
-3. Deja `MI_FACT_MULTA_COERCITIVA` **vacío** en Python (lo llena Oracle después).
+3. Deja `DW_M_FACT_MULTA_COERCITIVA` **vacío** en Python (lo llena Oracle después).
 
 ```python
 # logica/dwh/dimensional.py — idea
 fact_csep = _build_fact_multas(df_csep, ...)
 fact_od = _build_fact_multas(df_od, ...)
 fact_sisud = _build_fact_multas(df_sisud, ...)
-# MI_FACT_MULTA_COERCITIVA = DataFrame vacío  → se llena en SQL 07
+# DW_M_FACT_MULTA_COERCITIVA = DataFrame vacío  → se llena en SQL 07
 ```
 
 `_build_fact_multas` resuelve FKs (`ID_ORGANO`, `ID_OD`, `ID_FUENTE`, montos, flags, etc.) fila a fila del dataframe de esa fuente.
@@ -121,7 +121,7 @@ fact_sisud = _build_fact_multas(df_sisud, ...)
 
 `cargar_dw.py`:
 
-1. Wipe `MI_*` / `VW_*` y recrea DDL `01`–`04` + vistas `06`.  
+1. Wipe `DW_M_*` / `VW_*` y recrea DDL `01`–`04` + vistas `06`.  
 2. `INSERT` de dims y de los **3 facts evidencia**.  
 3. Ejecuta `_run_enrich_sheets_sisud()` → corre `07_enrich_sheets_sisud.sql`.
 
@@ -129,16 +129,16 @@ Ese SQL hace, en esencia:
 
 ```sql
 -- Sheets (vertical F1∪F2)
-SELECT * FROM MI_FACT_MC_CSEP
+SELECT * FROM DW_M_FACT_MC_CSEP
 UNION ALL
-SELECT * FROM MI_FACT_MC_OD
+SELECT * FROM DW_M_FACT_MC_OD
 
 -- LEFT JOIN SISUD (horizontal: CUM/CAM)
 LEFT JOIN (SISUD deduplicado por clave) 
   ON clave = norm(resolución) || '|' || monto
 ```
 
-Resultado → `MI_FACT_MULTA_COERCITIVA` (vista de negocio: `VW_MC_ENRIQUECIDA`).
+Resultado → `DW_M_FACT_MULTA_COERCITIVA` (vista de negocio: `VW_MC_ENRIQUECIDA`).
 
 ---
 
@@ -148,7 +148,7 @@ Resultado → `MI_FACT_MULTA_COERCITIVA` (vista de negocio: `VW_MC_ENRIQUECIDA`)
 |---|---|---|
 | Más multas en F1 o F2 | Evidencia + enriquecido | Crece **en vertical** (más filas) |
 | Lookup SISUD OK | Solo enriquecido | Crece **en horizontal** (CUM/CAM en la misma fila) |
-| Fila solo en SISUD | Solo `MI_FACT_MC_SISUD` | **No** entra al enriquecido |
+| Fila solo en SISUD | Solo `DW_M_FACT_MC_SISUD` | **No** entra al enriquecido |
 
 Caso F1 + F2:
 
@@ -162,7 +162,7 @@ Caso F1 + F2:
 
 - `calidad.py`: reglas R01–R05 (no borra filas; marca hallazgos).  
 - CUM/CAM vacío en Sheet tras el diseño enriquecido = esperado si no hubo match (advertencia).  
-- Puente H9: `RES_MONTO_Sheets_vs_SISUD` compara conjuntos de claves Sheet vs SISUD → `MI_QA_AMARRE` / `_DETALLE` y K5.
+- Puente H9: `RES_MONTO_Sheets_vs_SISUD` compara conjuntos de claves Sheet vs SISUD → `DW_M_QA_AMARRE` / `_DETALLE` y K5.
 
 ---
 
@@ -170,17 +170,17 @@ Caso F1 + F2:
 
 ```sql
 -- Evidencia
-SELECT COUNT(*) FROM APP.MI_FACT_MC_CSEP;
-SELECT COUNT(*) FROM APP.MI_FACT_MC_OD;
-SELECT COUNT(*) FROM APP.MI_FACT_MC_SISUD;
+SELECT COUNT(*) FROM APP.DW_M_FACT_MC_CSEP;
+SELECT COUNT(*) FROM APP.DW_M_FACT_MC_OD;
+SELECT COUNT(*) FROM APP.DW_M_FACT_MC_SISUD;
 
 -- Negocio (debe ≈ CSEP + OD)
-SELECT COUNT(*) FROM APP.MI_FACT_MULTA_COERCITIVA;
+SELECT COUNT(*) FROM APP.DW_M_FACT_MULTA_COERCITIVA;
 -- o: SELECT COUNT(*) FROM APP.VW_MC_ENRIQUECIDA;
 
 -- Caso 0153 / 64 UIT
 SELECT COD_MA, N_RES_MC, MONTO_UIT, CUM, CAM
-FROM APP.MI_FACT_MULTA_COERCITIVA
+FROM APP.DW_M_FACT_MULTA_COERCITIVA
 WHERE N_RES_MC LIKE '%153-2026-OEFA/DSEM%'
   AND MONTO_UIT = 64;
 ```

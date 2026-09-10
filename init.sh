@@ -92,17 +92,17 @@ set -e
 
 step "Comprobando salidas mínimas en log"
 grep -q "Salida PROF_" "$LOG" || fail "no hay salida PROF_* en el log"
-grep -q "Salida MI_DIM_" "$LOG" || fail "no hay salida MI_DIM_* en el log"
-grep -q "Salida MI_FACT_MC_CSEP" "$LOG" || fail "no hay salida MI_FACT_MC_CSEP en el log"
-grep -q "Salida MI_FACT_MC_OD" "$LOG" || fail "no hay salida MI_FACT_MC_OD en el log"
-grep -q "Salida MI_FACT_MC_SISUD" "$LOG" || fail "no hay salida MI_FACT_MC_SISUD en el log"
-grep -q "Salida MI_DQ_HALLAZGO" "$LOG" || fail "no hay salida MI_DQ_HALLAZGO en el log"
-grep -q "Salida MI_INDICADOR_RESULTADO" "$LOG" || fail "no hay MI_INDICADOR_RESULTADO en el log (memoria de corrida)"
+grep -q "Salida DW_M_DIM_" "$LOG" || fail "no hay salida DW_M_DIM_* en el log"
+grep -q "Salida DW_M_FACT_MC_CSEP" "$LOG" || fail "no hay salida DW_M_FACT_MC_CSEP en el log"
+grep -q "Salida DW_M_FACT_MC_OD" "$LOG" || fail "no hay salida DW_M_FACT_MC_OD en el log"
+grep -q "Salida DW_M_FACT_MC_SISUD" "$LOG" || fail "no hay salida DW_M_FACT_MC_SISUD en el log"
+grep -q "Salida DW_M_DQ_HALLAZGO" "$LOG" || fail "no hay salida DW_M_DQ_HALLAZGO en el log"
+grep -q "Salida DW_M_INDICADOR_RESULTADO" "$LOG" || fail "no hay DW_M_INDICADOR_RESULTADO en el log (memoria de corrida)"
 if grep -q "Salida DF_INFORMES" "$LOG"; then
   fail "log contiene DF_INFORMES (F3 fuera de alcance)"
 fi
-if grep -q "Salida MI_FACT_INFORME" "$LOG"; then
-  fail "log contiene MI_FACT_INFORME (F3 fuera de alcance)"
+if grep -q "Salida DW_M_FACT_INFORME" "$LOG"; then
+  fail "log contiene DW_M_FACT_INFORME (F3 fuera de alcance)"
 fi
 
 if grep -q "DW:" "$LOG"; then
@@ -110,9 +110,9 @@ if grep -q "DW:" "$LOG"; then
     fail "carga DW con tablas en REVISAR (conteo Oracle != DataFrame)"
   fi
   grep "DW:.*(OK)" "$LOG" || warn "carga DW sin líneas (OK); revisar credenciales oracle_dw"
-  grep -q "DW: POST-CARGA .*MI_DQ_HALLAZGO" "$LOG" || grep -q "MI_DQ_HALLAZGO:" "$LOG" \
-    || warn "no se vio POST-CARGA/INSERT de MI_DQ_HALLAZGO en log"
-  grep -q "AUD:" "$LOG" || warn "no se vieron líneas AUD: (foto cruda MI_AUD_*)"
+  grep -q "DW: POST-CARGA .*DW_M_DQ_HALLAZGO" "$LOG" || grep -q "DW_M_DQ_HALLAZGO:" "$LOG" \
+    || warn "no se vio POST-CARGA/INSERT de DW_M_DQ_HALLAZGO en log"
+  grep -q "AUD:" "$LOG" || warn "no se vieron líneas AUD: (foto cruda DW_M_AUD_*)"
 else
   fail "sin líneas DW: en log (carga Oracle obligatoria)"
 fi
@@ -165,62 +165,62 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
             return int(cur.fetchone()[0])
 
         # F3 fuera de alcance
-        if exists_table("MI_FACT_INFORME_SUPERVISION"):
-            sys.exit("MI_FACT_INFORME_SUPERVISION aún existe (F3 debe estar droppeada)")
-        print("MI_FACT_INFORME_SUPERVISION: inexistente")
+        if exists_table("DW_M_FACT_INFORME_SUPERVISION"):
+            sys.exit("DW_M_FACT_INFORME_SUPERVISION aún existe (F3 debe estar droppeada)")
+        print("DW_M_FACT_INFORME_SUPERVISION: inexistente")
 
         cur.execute(
             """
             SELECT COUNT(*) FROM user_tab_columns
-            WHERE table_name = 'MI_FACT_MULTA_COERCITIVA'
+            WHERE table_name = 'DW_M_FACT_MULTA_COERCITIVA'
               AND column_name = 'ID_INFORME'
             """
         )
         if cur.fetchone()[0]:
-            sys.exit("MI_FACT_MULTA_COERCITIVA.ID_INFORME aún existe (F3 debe estar droppeada)")
-        print("ID_INFORME: inexistente en MI_FACT_MULTA_COERCITIVA")
+            sys.exit("DW_M_FACT_MULTA_COERCITIVA.ID_INFORME aún existe (F3 debe estar droppeada)")
+        print("ID_INFORME: inexistente en DW_M_FACT_MULTA_COERCITIVA")
 
         cur.execute(
             """
             SELECT COUNT(*) FROM user_tab_columns
-            WHERE table_name = 'MI_FACT_MULTA_COERCITIVA'
+            WHERE table_name = 'DW_M_FACT_MULTA_COERCITIVA'
               AND column_name = 'FUENTE_REGISTRO'
             """
         )
         if cur.fetchone()[0]:
-            sys.exit("MI_FACT_MULTA_COERCITIVA.FUENTE_REGISTRO aún existe (debe deprecarse)")
+            sys.exit("DW_M_FACT_MULTA_COERCITIVA.FUENTE_REGISTRO aún existe (debe deprecarse)")
         print("FUENTE_REGISTRO VARCHAR: inexistente")
 
         cur.execute(
             """
             SELECT COUNT(*) FROM user_tab_columns
-            WHERE table_name = 'MI_FACT_MULTA_COERCITIVA'
+            WHERE table_name = 'DW_M_FACT_MULTA_COERCITIVA'
               AND column_name = 'ID_TIEMPO_FIRMA'
             """
         )
         if not cur.fetchone()[0]:
-            sys.exit("falta MI_FACT_MULTA_COERCITIVA.ID_TIEMPO_FIRMA")
+            sys.exit("falta DW_M_FACT_MULTA_COERCITIVA.ID_TIEMPO_FIRMA")
         print("ID_TIEMPO_FIRMA: presente")
 
         # Canónico publicado
         for t in (
-            "MI_FACT_MC_CSEP",
-            "MI_FACT_MC_OD",
-            "MI_FACT_MC_SISUD",
-            "MI_FACT_MULTA_COERCITIVA",
-            "MI_DET_ETAPA_MC",
-            "MI_DQ_HALLAZGO",
-            "MI_AUD_F1_OD_MULTAS",
-            "MI_AUD_F2_CSEP_MULTAS",
-            "MI_AUD_F2_CSEP_ETAPAS",
-            "MI_AUD_F5_SISUD_VW",
+            "DW_M_FACT_MC_CSEP",
+            "DW_M_FACT_MC_OD",
+            "DW_M_FACT_MC_SISUD",
+            "DW_M_FACT_MULTA_COERCITIVA",
+            "DW_M_DET_ETAPA_MC",
+            "DW_M_DQ_HALLAZGO",
+            "DW_M_AUD_F1_OD_MULTAS",
+            "DW_M_AUD_F2_CSEP_MULTAS",
+            "DW_M_AUD_F2_CSEP_ETAPAS",
+            "DW_M_AUD_F5_SISUD_VW",
         ):
             if not exists_table(t):
                 sys.exit(f"falta tabla canónica {t}")
         print("Tablas canónicas (facts/DET/DQ/AUD): OK")
 
         # Prohibidas en destino
-        for t in ("MI_QA_AMARRE", "MI_QA_AMARRE_DETALLE", "MI_INDICADOR_RESULTADO"):
+        for t in ("DW_M_QA_AMARRE", "DW_M_QA_AMARRE_DETALLE", "DW_M_INDICADOR_RESULTADO"):
             if exists_table(t):
                 sys.exit(f"{t} no debe publicarse en Oracle (solo memoria de corrida)")
         print("QA/K en Oracle: ausentes (OK)")
@@ -238,16 +238,16 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
         print("Vistas VW_MC_/VW_FCT_: ninguna (OK)")
 
         by_tbl = {
-            "CSEP": count("MI_FACT_MC_CSEP"),
-            "OD": count("MI_FACT_MC_OD"),
-            "SISUD": count("MI_FACT_MC_SISUD"),
-            "ENRIQUECIDA": count("MI_FACT_MULTA_COERCITIVA"),
-            "DET": count("MI_DET_ETAPA_MC"),
-            "DQ": count("MI_DQ_HALLAZGO"),
-            "AUD_F1": count("MI_AUD_F1_OD_MULTAS"),
-            "AUD_F2": count("MI_AUD_F2_CSEP_MULTAS"),
-            "AUD_ET": count("MI_AUD_F2_CSEP_ETAPAS"),
-            "AUD_F5": count("MI_AUD_F5_SISUD_VW"),
+            "CSEP": count("DW_M_FACT_MC_CSEP"),
+            "OD": count("DW_M_FACT_MC_OD"),
+            "SISUD": count("DW_M_FACT_MC_SISUD"),
+            "ENRIQUECIDA": count("DW_M_FACT_MULTA_COERCITIVA"),
+            "DET": count("DW_M_DET_ETAPA_MC"),
+            "DQ": count("DW_M_DQ_HALLAZGO"),
+            "AUD_F1": count("DW_M_AUD_F1_OD_MULTAS"),
+            "AUD_F2": count("DW_M_AUD_F2_CSEP_MULTAS"),
+            "AUD_ET": count("DW_M_AUD_F2_CSEP_ETAPAS"),
+            "AUD_F5": count("DW_M_AUD_F5_SISUD_VW"),
         }
         print(f"Conteos canónicos: {by_tbl}")
         expected_min = {"CSEP": 200, "OD": 50, "SISUD": 50}
@@ -265,13 +265,13 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
             sys.exit(f"AUD_F1={by_tbl['AUD_F1']} debe igualar OD={by_tbl['OD']}")
         if by_tbl["AUD_F5"] != by_tbl["SISUD"]:
             sys.exit(f"AUD_F5={by_tbl['AUD_F5']} debe igualar SISUD={by_tbl['SISUD']}")
-        print(f"MI_DQ_HALLAZGO: {by_tbl['DQ']} filas (R01–R05; 0 es válido si no hay hallazgos)")
+        print(f"DW_M_DQ_HALLAZGO: {by_tbl['DQ']} filas (R01–R05; 0 es válido si no hay hallazgos)")
 
         cur.execute(
             """
             SELECT COUNT(*),
                    SUM(CASE WHEN CUM IS NOT NULL AND CAM IS NOT NULL THEN 1 ELSE 0 END)
-            FROM {esq}.MI_FACT_MULTA_COERCITIVA
+            FROM {esq}.DW_M_FACT_MULTA_COERCITIVA
             WHERE REGEXP_REPLACE(UPPER(REPLACE(TRIM(N_RES_MC), ' ', '')), '^0+([0-9]+)', '\\1')
                   LIKE '153-2026-OEFA/DSEM'
               AND MONTO_UIT = 64
@@ -284,10 +284,10 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
         if n0153 < 2:
             sys.exit(f"caso 0153/64: esperado >=2 filas enriquecida, hay {n0153}")
 
-        n_org = count("MI_DIM_ORGANO_UNIDAD")
+        n_org = count("DW_M_DIM_ORGANO_UNIDAD")
         if n_org > 20:
-            sys.exit(f"MI_DIM_ORGANO_UNIDAD={n_org} (esperado ~11 CSEP+ND)")
-        print(f"MI_DIM_ORGANO_UNIDAD: {n_org}")
+            sys.exit(f"DW_M_DIM_ORGANO_UNIDAD={n_org} (esperado ~11 CSEP+ND)")
+        print(f"DW_M_DIM_ORGANO_UNIDAD: {n_org}")
 PY
 
 echo ""

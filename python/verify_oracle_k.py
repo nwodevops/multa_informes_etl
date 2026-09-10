@@ -42,11 +42,11 @@ def main() -> int:
             cur.execute("SELECT USER FROM dual")
             esq = str(cur.fetchone()[0])
 
-            cur.execute(f"SELECT COUNT(*) FROM {esq}.MI_INDICADOR_RESULTADO")
+            cur.execute(f"SELECT COUNT(*) FROM {esq}.DW_M_INDICADOR_RESULTADO")
             n = int(cur.fetchone()[0])
-            print(f"MI_INDICADOR_RESULTADO: {n} filas en Oracle")
+            print(f"DW_M_INDICADOR_RESULTADO: {n} filas en Oracle")
             cur.execute(
-                f"SELECT DISTINCT COD_INDICADOR FROM {esq}.MI_INDICADOR_RESULTADO ORDER BY 1"
+                f"SELECT DISTINCT COD_INDICADOR FROM {esq}.DW_M_INDICADOR_RESULTADO ORDER BY 1"
             )
             codes = {r[0] for r in cur.fetchall()}
             missing = sorted({"K1", "K2", "K3", "K4", "K5"} - codes)
@@ -56,50 +56,50 @@ def main() -> int:
             print("Indicadores K1-K5 presentes")
 
             cur.execute(
-                "SELECT COUNT(*) FROM all_tables WHERE owner = :1 AND table_name = 'MI_FACT_INFORME_SUPERVISION'",
+                "SELECT COUNT(*) FROM all_tables WHERE owner = :1 AND table_name = 'DW_M_FACT_INFORME_SUPERVISION'",
                 [esq],
             )
             if int(cur.fetchone()[0]):
-                print("ERROR: APP.MI_FACT_INFORME_SUPERVISION aun existe (F3)", file=sys.stderr)
+                print("ERROR: APP.DW_M_FACT_INFORME_SUPERVISION aun existe (F3)", file=sys.stderr)
                 return 1
-            print("MI_FACT_INFORME_SUPERVISION: inexistente")
+            print("DW_M_FACT_INFORME_SUPERVISION: inexistente")
 
             cur.execute(
-                "SELECT COUNT(*) FROM all_tab_columns WHERE owner = :1 AND table_name = 'MI_FACT_MULTA_COERCITIVA' AND column_name = 'ID_INFORME'",
+                "SELECT COUNT(*) FROM all_tab_columns WHERE owner = :1 AND table_name = 'DW_M_FACT_MULTA_COERCITIVA' AND column_name = 'ID_INFORME'",
                 [esq],
             )
             if int(cur.fetchone()[0]):
-                print("ERROR: MI_FACT_MULTA_COERCITIVA.ID_INFORME aun existe (F3)", file=sys.stderr)
+                print("ERROR: DW_M_FACT_MULTA_COERCITIVA.ID_INFORME aun existe (F3)", file=sys.stderr)
                 return 1
-            print("ID_INFORME: inexistente en MI_FACT_MULTA_COERCITIVA")
+            print("ID_INFORME: inexistente en DW_M_FACT_MULTA_COERCITIVA")
 
             cur.execute(
-                "SELECT COUNT(*) FROM all_tab_columns WHERE owner = :1 AND table_name = 'MI_FACT_MULTA_COERCITIVA' AND column_name = 'FUENTE_REGISTRO'",
+                "SELECT COUNT(*) FROM all_tab_columns WHERE owner = :1 AND table_name = 'DW_M_FACT_MULTA_COERCITIVA' AND column_name = 'FUENTE_REGISTRO'",
                 [esq],
             )
             if int(cur.fetchone()[0]):
-                print("ERROR: MI_FACT_MULTA_COERCITIVA.FUENTE_REGISTRO aun existe", file=sys.stderr)
+                print("ERROR: DW_M_FACT_MULTA_COERCITIVA.FUENTE_REGISTRO aun existe", file=sys.stderr)
                 return 1
             print("FUENTE_REGISTRO VARCHAR: inexistente")
 
             cur.execute(
-                "SELECT COUNT(*) FROM all_tab_columns WHERE owner = :1 AND table_name = 'MI_FACT_MULTA_COERCITIVA' AND column_name = 'ID_TIEMPO_FIRMA'",
+                "SELECT COUNT(*) FROM all_tab_columns WHERE owner = :1 AND table_name = 'DW_M_FACT_MULTA_COERCITIVA' AND column_name = 'ID_TIEMPO_FIRMA'",
                 [esq],
             )
             if not int(cur.fetchone()[0]):
-                print("ERROR: falta MI_FACT_MULTA_COERCITIVA.ID_TIEMPO_FIRMA", file=sys.stderr)
+                print("ERROR: falta DW_M_FACT_MULTA_COERCITIVA.ID_TIEMPO_FIRMA", file=sys.stderr)
                 return 1
             print("ID_TIEMPO_FIRMA: presente")
 
             cur.execute(
                 f"""
-                SELECT 'CSEP' AS U, COUNT(*) FROM {esq}.MI_FACT_MC_CSEP
+                SELECT 'CSEP' AS U, COUNT(*) FROM {esq}.DW_M_FACT_MC_CSEP
                 UNION ALL
-                SELECT 'OD', COUNT(*) FROM {esq}.MI_FACT_MC_OD
+                SELECT 'OD', COUNT(*) FROM {esq}.DW_M_FACT_MC_OD
                 UNION ALL
-                SELECT 'SISUD', COUNT(*) FROM {esq}.MI_FACT_MC_SISUD
+                SELECT 'SISUD', COUNT(*) FROM {esq}.DW_M_FACT_MC_SISUD
                 UNION ALL
-                SELECT 'ENRIQUECIDA', COUNT(*) FROM {esq}.MI_FACT_MULTA_COERCITIVA
+                SELECT 'ENRIQUECIDA', COUNT(*) FROM {esq}.DW_M_FACT_MULTA_COERCITIVA
                 """
             )
             by_tbl = {r[0]: int(r[1]) for r in cur.fetchall()}
@@ -126,7 +126,7 @@ def main() -> int:
                 f"""
                 SELECT COUNT(*),
                        SUM(CASE WHEN CUM IS NOT NULL AND CAM IS NOT NULL THEN 1 ELSE 0 END)
-                FROM {esq}.MI_FACT_MULTA_COERCITIVA
+                FROM {esq}.DW_M_FACT_MULTA_COERCITIVA
                 WHERE REGEXP_REPLACE(UPPER(REPLACE(TRIM(N_RES_MC), ' ', '')), '^0+([0-9]+)', '\\1')
                       LIKE '153-2026-OEFA/DSEM'
                   AND MONTO_UIT = 64
@@ -143,12 +143,12 @@ def main() -> int:
                 )
                 return 1
 
-            cur.execute(f"SELECT COUNT(*) FROM {esq}.MI_DIM_ORGANO_UNIDAD")
+            cur.execute(f"SELECT COUNT(*) FROM {esq}.DW_M_DIM_ORGANO_UNIDAD")
             n_org = int(cur.fetchone()[0])
             if n_org > 20:
-                print(f"ERROR: MI_DIM_ORGANO_UNIDAD={n_org} (esperado ~11 CSEP+ND)", file=sys.stderr)
+                print(f"ERROR: DW_M_DIM_ORGANO_UNIDAD={n_org} (esperado ~11 CSEP+ND)", file=sys.stderr)
                 return 1
-            print(f"MI_DIM_ORGANO_UNIDAD: {n_org}")
+            print(f"DW_M_DIM_ORGANO_UNIDAD: {n_org}")
 
             for v in ("VW_MC_CSEP", "VW_MC_OD", "VW_MC_SISUD", "VW_MC_ENRIQUECIDA"):
                 cur.execute(
@@ -160,25 +160,25 @@ def main() -> int:
                     return 1
             print("Vistas VW_MC_*: OK")
 
-            cur.execute(f"SELECT COUNT(*) FROM {esq}.MI_QA_AMARRE_DETALLE")
+            cur.execute(f"SELECT COUNT(*) FROM {esq}.DW_M_QA_AMARRE_DETALLE")
             n_det = int(cur.fetchone()[0])
-            print(f"MI_QA_AMARRE_DETALLE: {n_det} filas")
+            print(f"DW_M_QA_AMARRE_DETALLE: {n_det} filas")
             if n_det < 1:
-                print("ERROR: MI_QA_AMARRE_DETALLE vacio (esperado claves sin match H9)", file=sys.stderr)
+                print("ERROR: DW_M_QA_AMARRE_DETALLE vacio (esperado claves sin match H9)", file=sys.stderr)
                 return 1
 
-            cur.execute(f"SELECT COUNT(*) FROM {esq}.MI_QA_AMARRE")
+            cur.execute(f"SELECT COUNT(*) FROM {esq}.DW_M_QA_AMARRE")
             n_am = int(cur.fetchone()[0])
-            print(f"MI_QA_AMARRE: {n_am} filas")
+            print(f"DW_M_QA_AMARRE: {n_am} filas")
             if n_am < 1:
-                print("ERROR: MI_QA_AMARRE vacio (esperado resumen de puentes H9)", file=sys.stderr)
+                print("ERROR: DW_M_QA_AMARRE vacio (esperado resumen de puentes H9)", file=sys.stderr)
                 return 1
 
             cur.execute(
-                f"SELECT COUNT(*) FROM {esq}.MI_QA_AMARRE WHERE PUENTE = 'RES_MONTO_Sheets_vs_SISUD'"
+                f"SELECT COUNT(*) FROM {esq}.DW_M_QA_AMARRE WHERE PUENTE = 'RES_MONTO_Sheets_vs_SISUD'"
             )
             if not int(cur.fetchone()[0]):
-                print("ERROR: falta puente RES_MONTO_Sheets_vs_SISUD en MI_QA_AMARRE", file=sys.stderr)
+                print("ERROR: falta puente RES_MONTO_Sheets_vs_SISUD en DW_M_QA_AMARRE", file=sys.stderr)
                 return 1
 
     return 0

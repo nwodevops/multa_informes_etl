@@ -10,7 +10,7 @@ Orden fijo (no reordenar sin revisar dependencias):
   5) construir_modelo              — DIMs + 3 facts evidencia + DET etapas
   6) calcular_indicadores          — K1–K5 en memoria
 
-El fact de negocio enriquecido (MI_FACT_MULTA_COERCITIVA) NO se construye aquí:
+El fact de negocio enriquecido (DW_M_FACT_MULTA_COERCITIVA) NO se construye aquí:
 lo arma Oracle con docs/lineamientos/ddl/07_enrich_sheets_sisud.sql tras cargar_dw.
 """
 
@@ -73,9 +73,9 @@ def ejecutar(
     # STEP 6: calcular indicadores en memoria usando evidencia y hallazgos.
     fact_evidencia = pd.concat(
         [
-            modelo["MI_FACT_MC_CSEP"],
-            modelo["MI_FACT_MC_OD"],
-            modelo["MI_FACT_MC_SISUD"],
+            modelo["DW_M_FACT_MC_CSEP"],
+            modelo["DW_M_FACT_MC_OD"],
+            modelo["DW_M_FACT_MC_SISUD"],
         ],
         ignore_index=True,
         sort=False,
@@ -85,7 +85,7 @@ def ejecutar(
         df_multas,
         dq_hallazgo,
         qa_amarre,
-        modelo.get("MI_DIM_ORGANO_UNIDAD"),
+        modelo.get("DW_M_DIM_ORGANO_UNIDAD"),
     )
 
     n_conf_m = int((df_multas.get("FG_CONFORME") == "S").sum()) if len(df_multas) else 0
@@ -105,12 +105,12 @@ def ejecutar(
                 "N_DF_OD": len(df_od),
                 "N_DF_SISUD": len(df_sisud),
                 "N_DF_ETAPAS": len(df_etapas),
-                "N_MI_DQ_HALLAZGO": len(dq_hallazgo),
+                "N_DW_M_DQ_HALLAZGO": len(dq_hallazgo),
                 "N_MULTAS_CONFORMES": n_conf_m,
-                "N_FACT_CSEP": len(modelo["MI_FACT_MC_CSEP"]),
-                "N_FACT_OD": len(modelo["MI_FACT_MC_OD"]),
-                "N_FACT_SISUD": len(modelo["MI_FACT_MC_SISUD"]),
-                "N_DET_ETAPAS": len(modelo["MI_DET_ETAPA_MC"]),
+                "N_FACT_CSEP": len(modelo["DW_M_FACT_MC_CSEP"]),
+                "N_FACT_OD": len(modelo["DW_M_FACT_MC_OD"]),
+                "N_FACT_SISUD": len(modelo["DW_M_FACT_MC_SISUD"]),
+                "N_DET_ETAPAS": len(modelo["DW_M_DET_ETAPA_MC"]),
                 "N_INDICADORES": len(indicadores),
                 "N_QA_AMARRE_DET": len(qa_amarre_det),
             }
@@ -126,11 +126,11 @@ def ejecutar(
         "DF_OD": df_od,
         "DF_SISUD": df_sisud,
         "DF_ETAPAS": df_etapas,
-        "MI_DQ_HALLAZGO": dq_hallazgo,
-        "MI_QA_AMARRE": qa_amarre,
-        "MI_QA_AMARRE_DETALLE": qa_amarre_det,
-        "MI_INDICADOR_RESULTADO": indicadores,
+        "DW_M_DQ_HALLAZGO": dq_hallazgo,
+        "DW_M_QA_AMARRE": qa_amarre,
+        "DW_M_QA_AMARRE_DETALLE": qa_amarre_det,
+        "DW_M_INDICADOR_RESULTADO": indicadores,
         "RESULTADO": resultado,
     }
-    out.update(modelo)  # agrega MI_DIM_* + MI_FACT_MC_* + MI_DET_ETAPA_MC
+    out.update(modelo)  # agrega DW_M_DIM_* + DW_M_FACT_MC_* + DW_M_DET_ETAPA_MC
     return out

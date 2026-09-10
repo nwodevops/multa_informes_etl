@@ -18,7 +18,7 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) sección 6.
 
 **Fase 3:** intermedios tipificados **sin merge a un solo fact**:
 - `df_csep` (F2), `df_od` (F1), `df_sisud` (F5), `DF_ETAPAS` (F2-ET)
-- Estados mapeados a catálogo `MI_DIM_ESTADO` (semillas ddl/01)
+- Estados mapeados a catálogo `DW_M_DIM_ESTADO` (semillas ddl/01)
 - El enriquecido Sheet←SISUD ocurre **después**, en Oracle (`07_enrich_sheets_sisud.sql`)
 
 ## Verificación
@@ -34,6 +34,6 @@ Revisar log: conteos de `PROF_*`, `DICCIONARIO`, intermedios F1/F2/F5 / `DF_ETAP
 
 ## Pendiente (Fase 4+)
 
-- ~~Reglas R01–R05 → `MI_DQ_HALLAZGO`~~ → ver [`implementacion-fase-4.md`](implementacion-fase-4.md)
+- ~~Reglas R01–R05 → `DW_M_DQ_HALLAZGO`~~ → ver [`implementacion-fase-4.md`](implementacion-fase-4.md)
 - ~~3 facts evidencia + enrich 07~~ → ver [`implementacion-fase-5-6.md`](implementacion-fase-5-6.md)
-- `MI_INDICADOR_RESULTADO` K1–K5 (Fase 7)
+- `DW_M_INDICADOR_RESULTADO` K1–K5 (Fase 7)

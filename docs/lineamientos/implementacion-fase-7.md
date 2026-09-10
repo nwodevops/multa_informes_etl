@@ -6,7 +6,7 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) secciones 5
 
 | Módulo | Fase | Entregable |
 |---|---|---|
-| `logica/dwh/indicadores.py` | 7 | K1–K5 → `MI_INDICADOR_RESULTADO` en memoria |
+| `logica/dwh/indicadores.py` | 7 | K1–K5 → `DW_M_INDICADOR_RESULTADO` en memoria |
 | `docs/lineamientos/ddl/04_indicadores.sql` | 7 | DDL Oracle |
 | `python/io/cargar_dw.py` | 6–7 | TRUNCATE+INSERT incluye indicadores |
 | `logica/dwh/pipeline.py` | 2–7 | Orquestación extendida |
@@ -19,13 +19,13 @@ Referencia: [`PROPUESTA_ADAPTADA_ETL.md`](PROPUESTA_ADAPTADA_ETL.md) secciones 5
 | K2 | `PROM_DIAS_NOTIF_FIRMA` | idem (solo casos con días válidos) |
 | K3 | `RATIO_COBRANZA_SOLES`, `RATIO_COBRANZA_UIT` | idem (multas con resolución) |
 | K4 | `TASA_VERIF_POST_MC` | idem |
-| K5 | `PCT_CONFORME`, `PCT_AMARRE` | global / por regla R01–R05 / por puente H9 (detalle en `MI_QA_AMARRE_DETALLE`) |
+| K5 | `PCT_CONFORME`, `PCT_AMARRE` | global / por regla R01–R05 / por puente H9 (detalle en `DW_M_QA_AMARRE_DETALLE`) |
 
 Entrada: hechos y dataframes post-calidad en memoria (no re-lectura Oracle).
 
 ## Criterio de avance
 
-- Tabla `MI_INDICADOR_RESULTADO` en BD_CURSOR con DDL formal (`04_indicadores.sql`).
+- Tabla `DW_M_INDICADOR_RESULTADO` en BD_CURSOR con DDL formal (`04_indicadores.sql`).
 - `COUNT(*)` Oracle = filas del DataFrame.
 - Presencia de K1–K5; segunda corrida con mismo H2 → mismos `VALOR`/`NUMERADOR`/`DENOMINADOR`.
 
@@ -39,11 +39,11 @@ Consulta Oracle:
 
 ```sql
 SELECT COD_INDICADOR, METRICA, COUNT(*)
-FROM APP.MI_INDICADOR_RESULTADO
+FROM APP.DW_M_INDICADOR_RESULTADO
 GROUP BY COD_INDICADOR, METRICA
 ORDER BY 1, 2;
 ```
 
 ## Fuera de alcance (Fase 8)
 
-Power BI **no se realizará** en esta implementación. Consumo de `MI_INDICADOR_RESULTADO` / modelo queda a cargo del cliente si aplica.
+Power BI **no se realizará** en esta implementación. Consumo de `DW_M_INDICADOR_RESULTADO` / modelo queda a cargo del cliente si aplica.

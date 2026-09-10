@@ -21,22 +21,22 @@ ESQUEMA = ESQUEMA_DEFAULT
 
 # Tablas mínimas que deben existir tras una corrida exitosa de main.py
 TABLAS_NUCLEO = (
-    "MI_FACT_MC_CSEP",
-    "MI_FACT_MC_OD",
-    "MI_FACT_MC_SISUD",
-    "MI_FACT_MULTA_COERCITIVA",
-    "MI_DET_ETAPA_MC",
-    "MI_DQ_HALLAZGO",
-    "MI_AUD_F1_OD_MULTAS",
-    "MI_AUD_F2_CSEP_MULTAS",
-    "MI_AUD_F2_CSEP_ETAPAS",
-    "MI_AUD_F5_SISUD_VW",
+    "DW_M_FACT_MC_CSEP",
+    "DW_M_FACT_MC_OD",
+    "DW_M_FACT_MC_SISUD",
+    "DW_M_FACT_MULTA_COERCITIVA",
+    "DW_M_DET_ETAPA_MC",
+    "DW_M_DQ_HALLAZGO",
+    "DW_M_AUD_F1_OD_MULTAS",
+    "DW_M_AUD_F2_CSEP_MULTAS",
+    "DW_M_AUD_F2_CSEP_ETAPAS",
+    "DW_M_AUD_F5_SISUD_VW",
 )
 
 PROHIBIDAS = (
-    "MI_QA_AMARRE",
-    "MI_QA_AMARRE_DETALLE",
-    "MI_INDICADOR_RESULTADO",
+    "DW_M_QA_AMARRE",
+    "DW_M_QA_AMARRE_DETALLE",
+    "DW_M_INDICADOR_RESULTADO",
 )
 
 
@@ -100,7 +100,7 @@ def main() -> int:
             print(f"AVISO: tablas consultoría aún en esquema: {', '.join(leftover)}")
             rc = 1
         else:
-            print("QA/K en Oracle: ausentes (OK); MI_DQ_HALLAZGO es canónico")
+            print("QA/K en Oracle: ausentes (OK); DW_M_DQ_HALLAZGO es canónico")
 
     return rc
 

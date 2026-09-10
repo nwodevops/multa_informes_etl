@@ -1,13 +1,13 @@
 """Carga Oracle DW canónica — invocada por python/main.py tras logica/.
 
 Orden:
-  1) wipe MI_*/VW_* del esquema sesión (APP local / REPOCSEP remote)
-  2) DDL 01_dimensiones + 02_hechos (+ MI_DQ_HALLAZGO)
+  1) wipe DW_M_*/VW_* del esquema sesión (APP local / REPOCSEP remote)
+  2) DDL 01_dimensiones + 02_hechos (+ DW_M_DQ_HALLAZGO)
   3) INSERT dims + 3 facts evidencia + DET + DQ
-  4) enrich SQL 07 → MI_FACT_MULTA_COERCITIVA (Sheet manda + CUM/CAM)
+  4) enrich SQL 07 → DW_M_FACT_MULTA_COERCITIVA (Sheet manda + CUM/CAM)
 
-No publica MI_QA_* ni indicadores K ni vistas VW_MC_*.
-MI_AUD_* lo carga python/audit/cargar_aud.py después (también desde main.py).
+No publica DW_M_QA_* ni indicadores K ni vistas VW_MC_*.
+DW_M_AUD_* lo carga python/audit/cargar_aud.py después (también desde main.py).
 
 DDL: docs/lineamientos/ddl/
 """
@@ -28,39 +28,39 @@ DDL_DIR = "docs/lineamientos/ddl"
 
 # --- Catálogo de objetos del modelo canónico ---
 TABLAS_DIM = (
-    "MI_DIM_TIEMPO",
-    "MI_DIM_ADMINISTRADO",
-    "MI_DIM_ORGANO_UNIDAD",
-    "MI_DIM_OD",
-    "MI_DIM_FUENTE_REGISTRO",
-    "MI_DIM_MATERIA_SUBSECTOR",
-    "MI_DIM_ESTADO",
-    "MI_DIM_PARAMETRO_UIT",
+    "DW_M_DIM_TIEMPO",
+    "DW_M_DIM_ADMINISTRADO",
+    "DW_M_DIM_ORGANO_UNIDAD",
+    "DW_M_DIM_OD",
+    "DW_M_DIM_FUENTE_REGISTRO",
+    "DW_M_DIM_MATERIA_SUBSECTOR",
+    "DW_M_DIM_ESTADO",
+    "DW_M_DIM_PARAMETRO_UIT",
 )
 TABLAS_EVIDENCIA = (
-    "MI_FACT_MC_CSEP",
-    "MI_FACT_MC_OD",
-    "MI_FACT_MC_SISUD",
+    "DW_M_FACT_MC_CSEP",
+    "DW_M_FACT_MC_OD",
+    "DW_M_FACT_MC_SISUD",
 )
 TABLAS_HECHOS = (
     *TABLAS_EVIDENCIA,
-    "MI_FACT_MULTA_COERCITIVA",
-    "MI_DET_ETAPA_MC",
+    "DW_M_FACT_MULTA_COERCITIVA",
+    "DW_M_DET_ETAPA_MC",
 )
 REQUIRED_CORE = (*TABLAS_DIM, *TABLAS_HECHOS)
-# Hijos primero; el resto de MI_% (AUD, DQ legacy, …) se dropea después.
+# Hijos primero; el resto de DW_M_% (AUD, DQ legacy, …) se dropea después.
 DROP_ORDEN = (
-    "MI_DET_ETAPA_MC",
-    "MI_FACT_MULTA_COERCITIVA",
+    "DW_M_DET_ETAPA_MC",
+    "DW_M_FACT_MULTA_COERCITIVA",
     *TABLAS_EVIDENCIA,
     *TABLAS_DIM,
 )
 INSERT_ORDEN = (
     *TABLAS_DIM,
     *TABLAS_EVIDENCIA,
-    "MI_DET_ETAPA_MC",
-    "MI_DQ_HALLAZGO",
-    # MI_FACT_MULTA_COERCITIVA NO se inserta desde pandas: lo llena SQL 07
+    "DW_M_DET_ETAPA_MC",
+    "DW_M_DQ_HALLAZGO",
+    # DW_M_FACT_MULTA_COERCITIVA NO se inserta desde pandas: lo llena SQL 07
 )
 
 
@@ -108,9 +108,9 @@ def _verificar_post_carga(cur, counts: dict[str, int], cv: dict[str, str]) -> No
     print(f"DW: destino {dest}", flush=True)
     for tabla in (
         *TABLAS_EVIDENCIA,
-        "MI_FACT_MULTA_COERCITIVA",
-        "MI_DET_ETAPA_MC",
-        "MI_DQ_HALLAZGO",
+        "DW_M_FACT_MULTA_COERCITIVA",
+        "DW_M_DET_ETAPA_MC",
+        "DW_M_DQ_HALLAZGO",
     ):
         if tabla not in counts and not _table_exists(cur, tabla):
             continue
@@ -118,9 +118,9 @@ def _verificar_post_carga(cur, counts: dict[str, int], cv: dict[str, str]) -> No
         n = int(cur.fetchone()[0])
         esp = counts.get(tabla, "?")
         print(f"DW: POST-CARGA {ESQUEMA}.{tabla} = {n} filas (esperado {esp})", flush=True)
-    n_c = counts.get("MI_FACT_MC_CSEP", 0)
-    n_o = counts.get("MI_FACT_MC_OD", 0)
-    n_m = counts.get("MI_FACT_MULTA_COERCITIVA", 0)
+    n_c = counts.get("DW_M_FACT_MC_CSEP", 0)
+    n_o = counts.get("DW_M_FACT_MC_OD", 0)
+    n_m = counts.get("DW_M_FACT_MULTA_COERCITIVA", 0)
     if (n_c + n_o) and n_m != (n_c + n_o):
         print(f"AVISO enriquecida: {n_m} != CSEP+OD ({n_c}+{n_o})", flush=True)
 
@@ -190,7 +190,7 @@ def _drop_table(cur, tabla: str) -> None:
 
 
 def _drop_model(cur) -> None:
-    """Wipe canónico: todas VW_MC_/VW_FCT_ y todas MI_* (incl. AUD/DQ/QA legacy)."""
+    """Wipe canónico: todas VW_MC_/VW_FCT_ y todas DW_M_* (incl. AUD/DQ/QA legacy)."""
     cur.execute(
         """
         SELECT view_name FROM user_views
@@ -207,7 +207,7 @@ def _drop_model(cur) -> None:
                 raise
             print(f"AVISO: DROP VIEW {nombre}: {exc}", flush=True)
 
-    cur.execute("SELECT table_name FROM user_tables WHERE table_name LIKE 'MI_%'")
+    cur.execute("SELECT table_name FROM user_tables WHERE table_name LIKE 'DW_M_%'")
     existentes = {r[0] for r in cur.fetchall()}
     for tabla in DROP_ORDEN:
         if tabla in existentes:
@@ -218,18 +218,18 @@ def _drop_model(cur) -> None:
 
 
 def _run_dq_hallazgo_ddl(cur, root: Path, tablespace: str | None = None) -> None:
-    """Aplica solo MI_DQ_HALLAZGO (+ índices) desde 03_bitacora.sql; omite MI_QA_*."""
+    """Aplica solo DW_M_DQ_HALLAZGO (+ índices) desde 03_bitacora.sql; omite DW_M_QA_*."""
     path = root / DDL_DIR / "03_bitacora.sql"
     if not path.is_file():
         raise FileNotFoundError(path)
-    print("DW: aplicando MI_DQ_HALLAZGO (03 filtrado, sin MI_QA_*)...", flush=True)
+    print("DW: aplicando DW_M_DQ_HALLAZGO (03 filtrado, sin DW_M_QA_*)...", flush=True)
     for stmt in _split_sql(path.read_text(encoding="utf-8")):
         u = stmt.upper()
         if u.startswith("COMMIT") or not u.strip():
             continue
-        if "MI_QA_AMARRE" in u:
+        if "DW_M_QA_AMARRE" in u:
             continue
-        if "MI_DQ_HALLAZGO" not in u and "IX_DQ_" not in u:
+        if "DW_M_DQ_HALLAZGO" not in u and "IX_DQ_" not in u:
             continue
         if tablespace:
             stmt = _inject_tablespace(stmt, tablespace)
@@ -237,11 +237,11 @@ def _run_dq_hallazgo_ddl(cur, root: Path, tablespace: str | None = None) -> None
 
 
 def _prepare_schema(cur, root: Path) -> None:
-    """Wipe total → CREATE estrella (01+02) + MI_DQ_HALLAZGO. Sin QA/KPIs/vistas."""
+    """Wipe total → CREATE estrella (01+02) + DW_M_DQ_HALLAZGO. Sin QA/KPIs/vistas."""
     ddl_root = root / DDL_DIR
     ts = _user_tablespace(cur)
     print(
-        f"DW: wipe canónico MI_*/VW_* → DDL 01+02+DQ (TABLESPACE {ts})...",
+        f"DW: wipe canónico DW_M_*/VW_* → DDL 01+02+DQ (TABLESPACE {ts})...",
         flush=True,
     )
     _drop_model(cur)
@@ -263,8 +263,8 @@ def _run_enrich_sheets_sisud(cur, root: Path) -> int:
         )
     if not all(_table_exists(cur, t) for t in TABLAS_EVIDENCIA):
         raise RuntimeError("faltan facts evidencia para enrich Sheets-SISUD")
-    if not _table_exists(cur, "MI_FACT_MULTA_COERCITIVA"):
-        raise RuntimeError("falta MI_FACT_MULTA_COERCITIVA")
+    if not _table_exists(cur, "DW_M_FACT_MULTA_COERCITIVA"):
+        raise RuntimeError("falta DW_M_FACT_MULTA_COERCITIVA")
     print("DW: aplicando enrich Sheets-SISUD (07)...", flush=True)
     try:
         for stmt in _split_sql(path.read_text(encoding="utf-8")):
@@ -275,20 +275,20 @@ def _run_enrich_sheets_sisud(cur, root: Path) -> int:
     except Exception as exc:
         print(f"ERROR enrich 07: {exc}", flush=True)
         raise RuntimeError(f"falló enrich Sheets-SISUD (07): {exc}") from exc
-    cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.MI_FACT_MULTA_COERCITIVA")
+    cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.DW_M_FACT_MULTA_COERCITIVA")
     n = int(cur.fetchone()[0])
-    cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.MI_FACT_MC_CSEP")
+    cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.DW_M_FACT_MC_CSEP")
     n_c = int(cur.fetchone()[0])
-    cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.MI_FACT_MC_OD")
+    cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.DW_M_FACT_MC_OD")
     n_o = int(cur.fetchone()[0])
     print(
-        f"DW: MI_FACT_MULTA_COERCITIVA (enriquecida): {n} filas "
+        f"DW: DW_M_FACT_MULTA_COERCITIVA (enriquecida): {n} filas "
         f"(esperado CSEP+OD={n_c}+{n_o}={n_c + n_o})",
         flush=True,
     )
     if (n_c + n_o) > 0 and n == 0:
         raise RuntimeError(
-            "enrich 07 dejó MI_FACT_MULTA_COERCITIVA vacía pese a CSEP/OD con filas"
+            "enrich 07 dejó DW_M_FACT_MULTA_COERCITIVA vacía pese a CSEP/OD con filas"
         )
     return n
 
@@ -427,8 +427,8 @@ def _insert_df(cur, tabla: str, df: pd.DataFrame, skip_identity: bool = True) ->
 def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict[str, int]:
     """Punto de entrada desde main.py: wipe + DDL + INSERT evidencia + enrich 07.
 
-    `tablas` viene filtrado por main (MI_DIM_*, MI_FACT_MC_*, MI_DET_*, MI_DQ_HALLAZGO).
-    Devuelve COUNT por tabla publicada (incluye MI_FACT_MULTA_COERCITIVA post-enrich).
+    `tablas` viene filtrado por main (DW_M_DIM_*, DW_M_FACT_MC_*, DW_M_DET_*, DW_M_DQ_HALLAZGO).
+    Devuelve COUNT por tabla publicada (incluye DW_M_FACT_MULTA_COERCITIVA post-enrich).
     """
     root = root or project_root()
     if not tablas:
@@ -442,7 +442,7 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
         cur = conn.cursor()
         try:
             _bind_schema(cur)
-            # STEP 7.2: limpiar objetos MI_*/VW_* y recrear estrella + DQ.
+            # STEP 7.2: limpiar objetos DW_M_*/VW_* y recrear estrella + DQ.
             _prepare_schema(cur, root)
             _apply_column_comments(cur, root)
             conn.commit()
@@ -462,7 +462,7 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
 
             # STEP 7.4: ejecutar SQL 07 para construir el fact de negocio enriquecido.
             n_enriq = _run_enrich_sheets_sisud(cur, root)
-            counts["MI_FACT_MULTA_COERCITIVA"] = n_enriq
+            counts["DW_M_FACT_MULTA_COERCITIVA"] = n_enriq
             conn.commit()
 
             # STEP 7.5: comparar conteos esperados contra lo persistido en Oracle.

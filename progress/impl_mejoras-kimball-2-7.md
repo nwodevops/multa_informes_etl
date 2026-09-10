@@ -7,9 +7,9 @@
 
 | Punto | Estado | Evidencia Oracle / repo |
 |---|---|---|
-| 1 Órgano CSEP limpia | ya done | `MI_DIM_ORGANO_UNIDAD` = 11 |
+| 1 Órgano CSEP limpia | ya done | `DW_M_DIM_ORGANO_UNIDAD` = 11 |
 | 2 Vistas por fuente | done | `VW_MC_CSEP/OD/SISUD/GAPPS` presentes |
-| 3 Amarre H9 detalle | done | `MI_QA_AMARRE`=3, `MI_QA_AMARRE_DETALLE`=3078 |
+| 3 Amarre H9 detalle | done | `DW_M_QA_AMARRE`=3, `DW_M_QA_AMARRE_DETALLE`=3078 |
 | 4 Sin VARCHAR `FUENTE_REGISTRO` | done | columna inexistente en hecho |
 | 5 `ID_TIEMPO_FIRMA` | done | columna + FK presentes |
 | 6 Ops / contrato | done | mínimos CAGR≥200, OD≥50, SISUD≥50; `docs/inputs/README.md` |
@@ -21,7 +21,7 @@
 
 ## Fix de cableado
 
-`python/main.py` `_es_salida` ahora incluye prefijo `MI_QA_` (sin eso se truncaban las tablas QA pero no se insertaban).
+`python/main.py` `_es_salida` ahora incluye prefijo `DW_M_QA_` (sin eso se truncaban las tablas QA pero no se insertaban).
 
 ## Archivos clave
 

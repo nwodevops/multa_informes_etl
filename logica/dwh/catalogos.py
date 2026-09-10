@@ -1,9 +1,9 @@
 """Catálogos de referencia (semillas ddl/01 + inventario de campos F1/F2/F5).
 
 Aquí viven las EQUIVALENCIAS estáticas que el resto del código consulta:
-  - MI_DIM_ESTADO / MAPEO_ESTADO  → homologación de estados (H8)
-  - MI_DIM_PARAMETRO_UIT          → UIT por año (MONTO_S_CALC y R05)
-  - ODS_OEFA                      → semilla MI_DIM_OD
+  - DW_M_DIM_ESTADO / MAPEO_ESTADO  → homologación de estados (H8)
+  - DW_M_DIM_PARAMETRO_UIT          → UIT por año (MONTO_S_CALC y R05)
+  - ODS_OEFA                      → semilla DW_M_DIM_OD
   - CATALOGO_CAMPOS               → respaldo de diccionario / perfil
 
 Analogía Java: clase Constants / enum maps cargados al arranque.
@@ -11,8 +11,8 @@ Analogía Java: clase Constants / enum maps cargados al arranque.
 
 from __future__ import annotations
 
-# Semillas MI_DIM_ESTADO: (TIPO_ESTADO, CODIGO, DESCRIPCION, GRUPO)
-MI_DIM_ESTADO: list[tuple[str, str, str, str]] = [
+# Semillas DW_M_DIM_ESTADO: (TIPO_ESTADO, CODIGO, DESCRIPCION, GRUPO)
+DW_M_DIM_ESTADO: list[tuple[str, str, str, str]] = [
     ("RESOLUCION", "ACTIVO", "Resolución activa", "VIGENTE"),
     ("RESOLUCION", "INACTIVO", "Resolución inactiva", "CERRADO"),
     ("MULTA", "ACTIVO", "Multa activa", "VIGENTE"),
@@ -28,7 +28,7 @@ MI_DIM_ESTADO: list[tuple[str, str, str, str]] = [
 ]
 
 # UIT oficial MEF (ddl/01_dimensiones.sql)
-MI_DIM_PARAMETRO_UIT: dict[int, float] = {
+DW_M_DIM_PARAMETRO_UIT: dict[int, float] = {
     2015: 3850.0,
     2016: 3950.0,
     2017: 4050.0,

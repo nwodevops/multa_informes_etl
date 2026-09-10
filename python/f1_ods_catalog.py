@@ -1,6 +1,6 @@
 """Catálogo F1 OD Google Sheets (docs/inputs/f1_ods_sheets.json).
 
-Usado por stage_sheets / Hop y por dimensional (MI_DIM_OD / COD_OD).
+Usado por stage_sheets / Hop y por dimensional (DW_M_DIM_OD / COD_OD).
 No descarga datos: solo lee el JSON de oficinas activas y spreadsheet_key.
 """
 

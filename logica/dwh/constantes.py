@@ -24,7 +24,7 @@ FUENTE_REGISTRO = {
     "ETAPAS": "CAGR",
 }
 
-# Semillas MI_DIM_FUENTE_REGISTRO (ID fijo; CODIGO = linaje). GAPPS/OD_EXCEL sin ingestión.
+# Semillas DW_M_DIM_FUENTE_REGISTRO (ID fijo; CODIGO = linaje). GAPPS/OD_EXCEL sin ingestión.
 SEMILLAS_FUENTE_REGISTRO = (
     (-1, "ND", "NO ESPECIFICADO", "ND", "NO ESPECIFICADO"),
     (1, "OD_SHEETS", "Sheets OD", "F1", "31 Google Sheets OD → STG_GS2_OD_MULTAS"),
