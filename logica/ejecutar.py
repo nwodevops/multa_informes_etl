@@ -5,11 +5,11 @@
 # Flujo (quién llama a quién):
 #   Hop deja STG_* en H2 → Python lee GS1/GS2/ETAPAS/ORA → este módulo
 #   → dwh.pipeline.ejecutar(...) → DataFrames DW_M_* en memoria
-#   → cargar_dw.py publica a Oracle + SQL 07 arma el fact enriquecido.
+#   → cargar_dw.py publica estrella flaca (dims + enriquecida + DET + DQ).
 #
 # Qué NO hace este módulo:
 #   - No lee Sheets/Oracle fuente (eso es Hop).
-#   - No hace el LEFT JOIN Sheet←SISUD (eso es docs/lineamientos/ddl/07_*.sql).
+#   - No publica las 3 facts evidencia a Oracle (solo memoria / RESULTADO).
 # Guía: docs/adjuntos/guia-codigo-logica-homologacion-facts.md
 # =============================================================================
 
@@ -57,10 +57,11 @@ DW_M_DIM_FUENTE_REGISTRO = _out["DW_M_DIM_FUENTE_REGISTRO"]
 DW_M_DIM_MATERIA_SUBSECTOR = _out["DW_M_DIM_MATERIA_SUBSECTOR"]
 DW_M_DIM_ESTADO = _out["DW_M_DIM_ESTADO"]
 DW_M_DIM_PARAMETRO_UIT = _out["DW_M_DIM_PARAMETRO_UIT"]
-# Tres facts de EVIDENCIA (1 fila = 1 multa de UNA fuente). El de NEGOCIO se arma en SQL 07.
+# Evidencia en memoria (no se publica). Negocio = UNION F1∪F2 + lookup SISUD.
 DW_M_FACT_MC_CSEP = _out["DW_M_FACT_MC_CSEP"]
 DW_M_FACT_MC_OD = _out["DW_M_FACT_MC_OD"]
 DW_M_FACT_MC_SISUD = _out["DW_M_FACT_MC_SISUD"]
+DW_M_FACT_MULTA_COERCITIVA = _out["DW_M_FACT_MULTA_COERCITIVA"]
 DW_M_DET_ETAPA_MC = _out["DW_M_DET_ETAPA_MC"]
 DW_M_INDICADOR_RESULTADO = _out["DW_M_INDICADOR_RESULTADO"]
 RESULTADO = _out["RESULTADO"]

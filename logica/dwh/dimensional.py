@@ -604,7 +604,7 @@ def construir_modelo(
     df_sisud: pd.DataFrame,
     df_etapas: pd.DataFrame,
 ) -> dict[str, pd.DataFrame]:
-    """Fase 5: 3 facts evidencia + dims + etapas. El enriquecido se llena en Oracle (07)."""
+    """Fase 5: 3 facts evidencia (memoria) + dims + etapas. Enrich en enrich.py."""
     # df_all solo para poblar dims que miran valores distintos (estado, administrado)
     df_all = pd.concat([df_csep, df_od, df_sisud], ignore_index=True, sort=False)
 

@@ -242,10 +242,20 @@
     {
       "id": "fase-remote-deploy",
       "title": "Despliegue remoto Windows (REPOCSEP → 10.6.0.15:1532/dvoefacore)",
-      "status": "in_progress",
+      "status": "pending",
       "criterio": "git pull + switch-env.ps1 remote + wf_main_win/init.bat → Success; POST-CARGA CSEP/OD/SISUD/enriquecida ≈ 990/281/534/1271; DW_M_AUD_* = STG; DW_M_DQ_HALLAZGO presente; sin VW_MC_* ni DW_M_QA_/DW_M_INDICADOR_*",
       "doc": "environments/remote.json",
-      "nota": "Re-corrida Win tras wipe + DW_M_AUD_* + DW_M_DQ_HALLAZGO; requiere client_secret.json"
+      "nota": "Pausada: canónico flaco en linux_v2 primero; luego re-validar Win"
+    },
+    {
+      "id": "canonico-flaco-enrich-py",
+      "title": "Oracle flaco: enrich pandas, sin FACT_MC_* publicadas",
+      "status": "done",
+      "passes": true,
+      "criterio": "linux_v2: DW_M_FACT_MULTA_COERCITIVA = F1∪F2 + lookup SISUD en enrich.py; sin DW_M_FACT_MC_* en Oracle; DET FK al enriquecido; enriquecida = AUD_F2+AUD_F1; 0153/64; ./init.sh HARNESS OK",
+      "doc": "logica/dwh/enrich.py",
+      "evidencia": "progress/impl_canonico-flaco-enrich-py.md",
+      "nota": "HARNESS OK 1271=990+281; 0153/64 con CUM+CAM. Merge a linux/windows pendiente."
     }
   ]
 }

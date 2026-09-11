@@ -167,3 +167,15 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 - Trae `60673a1` + `a960432` desde linux.
 - Conserva `stage_sheets.py` / `stage_*.cmd` / `wf_main_win.hwf`.
 - `cargar_dw` canónico (wipe+DDL); attrs Sheet done en feature_list.
+
+---
+
+## 2026-09-11 — canónico flaco enrich pandas (`linux_v2`)
+
+**Feature:** `canonico-flaco-enrich-py` → `done`
+
+- `DW_M_FACT_MULTA_COERCITIVA` = F1∪F2 + lookup SISUD en `logica/dwh/enrich.py`.
+- Oracle sin `DW_M_FACT_MC_*`. DET FK al enriquecido. SQL 07 deprecado.
+- `./init.sh` → HARNESS OK: 1271 = 990+281; 0153/64 con CUM+CAM.
+- Evidencia: `progress/impl_canonico-flaco-enrich-py.md`
+- Siguiente: rama `windows_v2` + re-corrida Win.

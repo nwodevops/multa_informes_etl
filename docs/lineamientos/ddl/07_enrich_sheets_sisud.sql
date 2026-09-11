@@ -1,5 +1,7 @@
 --------------------------------------------------------------------------------
 -- 07_enrich_sheets_sisud.sql
+-- DEPRECADO (linux_v2): el enrich vive en logica/dwh/enrich.py.
+-- Este SQL no se ejecuta en runtime. Se conserva como especificación histórica.
 -- Tras DELETE+INSERT de DW_M_FACT_MC_CSEP / _OD / _SISUD:
 -- arma DW_M_FACT_MULTA_COERCITIVA = (CSEP ∪ OD) LEFT JOIN SISUD
 -- clave: resolución normalizada (sin ceros a la izquierda del correlativo) + MONTO_UIT.

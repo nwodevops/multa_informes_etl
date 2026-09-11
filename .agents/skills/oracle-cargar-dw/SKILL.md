@@ -19,8 +19,8 @@ DDL `01`–`04`+`06`, INSERT tipado, enrich `07`, log `COUNT(*)`.
 2. Aplicar DDL `01`→`02`→`03`→`04` (con TABLESPACE).
 3. Aplicar `06_vistas.sql` (`VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA`).
 4. Aplicar `05_comentarios.sql` (`COMMENT ON`).
-5. INSERT dims → facts evidencia → DET → DQ/QA → indicadores.
-6. Ejecutar **`07_enrich_sheets_sisud.sql`** → `DW_M_FACT_MULTA_COERCITIVA`.
+5. INSERT dims → `DW_M_FACT_MULTA_COERCITIVA` (ya enriquecida en pandas) → DET → DQ.
+6. No ejecutar `07` en runtime (histórico).
 
 No hay migraciones ALTER ni `_ensure_*`: el esquema es siempre el DDL vigente.
 
@@ -39,8 +39,7 @@ cur.execute("SELECT tablespace_name FROM user_ts_quotas WHERE ...")
 ## Orden INSERT
 
 ```
-DIM_* → DW_M_FACT_MC_* → DET_* → DQ_* / QA_* → DW_M_INDICADOR_RESULTADO
-luego: 07 enrich → DW_M_FACT_MULTA_COERCITIVA
+DIM_* → DW_M_FACT_MULTA_COERCITIVA → DET_* → DQ_*
 ```
 
 ## Coerción de tipos (`_coerce_for_oracle`)
@@ -62,13 +61,10 @@ No pasar float a columna VARCHAR (DPY-3013).
 ## Verificación
 
 ```
-DW: DW_M_FACT_MC_CSEP: ~990 filas -> N en BD (OK)
-DW: DW_M_FACT_MC_OD: ~281 filas -> N en BD (OK)
-DW: DW_M_FACT_MC_SISUD: ~534 filas -> N en BD (OK)
-# enrich 07 → DW_M_FACT_MULTA_COERCITIVA ~1271 (CSEP∪OD)
+DW: DW_M_FACT_MULTA_COERCITIVA: ~1271 filas -> N en BD (OK)
 ```
 
-Criterio: `n_bd == n_df` por tabla de evidencia. Enriquecido se valida por COUNT post-07.
+Criterio: `n_bd == n_df` en enriquecida (F1∪F2). Sin `DW_M_FACT_MC_*` en Oracle.
 Script standalone: `python/verify_dw.py`.
 
 ## Errores frecuentes

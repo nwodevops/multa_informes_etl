@@ -6,8 +6,8 @@ Verificación ejecutable: [`./init.sh`](init.sh) (Linux) / `init.bat` (Windows) 
 Referencia canónica: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md).  
 Contrato runtime: [`python/CONTRATO.md`](python/CONTRATO.md).
 
-**Oracle canónico (runtime):** dims + 3 facts evidencia + DET + `DW_M_FACT_MULTA_COERCITIVA` (enrich `07`) + `DW_M_DQ_HALLAZGO` + `DW_M_AUD_*`.  
-**No se publican:** `DW_M_QA_*`, `DW_M_INDICADOR_*` (K1–K5 solo memoria), vistas `VW_MC_*` / `VW_FCT_*`.
+**Oracle canónico (runtime):** dims + `DW_M_FACT_MULTA_COERCITIVA` (enrich pandas) + DET + `DW_M_DQ_HALLAZGO` + `DW_M_AUD_*`.  
+**No se publican:** `DW_M_FACT_MC_*` (evidencia memoria), `DW_M_QA_*`, `DW_M_INDICADOR_*`, vistas `VW_MC_*` / `VW_FCT_*`.
 
 ---
 
@@ -62,9 +62,9 @@ Módulo: `logica/dwh/calidad.py`. Skill: `.agents/skills/auditable-soft-quaranti
 ## Fase 5 — Modelo dimensional {#fase-5}
 
 - [ ] Ocho `DW_M_DIM_*` (incluye `DW_M_DIM_OD`, `DW_M_DIM_FUENTE_REGISTRO`).
-- [ ] **Tres facts evidencia:** `DW_M_FACT_MC_CSEP`, `DW_M_FACT_MC_OD`, `DW_M_FACT_MC_SISUD` + `DW_M_DET_ETAPA_MC`.
-- [ ] `DW_M_FACT_MULTA_COERCITIVA` vacío en Python (lo llena Oracle SQL `07`).
-- [ ] Linaje por `ID_FUENTE`; `ID_TIEMPO_FIRMA` poblado; attrs operativos F2 en CSEP/enriquecida.
+- [ ] Tres facts evidencia **en memoria** (`DW_M_FACT_MC_*`) + `DW_M_DET_ETAPA_MC`.
+- [ ] `DW_M_FACT_MULTA_COERCITIVA` armado en `logica/dwh/enrich.py` (F1∪F2 + lookup SISUD).
+- [ ] Linaje por `ID_FUENTE`; `ID_TIEMPO_FIRMA` poblado; attrs operativos F2 en enriquecida.
 - [ ] `DW_M_DIM_ORGANO_UNIDAD` solo CSEP+ND (~11); miembro `-1` en dims.
 
 Módulo: `logica/dwh/dimensional.py`. Manual: `docs/lineamientos/extra/manual-como-se-arma-el-fact.md`.
@@ -73,9 +73,9 @@ Módulo: `logica/dwh/dimensional.py`. Manual: `docs/lineamientos/extra/manual-co
 
 ## Fase 6 — Carga Oracle {#fase-6}
 
-- [ ] Wipe canónico `DW_M_*` / `VW_*` → DDL `01`+`02` + `DW_M_DQ_HALLAZGO` (03 filtrado) (+`05`) → INSERT → enrich `07` → `DW_M_AUD_*`.
-- [ ] **Sin** `04_indicadores` / `06_vistas` en runtime; sin vistas `VW_MC_*` en destino.
-- [ ] Tras insert evidencia: `07_enrich_sheets_sisud.sql` → enriquecida COUNT = CSEP + OD.
+- [ ] Wipe canónico `DW_M_*` / `VW_*` → DDL `01`+`02` + `DW_M_DQ_HALLAZGO` (03 filtrado) (+`05`) → INSERT enriquecida/DET/DQ → `DW_M_AUD_*`.
+- [ ] **Sin** `04`/`06`/`07` en runtime; sin `DW_M_FACT_MC_*` ni vistas `VW_MC_*` en destino.
+- [ ] Enriquecida COUNT = AUD_F2 + AUD_F1 (mismo grano que F1∪F2).
 - [ ] Log `DW: <tabla>: N filas -> N en BD (OK)` para dims/facts/DET/DQ.
 - [ ] `DW_M_AUD_*` alineados a STG (F1/F2/F5); `python/verify_dw.py` OK.
 

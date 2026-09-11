@@ -7,11 +7,9 @@ Orden fijo (no reordenar sin revisar dependencias):
   2) integrar                      — homologar + rename → 3 bloques canónicos (+ etapas)
   3) concat DF_MULTAS              — UNION auxiliar solo para calidad/KPIs (no es el fact)
   4) aplicar_calidad               — marca defectos; NO borra filas
-  5) construir_modelo              — DIMs + 3 facts evidencia + DET etapas
-  6) calcular_indicadores          — K1–K5 en memoria
-
-El fact de negocio enriquecido (DW_M_FACT_MULTA_COERCITIVA) NO se construye aquí:
-lo arma Oracle con docs/lineamientos/ddl/07_enrich_sheets_sisud.sql tras cargar_dw.
+  5) construir_modelo              — DIMs + 3 facts evidencia (memoria) + DET
+  6) enriquecer_sheets_sisud       — fact de negocio (F1∪F2 + lookup SISUD)
+  7) calcular_indicadores          — K1–K5 en memoria
 """
 
 from __future__ import annotations
@@ -24,6 +22,7 @@ from .calidad import aplicar_calidad
 from .constantes import FECHA_CARGA, ID_CARGA
 from .diccionario import armar_diccionario
 from .dimensional import construir_modelo
+from .enrich import enriquecer_sheets_sisud
 from .indicadores import calcular_indicadores
 from .integracion import integrar
 from .perfilamiento import perfilar_todas
@@ -67,8 +66,15 @@ def ejecutar(
     # Los facts evidencia se construyen desde df_csep/od/sisud (sin depender de FG_CONFORME).
     df_multas, dq_hallazgo, qa_amarre, qa_amarre_det = aplicar_calidad(df_multas, df_sisud)
 
-    # STEP 5: construir dimensiones, facts de evidencia y detalle de etapas.
+    # STEP 5: construir dimensiones, facts de evidencia (memoria) y detalle de etapas.
     modelo = construir_modelo(df_csep, df_od, df_sisud, df_etapas)
+
+    # STEP 5b: fact de negocio — vertical F1∪F2, horizontal lookup SISUD.
+    fact_enriq = enriquecer_sheets_sisud(
+        modelo["DW_M_FACT_MC_CSEP"],
+        modelo["DW_M_FACT_MC_OD"],
+        modelo["DW_M_FACT_MC_SISUD"],
+    )
 
     # STEP 6: calcular indicadores en memoria usando evidencia y hallazgos.
     fact_evidencia = pd.concat(
@@ -110,6 +116,7 @@ def ejecutar(
                 "N_FACT_CSEP": len(modelo["DW_M_FACT_MC_CSEP"]),
                 "N_FACT_OD": len(modelo["DW_M_FACT_MC_OD"]),
                 "N_FACT_SISUD": len(modelo["DW_M_FACT_MC_SISUD"]),
+                "N_FACT_ENRIQUECIDA": len(fact_enriq),
                 "N_DET_ETAPAS": len(modelo["DW_M_DET_ETAPA_MC"]),
                 "N_INDICADORES": len(indicadores),
                 "N_QA_AMARRE_DET": len(qa_amarre_det),
@@ -132,5 +139,6 @@ def ejecutar(
         "DW_M_INDICADOR_RESULTADO": indicadores,
         "RESULTADO": resultado,
     }
-    out.update(modelo)  # agrega DW_M_DIM_* + DW_M_FACT_MC_* + DW_M_DET_ETAPA_MC
+    out.update(modelo)  # dims + facts evidencia (memoria) + DET
+    out["DW_M_FACT_MULTA_COERCITIVA"] = fact_enriq
     return out

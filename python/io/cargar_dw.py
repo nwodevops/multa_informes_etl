@@ -3,10 +3,9 @@
 Orden:
   1) wipe DW_M_*/VW_* del esquema sesión (APP local / REPOCSEP remote)
   2) DDL 01_dimensiones + 02_hechos (+ DW_M_DQ_HALLAZGO)
-  3) INSERT dims + 3 facts evidencia + DET + DQ
-  4) enrich SQL 07 → DW_M_FACT_MULTA_COERCITIVA (Sheet manda + CUM/CAM)
+  3) INSERT dims + DW_M_FACT_MULTA_COERCITIVA + DET + DQ
 
-No publica DW_M_QA_* ni indicadores K ni vistas VW_MC_*.
+No publica facts evidencia FACT_MC_*, DW_M_QA_*, indicadores K ni vistas VW_MC_*.
 DW_M_AUD_* lo carga python/audit/cargar_aud.py después (también desde main.py).
 
 DDL: docs/lineamientos/ddl/
@@ -37,30 +36,22 @@ TABLAS_DIM = (
     "DW_M_DIM_ESTADO",
     "DW_M_DIM_PARAMETRO_UIT",
 )
-TABLAS_EVIDENCIA = (
-    "DW_M_FACT_MC_CSEP",
-    "DW_M_FACT_MC_OD",
-    "DW_M_FACT_MC_SISUD",
-)
 TABLAS_HECHOS = (
-    *TABLAS_EVIDENCIA,
     "DW_M_FACT_MULTA_COERCITIVA",
     "DW_M_DET_ETAPA_MC",
 )
 REQUIRED_CORE = (*TABLAS_DIM, *TABLAS_HECHOS)
-# Hijos primero; el resto de DW_M_% (AUD, DQ legacy, …) se dropea después.
+# Hijos primero; leftover DW_M_% (AUD, FACT_MC_* viejos, DQ, …) se dropea después.
 DROP_ORDEN = (
     "DW_M_DET_ETAPA_MC",
     "DW_M_FACT_MULTA_COERCITIVA",
-    *TABLAS_EVIDENCIA,
     *TABLAS_DIM,
 )
 INSERT_ORDEN = (
     *TABLAS_DIM,
-    *TABLAS_EVIDENCIA,
+    "DW_M_FACT_MULTA_COERCITIVA",
     "DW_M_DET_ETAPA_MC",
     "DW_M_DQ_HALLAZGO",
-    # DW_M_FACT_MULTA_COERCITIVA NO se inserta desde pandas: lo llena SQL 07
 )
 
 
@@ -107,7 +98,6 @@ def _verificar_post_carga(cur, counts: dict[str, int], cv: dict[str, str]) -> No
     dest = _destino_label(cv)
     print(f"DW: destino {dest}", flush=True)
     for tabla in (
-        *TABLAS_EVIDENCIA,
         "DW_M_FACT_MULTA_COERCITIVA",
         "DW_M_DET_ETAPA_MC",
         "DW_M_DQ_HALLAZGO",
@@ -118,11 +108,6 @@ def _verificar_post_carga(cur, counts: dict[str, int], cv: dict[str, str]) -> No
         n = int(cur.fetchone()[0])
         esp = counts.get(tabla, "?")
         print(f"DW: POST-CARGA {ESQUEMA}.{tabla} = {n} filas (esperado {esp})", flush=True)
-    n_c = counts.get("DW_M_FACT_MC_CSEP", 0)
-    n_o = counts.get("DW_M_FACT_MC_OD", 0)
-    n_m = counts.get("DW_M_FACT_MULTA_COERCITIVA", 0)
-    if (n_c + n_o) and n_m != (n_c + n_o):
-        print(f"AVISO enriquecida: {n_m} != CSEP+OD ({n_c}+{n_o})", flush=True)
 
 
 def _split_sql(text: str) -> list[str]:
@@ -249,48 +234,6 @@ def _prepare_schema(cur, root: Path) -> None:
         print(f"DW: aplicando {name}...", flush=True)
         _run_ddl_file(cur, ddl_root / name, ts)
     _run_dq_hallazgo_ddl(cur, root, ts)
-
-
-def _run_enrich_sheets_sisud(cur, root: Path) -> int:
-    """DELETE+INSERT hecho enriquecido (07_enrich_sheets_sisud.sql)."""
-    path = (root / DDL_DIR / "07_enrich_sheets_sisud.sql").resolve()
-    print(f"DW: enrich busca {path}", flush=True)
-    if not path.is_file():
-        ddl_dir = path.parent
-        listing = sorted(p.name for p in ddl_dir.glob("*")) if ddl_dir.is_dir() else []
-        raise FileNotFoundError(
-            f"falta {path} (en {ddl_dir}: {', '.join(listing) or 'vacío/inexistente'})"
-        )
-    if not all(_table_exists(cur, t) for t in TABLAS_EVIDENCIA):
-        raise RuntimeError("faltan facts evidencia para enrich Sheets-SISUD")
-    if not _table_exists(cur, "DW_M_FACT_MULTA_COERCITIVA"):
-        raise RuntimeError("falta DW_M_FACT_MULTA_COERCITIVA")
-    print("DW: aplicando enrich Sheets-SISUD (07)...", flush=True)
-    try:
-        for stmt in _split_sql(path.read_text(encoding="utf-8")):
-            u = stmt.upper().strip()
-            if u.startswith("COMMIT") or not u:
-                continue
-            cur.execute(stmt)
-    except Exception as exc:
-        print(f"ERROR enrich 07: {exc}", flush=True)
-        raise RuntimeError(f"falló enrich Sheets-SISUD (07): {exc}") from exc
-    cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.DW_M_FACT_MULTA_COERCITIVA")
-    n = int(cur.fetchone()[0])
-    cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.DW_M_FACT_MC_CSEP")
-    n_c = int(cur.fetchone()[0])
-    cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.DW_M_FACT_MC_OD")
-    n_o = int(cur.fetchone()[0])
-    print(
-        f"DW: DW_M_FACT_MULTA_COERCITIVA (enriquecida): {n} filas "
-        f"(esperado CSEP+OD={n_c}+{n_o}={n_c + n_o})",
-        flush=True,
-    )
-    if (n_c + n_o) > 0 and n == 0:
-        raise RuntimeError(
-            "enrich 07 dejó DW_M_FACT_MULTA_COERCITIVA vacía pese a CSEP/OD con filas"
-        )
-    return n
 
 
 def _apply_column_comments(cur, root: Path) -> None:
@@ -425,11 +368,7 @@ def _insert_df(cur, tabla: str, df: pd.DataFrame, skip_identity: bool = True) ->
 
 
 def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict[str, int]:
-    """Punto de entrada desde main.py: wipe + DDL + INSERT evidencia + enrich 07.
-
-    `tablas` viene filtrado por main (DW_M_DIM_*, DW_M_FACT_MC_*, DW_M_DET_*, DW_M_DQ_HALLAZGO).
-    Devuelve COUNT por tabla publicada (incluye DW_M_FACT_MULTA_COERCITIVA post-enrich).
-    """
+    """Wipe + DDL + INSERT dims/enriquecida/DET/DQ. Sin facts evidencia ni SQL 07."""
     root = root or project_root()
     if not tablas:
         print("AVISO: no hay tablas para cargar a BD_CURSOR.", flush=True)
@@ -447,8 +386,7 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
             _apply_column_comments(cur, root)
             conn.commit()
 
-            # STEP 7.3: insertar dimensiones, facts de evidencia, detalle y DQ.
-            # INSERT_ORDEN respeta las dependencias de las claves foráneas.
+            # STEP 7.3: insertar dims, fact enriquecido, DET y DQ (orden FK).
             for tabla in INSERT_ORDEN:
                 df = tablas.get(tabla)
                 if df is None:
@@ -460,12 +398,7 @@ def cargar_dw(tablas: dict[str, pd.DataFrame], root: Path | None = None) -> dict
                 ok = "OK" if n_bd == n_df else "REVISAR"
                 print(f"DW: {tabla}: {n_df} filas -> {n_bd} en BD ({ok})", flush=True)
 
-            # STEP 7.4: ejecutar SQL 07 para construir el fact de negocio enriquecido.
-            n_enriq = _run_enrich_sheets_sisud(cur, root)
-            counts["DW_M_FACT_MULTA_COERCITIVA"] = n_enriq
-            conn.commit()
-
-            # STEP 7.5: comparar conteos esperados contra lo persistido en Oracle.
+            # STEP 7.4: comparar conteos esperados contra lo persistido en Oracle.
             _verificar_post_carga(cur, counts, cv)
             conn.commit()
         finally:

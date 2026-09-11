@@ -96,6 +96,7 @@ grep -q "Salida DW_M_DIM_" "$LOG" || fail "no hay salida DW_M_DIM_* en el log"
 grep -q "Salida DW_M_FACT_MC_CSEP" "$LOG" || fail "no hay salida DW_M_FACT_MC_CSEP en el log"
 grep -q "Salida DW_M_FACT_MC_OD" "$LOG" || fail "no hay salida DW_M_FACT_MC_OD en el log"
 grep -q "Salida DW_M_FACT_MC_SISUD" "$LOG" || fail "no hay salida DW_M_FACT_MC_SISUD en el log"
+grep -q "Salida DW_M_FACT_MULTA_COERCITIVA" "$LOG" || fail "no hay salida DW_M_FACT_MULTA_COERCITIVA en el log"
 grep -q "Salida DW_M_DQ_HALLAZGO" "$LOG" || fail "no hay salida DW_M_DQ_HALLAZGO en el log"
 grep -q "Salida DW_M_INDICADOR_RESULTADO" "$LOG" || fail "no hay DW_M_INDICADOR_RESULTADO en el log (memoria de corrida)"
 if grep -q "Salida DF_INFORMES" "$LOG"; then
@@ -204,9 +205,6 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
 
         # Canónico publicado
         for t in (
-            "DW_M_FACT_MC_CSEP",
-            "DW_M_FACT_MC_OD",
-            "DW_M_FACT_MC_SISUD",
             "DW_M_FACT_MULTA_COERCITIVA",
             "DW_M_DET_ETAPA_MC",
             "DW_M_DQ_HALLAZGO",
@@ -217,13 +215,20 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
         ):
             if not exists_table(t):
                 sys.exit(f"falta tabla canónica {t}")
-        print("Tablas canónicas (facts/DET/DQ/AUD): OK")
+        print("Tablas canónicas (enriquecida/DET/DQ/AUD): OK")
 
         # Prohibidas en destino
-        for t in ("DW_M_QA_AMARRE", "DW_M_QA_AMARRE_DETALLE", "DW_M_INDICADOR_RESULTADO"):
+        for t in (
+            "DW_M_FACT_MC_CSEP",
+            "DW_M_FACT_MC_OD",
+            "DW_M_FACT_MC_SISUD",
+            "DW_M_QA_AMARRE",
+            "DW_M_QA_AMARRE_DETALLE",
+            "DW_M_INDICADOR_RESULTADO",
+        ):
             if exists_table(t):
                 sys.exit(f"{t} no debe publicarse en Oracle (solo memoria de corrida)")
-        print("QA/K en Oracle: ausentes (OK)")
+        print("Evidencia FACT_MC_* / QA/K en Oracle: ausentes (OK)")
 
         cur.execute(
             """
@@ -238,9 +243,6 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
         print("Vistas VW_MC_/VW_FCT_: ninguna (OK)")
 
         by_tbl = {
-            "CSEP": count("DW_M_FACT_MC_CSEP"),
-            "OD": count("DW_M_FACT_MC_OD"),
-            "SISUD": count("DW_M_FACT_MC_SISUD"),
             "ENRIQUECIDA": count("DW_M_FACT_MULTA_COERCITIVA"),
             "DET": count("DW_M_DET_ETAPA_MC"),
             "DQ": count("DW_M_DQ_HALLAZGO"),
@@ -250,21 +252,15 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
             "AUD_F5": count("DW_M_AUD_F5_SISUD_VW"),
         }
         print(f"Conteos canónicos: {by_tbl}")
-        expected_min = {"CSEP": 200, "OD": 50, "SISUD": 50}
+        expected_min = {"AUD_F2": 200, "AUD_F1": 50, "AUD_F5": 50}
         for cod, mn in expected_min.items():
             n = by_tbl.get(cod, 0)
             if n < mn:
                 sys.exit(f"conteo {cod}={n} bajo mínimo esperado {mn} (posible fallo de staging)")
         n_enriq = by_tbl["ENRIQUECIDA"]
-        n_sheets = by_tbl["CSEP"] + by_tbl["OD"]
+        n_sheets = by_tbl["AUD_F2"] + by_tbl["AUD_F1"]
         if n_enriq != n_sheets:
-            sys.exit(f"enriquecida={n_enriq} debe igualar CSEP+OD={n_sheets}")
-        if by_tbl["AUD_F2"] != by_tbl["CSEP"]:
-            sys.exit(f"AUD_F2={by_tbl['AUD_F2']} debe igualar CSEP={by_tbl['CSEP']}")
-        if by_tbl["AUD_F1"] != by_tbl["OD"]:
-            sys.exit(f"AUD_F1={by_tbl['AUD_F1']} debe igualar OD={by_tbl['OD']}")
-        if by_tbl["AUD_F5"] != by_tbl["SISUD"]:
-            sys.exit(f"AUD_F5={by_tbl['AUD_F5']} debe igualar SISUD={by_tbl['SISUD']}")
+            sys.exit(f"enriquecida={n_enriq} debe igualar AUD_F2+AUD_F1={n_sheets}")
         print(f"DW_M_DQ_HALLAZGO: {by_tbl['DQ']} filas (R01–R05; 0 es válido si no hay hallazgos)")
 
         cur.execute(

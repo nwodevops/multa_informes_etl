@@ -132,6 +132,11 @@ def main() -> int:
 
     # STEP 7: seleccionar y publicar en Oracle únicamente estrella + DQ.
     # Estrella + DQ a Oracle. QA/K NO se publican (solo memoria / RESULTADO).
+    _evidencia_memoria = {
+        "DW_M_FACT_MC_CSEP",
+        "DW_M_FACT_MC_OD",
+        "DW_M_FACT_MC_SISUD",
+    }
     tablas_dw = {
         k: v
         for k, v in salidas.items()
@@ -140,9 +145,10 @@ def main() -> int:
             or k == "DW_M_DQ_HALLAZGO"
         )
         and not k.startswith(("DW_M_QA_", "DW_M_INDICADOR_"))
+        and k not in _evidencia_memoria
     }
     if tablas_dw:
-        # wipe + DDL + INSERT evidencia/dims + enrich SQL 07 → DW_M_FACT_MULTA_COERCITIVA
+        # wipe + DDL + INSERT dims/enriquecida/DET/DQ (evidencia FACT_MC_* no se publica)
         cargar = _load("cargar_dw", HERE / "io" / "cargar_dw.py")
         cargar.cargar_dw(tablas_dw, root)
 
@@ -151,8 +157,8 @@ def main() -> int:
         aud.cargar_aud(datos, root)
 
     print(
-        "Listo (H2 -> logica -> Oracle canónico dims/facts/DET/DQ/enrich + DW_M_AUD_*). "
-        "QA/K solo en memoria de corrida."
+        "Listo (H2 -> logica -> Oracle canónico dims/enriquecida/DET/DQ + DW_M_AUD_*). "
+        "Evidencia FACT_MC_* y QA/K solo en memoria de corrida."
     )
     return 0
 

@@ -1,30 +1,16 @@
-# Sesión activa — rama `linux` (harness / desarrollo local)
+# Sesión activa — rama `linux_v2` / `windows_v2`
 
 ## Feature activa
 
-| Campo | Valor |
-|---|---|
-| ID | `fase-remote-deploy` |
-| Status | `in_progress` |
-| Criterio Win | `wf_main_win` / `init.bat` → Success + POST-CARGA + `DW_M_AUD_*` + `DW_M_DQ_HALLAZGO`; sin VW/QA/K |
+Ninguna `in_progress`. Última cerrada: `canonico-flaco-enrich-py`.
 
 ## Hecho reciente
 
-- Harness alineado al DW canónico: `init.sh` / `init.bat` / `CHECKPOINTS.md` / `docs/verification.md`.
-- Oracle: estrella + `DW_M_DQ_HALLAZGO` + `DW_M_AUD_*`. QA/K solo memoria.
+- Oracle flaco: enrich en pandas. Sin `DW_M_FACT_MC_*` publicadas.
+- `./init.sh` HARNESS OK (1271 = 990+281; 0153/64).
 
-## Plan
+## Siguiente
 
-1. Local (`linux`): `./switch-env.sh local` → `./init.sh` o Hop `wf_main.hwf` → `HARNESS OK`.
-2. Remoto Win: `git pull` en `windows` → `.\switch-env.ps1 remote` → `init.bat` / `wf_main_win`.
-3. Si Win OK → `fase-remote-deploy` = done; merge/homologar ramas.
-
-## Comandos Linux
-
-```bash
-git checkout linux
-./switch-env.sh local
-./init.sh
-# o Hop: wf_main.hwf
-.venv/bin/python python/verify_dw.py
-```
+1. PC Win: `git checkout windows_v2` → `.\switch-env.ps1 remote` → `init.bat`.
+2. Si Win OK → retomar `fase-remote-deploy` (criterio: enriquecida + AUD, sin facts evidencia).
+3. Merge a `linux` / `windows` cuando se pida.

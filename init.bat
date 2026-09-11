@@ -175,6 +175,11 @@ if errorlevel 1 (
     call :fail "no hay salida DW_M_FACT_MC_SISUD en el log"
     exit /b 1
 )
+findstr /C:"Salida DW_M_FACT_MULTA_COERCITIVA" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida DW_M_FACT_MULTA_COERCITIVA en el log"
+    exit /b 1
+)
 findstr /C:"Salida DW_M_DQ_HALLAZGO" "%LOG%" >nul 2>&1
 if errorlevel 1 (
     call :fail "no hay salida DW_M_DQ_HALLAZGO en el log"

@@ -12,9 +12,9 @@ CAPA POST-STAGING (lineamientos Fases 2–7)
   python/main.py            orquesta: leer_h2 → logica/ → cargar_dw → audit/cargar_aud
   python/io/leer_h2.py      ENTRADA: H2 STG_* → DataFrames
   logica/ejecutar.py        delega a logica/dwh/
-  logica/dwh/               perfil … dimensional (3 facts) … calidad/indicadores (memoria)
+  logica/dwh/               perfil … dimensional (3 facts memoria) … enrich.py … KPIs
   python/io/cargar_dw.py    SALIDA: wipe canónico DW_M_*/VW_* + DDL 01+02+DQ(+05)
-                            + INSERT dims/facts/DET/DW_M_DQ_HALLAZGO + SQL 07 enrich
+                            + INSERT dims/enriquecida/DET/DW_M_DQ_HALLAZGO
   python/audit/cargar_aud.py  DW_M_AUD_* 1:1 desde STG (fuera de estrella)
 ```
 
@@ -37,8 +37,8 @@ Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F5 SISUD. **Sin MySQL.*
 
 | Nombre | Qué es |
 |---|---|
-| `DW_M_DIM_*` / `DW_M_FACT_MC_CSEP` / `_OD` / `_SISUD` / `DW_M_DET_ETAPA_MC` | Estrella evidencia |
-| `DW_M_FACT_MULTA_COERCITIVA` | Negocio enrich SQL 07 (solo Oracle) |
+| `DW_M_DIM_*` / `DW_M_DET_ETAPA_MC` | Estrella (DET FK al enriquecido) |
+| `DW_M_FACT_MULTA_COERCITIVA` | Negocio: F1∪F2 + lookup SISUD (`logica/dwh/enrich.py`) |
 | `DW_M_DQ_HALLAZGO` | Bitácora R01–R05 (cuarentena blanda; no elimina filas) |
 | `DW_M_AUD_F1_OD_MULTAS` / `DW_M_AUD_F2_CSEP_MULTAS` / `DW_M_AUD_F2_CSEP_ETAPAS` / `DW_M_AUD_F5_SISUD_VW` | Foto cruda STG 1:1 |
 
@@ -47,12 +47,13 @@ Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F5 SISUD. **Sin MySQL.*
 | Nombre | Fase | Qué es |
 |---|---|---|
 | `PROF_*` / `DICCIONARIO` / `DF_*` | 2–4 | Intermedios |
+| `DW_M_FACT_MC_CSEP` / `_OD` / `_SISUD` | 5 | Evidencia por fuente (no se publica) |
 | `DW_M_QA_AMARRE*` | 4 | Amarre H9 (resumen/detalle) |
 | `DW_M_INDICADOR_RESULTADO` | 7 | KPIs K1–K5 |
 | `RESULTADO` | 2–7 | Resumen de corrida |
 
-Carga Oracle: wipe **todas** `DW_M_*` y `VW_MC_*`/`VW_FCT_*` → DDL `01`+`02` + `DW_M_DQ_HALLAZGO` (03 filtrado) (+ comentarios `05`) → INSERT estrella/DQ → enrich `07` → `python/audit` recrea `DW_M_AUD_*`.  
-**No** se aplican `04`/`06` ni tablas `DW_M_QA_*` en runtime.
+Carga Oracle: wipe **todas** `DW_M_*` y `VW_MC_*`/`VW_FCT_*` → DDL `01`+`02` + `DW_M_DQ_HALLAZGO` (03 filtrado) (+ comentarios `05`) → INSERT dims/enriquecida/DET/DQ → `python/audit` recrea `DW_M_AUD_*`.  
+**No** se aplican `04`/`06`/`07` ni tablas `DW_M_QA_*` / `DW_M_FACT_MC_*` en runtime.
 
 Windows/REPOCSEP: cleanup manual de vistas/`DW_M_*` viejos una vez; luego el wipe canónico mantiene el esquema flaco. Linux/Docker: wipe total cada corrida.
 

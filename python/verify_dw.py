@@ -21,9 +21,6 @@ ESQUEMA = ESQUEMA_DEFAULT
 
 # Tablas mínimas que deben existir tras una corrida exitosa de main.py
 TABLAS_NUCLEO = (
-    "DW_M_FACT_MC_CSEP",
-    "DW_M_FACT_MC_OD",
-    "DW_M_FACT_MC_SISUD",
     "DW_M_FACT_MULTA_COERCITIVA",
     "DW_M_DET_ETAPA_MC",
     "DW_M_DQ_HALLAZGO",
@@ -34,6 +31,9 @@ TABLAS_NUCLEO = (
 )
 
 PROHIBIDAS = (
+    "DW_M_FACT_MC_CSEP",
+    "DW_M_FACT_MC_OD",
+    "DW_M_FACT_MC_SISUD",
     "DW_M_QA_AMARRE",
     "DW_M_QA_AMARRE_DETALLE",
     "DW_M_INDICADOR_RESULTADO",
@@ -100,7 +100,7 @@ def main() -> int:
             print(f"AVISO: tablas consultoría aún en esquema: {', '.join(leftover)}")
             rc = 1
         else:
-            print("QA/K en Oracle: ausentes (OK); DW_M_DQ_HALLAZGO es canónico")
+            print("Evidencia FACT_MC_* / QA/K en Oracle: ausentes (OK); DQ es canónico")
 
     return rc
 

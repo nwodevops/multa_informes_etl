@@ -22,7 +22,7 @@ Detalle por fase: [phases.md](phases.md).
 | 3 | Intermedios F1/F2/F5 + `DF_ETAPAS` (sin merge) | `homologacion.py`, `integracion.py` |
 | 4 | `FG_CONFORME`, `DW_M_DQ_HALLAZGO`, `DW_M_QA_AMARRE`(+`_DETALLE`) | `calidad.py` |
 | 5 | `DW_M_DIM_*`, `DW_M_FACT_MC_CSEP`/`_OD`/`_SISUD`, `DET_*` | `dimensional.py` |
-| 6 | Carga Oracle + enrich 07 + vistas `VW_MC_*` | `python/io/cargar_dw.py` |
+| 6 | Carga Oracle (enriquecida ya en pandas) | `python/io/cargar_dw.py` |
 | 7 | `DW_M_INDICADOR_RESULTADO` K1–K5 | `indicadores.py` |
 
 Orquestación: `logica/dwh/pipeline.py` → `logica/ejecutar.py` → `python/main.py`.
