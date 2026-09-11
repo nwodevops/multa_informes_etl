@@ -12,8 +12,8 @@ Flujo interno:
   1. SETUP   : root + variables de project-config.json
   2. ENTRADA : io/leer_h2.py → DataFrames (claves = LECTURAS)
   3. LOGICA  : único .py en logica/ → PROF_*, DF_*, DW_M_DIM_*, DW_M_FACT_*, …
-  4. SALIDA  : cargar_dw (estrella + DQ + enrich 07) + cargar_aud (DW_M_AUD_*)
-               QA/K quedan en memoria (no se publican a Oracle)
+  4. SALIDA  : cargar_dw (dims + enriquecida + DET + DQ) + cargar_aud (DW_M_AUD_*)
+               evidencia FACT_MC_* / QA/K quedan en memoria (no se publican)
 
 Contrato: python/CONTRATO.md
 Uso: .venv/bin/python python/main.py

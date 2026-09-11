@@ -7,7 +7,7 @@ Qué hace:
 
 Qué NO hace:
   - No hace JOIN/merge entre F1, F2 y F5.
-  - El hecho enriquecido (Sheet + CUM/CAM) se arma en Oracle SQL 07.
+  - El hecho enriquecido (Sheet + CUM/CAM) se arma en logica/dwh/enrich.py.
 
 Analogía Java: Mapper por fuente → DTO canónico común; tres listas separadas.
 

@@ -9,7 +9,7 @@ Grano evidencia: 1 fila = 1 multa de UNA fuente (ID_FUENTE distingue el universo
 Lookups = dict en memoria (como Map<clave, id> en Java), no SQL JOIN.
 
 El fact de NEGOCIO enriquecido (CUM/CAM a la derecha) NO se arma aquí:
-  → Oracle SQL 07_enrich_sheets_sisud.sql tras cargar_dw.
+  lo hace logica/dwh/enrich.py (pandas; F1∪F2 + lookup SISUD).
 
 ID_* = -1 (ND) significa "NO ESPECIFICADO".
 """

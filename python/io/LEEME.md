@@ -6,7 +6,7 @@ Flujo en main.py:
   leer_h2.py  →  logica/  →  cargar_dw.py  →  ../audit/cargar_aud.py
 
 - `leer_h2.py` — `LECTURAS` (contrato de entrada de `logica/` en la raíz)
-- `cargar_dw.py` — wipe canónico `DW_M_*`/`VW_*` + DDL `01`+`02`(+`05`) + INSERT estrella + enrich `07`
+- `cargar_dw.py` — wipe canónico `DW_M_*`/`VW_*` + DDL `01`+`02`(+`05`) + INSERT dims/enriquecida/DET/DQ (sin SQL 07)
 
 Foto cruda audit: [`../audit/cargar_aud.py`](../audit/cargar_aud.py) (`DW_M_AUD_*`).
 

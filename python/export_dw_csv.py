@@ -38,21 +38,22 @@ def main() -> int:
 
     with oracledb.connect(user=user, password=password, dsn=dsn) as conn:
         cur = conn.cursor()
+        esq = user.upper()
         cur.execute(
-            "SELECT table_name FROM all_tables WHERE owner = :owner "
-            "AND (table_name LIKE 'MI\\_%' ESCAPE '\\' OR table_name LIKE 'STG\\_%' ESCAPE '\\') "
+            "SELECT table_name FROM all_tables WHERE owner = :1 "
+            "AND table_name LIKE 'DW_M\\_%' ESCAPE '\\' "
             "ORDER BY table_name",
-            owner=user.upper(),
+            [esq],
         )
         tables = [row[0] for row in cur.fetchall()]
 
         if not tables:
-            print("dw_csv: sin tablas DW_M_*/STG_* en esquema", user.upper())
+            print("dw_csv: sin tablas DW_M_* en esquema", esq)
             return 0
 
         total = 0
         for table in tables:
-            cur.execute(f'SELECT * FROM "{table}"')
+            cur.execute(f"SELECT * FROM {esq}.{table}")
             cols = [d[0] for d in cur.description]
             path = out_dir / f"{table}.csv"
             with path.open("w", encoding="utf-8-sig", newline="") as fh:
