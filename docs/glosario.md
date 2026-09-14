@@ -10,9 +10,9 @@ El `_` al final (`STG_`, `DW_M_`) significa “todas las tablas de esa capa”.
 |---|---|
 | **STG_** | Staging en H2: copia 1:1 de cada fuente activa (F1/F2/F5). Sin UNION, sin QA. |
 | **DW_M_** | Modelo dimensional en Oracle BD_CURSOR (dims, hechos, DQ, indicadores). |
-| **DW_M_FACT_MC_*** | Facts de **evidencia** por universo: CSEP / OD / SISUD (lo que se descargó). |
-| **DW_M_FACT_MULTA_COERCITIVA** | Fact de negocio **enriquecido**: (CSEP∪OD) LEFT JOIN SISUD (SQL 07). |
-| **VW_MC_*** | Vistas de reporte: evidencia (`_CSEP`/`_OD`/`_SISUD`) y `VW_MC_ENRIQUECIDA`. |
+| **DW_M_FACT_MC_*** | Facts de **evidencia** en memoria (sede central / OD / SISUD). No se publican a Oracle. |
+| **DW_M_FACT_MULTA_COERCITIVA** | Fact de negocio: planillas sede central + OD, lookup SISUD (CUM/CAM). |
+| **VW_MC_*** | Vistas legado (no son el entregable actual). El tablero lee el fact + dims. |
 
 ## Legado (fase 1 medallion — ya no es el entregable)
 
@@ -40,13 +40,18 @@ El `_` al final (`STG_`, `DW_M_`) significa “todas las tablas de esa capa”.
 
 ## Fuentes (nombres cortos)
 
+**CSEP** administra todas las fuentes. No es una base: las planillas son **sede central** (10) y **OD** (31). SISUD es lookup.
+
 | Término | Qué es, en una frase |
 |---|---|
-| **F1 / GS2** | Sheets OD (oficinas desconcentradas) → `DW_M_FACT_MC_OD`. |
-| **F2 / GS1** | Sheets CSEP (+ etapas) → `DW_M_FACT_MC_CSEP`. |
-| **F5 / SISUD** | Vista Oracle `VW_MULTA_COERCITIVA` → `DW_M_FACT_MC_SISUD` (+ CUM/CAM en enrich). |
+| **CSEP** | Área que administra sede central, OD y SISUD. No es `ID_FUENTE`. |
+| **Sede central** | 10 Google Sheets de coordinaciones/unidades (CMIN, CRES, …). Código interno F2 / `CAGR`. |
+| **OD** | 31 Google Sheets de oficinas desconcentradas. Código interno F1 / `OD_SHEETS`. |
+| **F1 / GS2** | Planillas OD → filas del fact con `ID_FUENTE` = OD. |
+| **F2 / GS1** | Planillas sede central (+ etapas) → filas del fact con `ID_FUENTE` = Sede central. |
+| **F5 / SISUD** | Vista Oracle `VW_MULTA_COERCITIVA` (CUM/CAM al enrich). No agrega filas al fact. |
 | **F3** | Informes SISUD — **fuera de alcance**. |
 | **F4 / GAPP** | MySQL histórico — **fuera de ingestión** (semilla `GAPPS` en dim). |
 | **MC** | Multa coercitiva. |
-| **Evidencia** | Fact 1:1 por fuente, sin merge. |
-| **Enriquecida** | Negocio Sheet + CUM/CAM SISUD a la derecha. |
+| **Evidencia** | Fact 1:1 por fuente, en memoria, sin merge. |
+| **Enriquecida** | Negocio sede central + OD, con CUM/CAM SISUD a la derecha. |

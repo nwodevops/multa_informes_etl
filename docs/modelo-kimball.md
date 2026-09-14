@@ -1,7 +1,9 @@
 # Modelo Kimball (Oracle DW)
 
 Estrella dimensional que vive en Oracle (`DB_ORA_DW_*` en [`environments/remote.json`](../environments/remote.json)).  
-Flujo ETL: [`arquitectura.md`](arquitectura.md) · inputs: [`inputs/README.md`](inputs/README.md). Mapeo campos: [`lineamientos/ANEXO_MAPEO_CAMPOS.md`](lineamientos/ANEXO_MAPEO_CAMPOS.md).
+Flujo ETL: [`arquitectura.md`](arquitectura.md) · inputs: [`inputs/README.md`](inputs/README.md). Mapeo campos: [`lineamientos/ANEXO_MAPEO_CAMPOS.md`](lineamientos/ANEXO_MAPEO_CAMPOS.md). Lectura: [`adjunto/README.md`](adjunto/README.md).
+
+**Fuentes de planilla:** sede central (10) y OD (31), administradas por CSEP. CSEP no es una fuente del fact. SISUD no aporta filas.
 
 ## Estrella
 
@@ -62,7 +64,7 @@ No es un tercer hecho dimensional: no se analiza sola en Power BI como grano ana
 
 **Para qué:** registrar **qué regla falló**, en **qué registro/campo**, con severidad. Es el log auditable de las reglas R01–R05 (completitud, formato CUM/CAM, fechas, montos UIT, coherencia UIT↔soles).
 
-**No reemplaza al hecho:** la fila defectuosa **sigue** en `DW_M_FACT_*` (cuarentena blanda, marcada con `FG_CONFORME`). El hallazgo vive aquí para que CSEP revise en Power BI / SQL sin mirar logs de corrida.
+**No reemplaza al hecho:** la fila defectuosa **sigue** en `DW_M_FACT_*` (cuarentena blanda, marcada con `FG_CONFORME`). El hallazgo vive aquí para revisar en Power BI / SQL sin mirar logs de corrida.
 
 ```text
 Regla R0x falla en una fila

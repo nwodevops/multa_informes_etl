@@ -414,12 +414,18 @@ def _lk_simple(dim: pd.DataFrame, col_key: str, col_id: str = None) -> dict[str,
 
 
 def _resolve_estado(lk: dict, val, tipo_default: str) -> int:
-    """Texto origen → homologar_estado → lookup dim → ID_ESTADO (o ND)."""
+    """Texto origen → homologar_estado → lookup dim → ID_ESTADO (o ND).
+
+    ACTIVO/INACTIVO en MAPEO_ESTADO apuntan a MULTA; si el caller pide
+    RESOLUCION y la dim tiene (RESOLUCION, ACTIVO), se usa ese par.
+    """
     if vacio(val):
         return ND
     t, c = homologar_estado(val, tipo_default)
     if not c:
         return ND
+    if (tipo_default, c) in lk:
+        return lk[(tipo_default, c)]
     return lk.get((t or tipo_default, c), ND)
 
 

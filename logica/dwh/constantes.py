@@ -16,7 +16,7 @@ FECHA_CARGA = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 VACIOS = {"", "#N/A", "#NA", "N/A", "NA", "NULL", "NONE", "-", "—", "#REF!", "#VALUE!"}
 
 # Clave Hop/staging → código linaje en DF / DIM_FUENTE_REGISTRO
-# F1=Sheets OD (GS2), F2=Sheets CSEP (GS1, código histórico CAGR), F5=ORA
+# F1=OD (GS2), F2=sede central (GS1, código histórico CAGR), F5=ORA
 FUENTE_REGISTRO = {
     "GS2": "OD_SHEETS",
     "GS1": "CAGR",
@@ -25,19 +25,20 @@ FUENTE_REGISTRO = {
 }
 
 # Semillas DW_M_DIM_FUENTE_REGISTRO (ID fijo; CODIGO = linaje). GAPPS/OD_EXCEL sin ingestión.
+# NOMBRE es lo que se lee en el DW: Sede central vs OD. CAGR es alias interno, no una base CSEP.
 SEMILLAS_FUENTE_REGISTRO = (
     (-1, "ND", "NO ESPECIFICADO", "ND", "NO ESPECIFICADO"),
-    (1, "OD_SHEETS", "Sheets OD", "F1", "31 Google Sheets OD → STG_GS2_OD_MULTAS"),
-    (2, "CAGR", "Sheets CSEP", "F2", "10 Google Sheets CSEP → STG_GS1_CSEP_MULTAS / ETAPAS"),
+    (1, "OD_SHEETS", "OD", "F1", "31 Google Sheets OD → STG_GS2_OD_MULTAS"),
+    (2, "CAGR", "Sede central", "F2", "10 Google Sheets sede central → STG_GS1_CSEP_MULTAS / ETAPAS"),
     (3, "GAPPS", "MySQL GAPP (histórico)", "F4", "Fuera de ingestión; semilla conservada"),
     (4, "SISUD_VW", "Oracle SISUD", "F5", "SISUD.VW_MULTA_COERCITIVA → STG_ORA_*"),
     (5, "OD_EXCEL", "Excel OD (legacy)", "F1", "Alias histórico; el ETL normaliza a OD_SHEETS"),
 )
 
 STG_FUENTE = {
-    "GS1": ("F2", "STG_GS1_CSEP_MULTAS", "CSEP Google Sheets multas"),
-    "GS2": ("F1", "STG_GS2_OD_MULTAS", "ODs Google Sheets multas"),
-    "ETAPAS": ("F2-ET", "STG_GS1_ETAPAS", "CSEP etapas (Sheets)"),
+    "GS1": ("F2", "STG_GS1_CSEP_MULTAS", "Sede central Google Sheets multas"),
+    "GS2": ("F1", "STG_GS2_OD_MULTAS", "OD Google Sheets multas"),
+    "ETAPAS": ("F2-ET", "STG_GS1_ETAPAS", "Etapas sede central (Sheets)"),
     "ORA": ("F5", "STG_ORA_VW_MULTA_COERCITIVA", "SISUD vista multas"),
     "DIC_TABLAS": ("F2", "STG_GS1_DIC_TABLAS", "DIC_TABLAS"),
     "DIC_VARIABLES": ("F2", "STG_GS1_DIC_VARIABLES", "DIC_VARIABLES"),

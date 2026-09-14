@@ -1,6 +1,6 @@
 # Propuesta Adaptada — DWH OEFA sobre tu arquitectura real (Apache Hop + H2 + Python + Oracle BD_CURSOR)
 
-> **Diseño vigente (no inventar sobre este doc histórico):** fuentes activas **F1 Sheets OD + F2 Sheets CSEP (+etapas) + F5 SISUD**. **F3 OUT**. **F4 MySQL fuera de ingestión** (solo semilla `ID_FUENTE=GAPPS` en dim). Python materializa **3 facts de evidencia** (`DW_M_FACT_MC_CSEP` / `_OD` / `_SISUD`); Oracle `ddl/07_enrich_sheets_sisud.sql` arma `DW_M_FACT_MULTA_COERCITIVA` = (CSEP∪OD) LEFT JOIN SISUD. Vistas: `VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA`. Manual: [`extra/manual-como-se-arma-el-fact.md`](extra/manual-como-se-arma-el-fact.md) · Guía: [`../modelo-kimball.md`](../modelo-kimball.md).
+> **Diseño vigente (no inventar sobre este doc histórico):** fuentes activas **F1 planillas OD (31) + F2 planillas sede central (10, +etapas) + F5 SISUD lookup**. **No hay base CSEP.** **F3 OUT**. **F4 MySQL fuera de ingestión** (solo semilla `ID_FUENTE=GAPPS` en dim). Python arma el fact de negocio en pandas (`DW_M_FACT_MULTA_COERCITIVA` = sede central + OD, lookup SISUD). Manual: [`extra/manual-como-se-arma-el-fact.md`](extra/manual-como-se-arma-el-fact.md) · Lectura: [`../adjunto/README.md`](../adjunto/README.md).
 
 **Evaluación de la efectividad de las estrategias de promoción del cumplimiento**
 *(multas coercitivas)*
@@ -8,7 +8,7 @@
 | | |
 |---|---|
 | **Referencia** | TDR REQ N.° 3629-2026 |
-| **Área usuaria** | CSEP — DPEF / OEFA |
+| **Área usuaria** | CSEP — DPEF / OEFA (administra sede central, OD y SISUD; no es una fuente del fact) |
 | **Origen de este documento** | Adaptación de `PROPUESTA_CONSOLIDADA.md` a la arquitectura ETL real ya definida en `arquitectura.md` |
 | **Cambio respecto a la consolidada** | No se introduce SQL Server ni un motor nuevo; se reutilizan Apache Hop, H2 en memoria y Oracle BD_CURSOR tal como ya existen |
 | **Alcance de este documento** | Planteamiento técnico y plan de implementación por fases (diseño conceptual; partes del texto inicial son históricas) |

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Cómo leer este DW</title>
+</head>
+<body style="font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #222; line-height: 1.45; max-width: 1100px;">
+
+<p style="font-size: 18px; font-weight: bold; margin-bottom: 8px;">Cómo leer este DW</p>
+
+<p>Guía corta para consultar el modelo en Oracle. No es el manual técnico del ETL.</p>
+
+<p><b>CSEP</b> administra todas las fuentes (sede central, OD y SISUD). <b>No es una base de datos</b> ni un universo de filas en el fact.</p>
+
+<p>Las planillas de multa son solo dos familias:</p>
+
+<table cellpadding="6" cellspacing="0" border="1" style="border-collapse: collapse; border: 1px solid #ccc; margin: 12px 0;">
+  <tr style="background: #f2f2f2;">
+    <th align="left">Fuente</th>
+    <th align="left">Qué es</th>
+    <th align="left">Cuántas</th>
+  </tr>
+  <tr>
+    <td><b>Sede central</b></td>
+    <td>Google Sheets de las coordinaciones/unidades de Lima (CMIN, CRES, CHID, …)</td>
+    <td>10 libros</td>
+  </tr>
+  <tr>
+    <td><b>OD</b></td>
+    <td>Google Sheets de las oficinas desconcentradas</td>
+    <td>31 libros</td>
+  </tr>
+</table>
+
+<p>SISUD es Oracle (lookup de CUM/CAM, estado de resolución, medida, montos REC/TFA), no una tercera planilla.</p>
+
+<p>Tabla de negocio: <b>DW_M_FACT_MULTA_COERCITIVA</b>. Una fila = una multa de esas planillas. Las dimensiones se pegan por <code>ID_*</code>. El valor <code>-1</code> en una FK significa “no especificado”.</p>
+
+<pre style="font-family: Consolas, monospace; font-size: 13px; background: #f7f7f7; padding: 12px; border: 1px solid #ddd;">Sede central (10)  ─┐
+                    ├─ se apilan (crece en filas)  ─►  FACT  ◄─ lookup SISUD (CUM/CAM, estado resolución, medida, REC/TFA)
+OD (31)            ─┘</pre>
+
+<p>SISUD <b>no agrega filas</b> al fact. Si una multa solo existe en SISUD, no entra aquí; queda en la foto cruda <code>DW_M_AUD_F5_SISUD_VW</code>.</p>
+
+<p>En <code>DW_M_DIM_FUENTE_REGISTRO.NOMBRE</code> se lee <b>Sede central</b> u <b>OD</b>. El código interno <code>CAGR</code> = sede central (alias histórico; no es “solo Agricultura”).</p>
+
+<p style="font-size: 16px; font-weight: bold; margin-top: 24px;">Cómo se arma el universo (vertical + horizontal)</p>
+
+<p><b>Vertical — apilar planillas.</b><br>
+El universo de análisis es sede central más OD. Cada fila de planilla sigue siendo una fila. <code>ID_FUENTE</code> dice de qué familia vino. No se mezclan dos planillas en una sola fila.</p>
+
+<p><b>Horizontal — lookup a SISUD.</b><br>
+Sobre esas mismas filas se busca en SISUD (resolución normalizada + monto UIT). Si hay match y el Sheet no traía CUM/CAM (u otros identificadores institucionales), se rellenan a la derecha: también <code>ID_ESTADO_RESOLUCION</code>, <code>MEDIDA_ADMINISTRATIVA</code>, <code>MONTO_MULTA_REC</code> y <code>MONTO_MULTA_TFA</code> (las planillas no los tienen). Si no hay match, la multa <b>sigue</b>; esos campos quedan vacíos o <code>-1</code>.</p>
+
+<p>Manda el Sheet: dos filas con la misma resolución y distinto expediente = dos filas en el fact.</p>
+
+<p>Para reportar el universo: contar <code>DW_M_FACT_MULTA_COERCITIVA</code>. Cortar sede central vs OD con <code>ID_FUENTE</code>. No sumar SISUD como si fuera otro universo de filas.</p>
+
+<p style="font-size: 16px; font-weight: bold; margin-top: 24px;">Hecho</p>
+
+<table cellpadding="6" cellspacing="0" border="1" style="border-collapse: collapse; border: 1px solid #ccc; margin: 12px 0;">
+  <tr style="background: #f2f2f2;">
+    <th align="left">Tabla</th>
+    <th align="left">Para qué</th>
+  </tr>
+  <tr>
+    <td>DW_M_FACT_MULTA_COERCITIVA</td>
+    <td>Multa coercitiva de negocio. Diccionario: diccionario-fact.md. Qué no entra: fuera-del-fact.md.</td>
+  </tr>
+</table>
+
+<p>Detalle (no es un segundo fact de análisis):</p>
+
+<table cellpadding="6" cellspacing="0" border="1" style="border-collapse: collapse; border: 1px solid #ccc; margin: 12px 0;">
+  <tr style="background: #f2f2f2;">
+    <th align="left">Tabla</th>
+    <th align="left">Para qué</th>
+  </tr>
+  <tr>
+    <td>DW_M_DET_ETAPA_MC</td>
+    <td>Pasos del workflow de sede central (muchas etapas por una multa). Ver det-etapa-mc.md.</td>
+  </tr>
+</table>
+
+<p style="font-size: 16px; font-weight: bold; margin-top: 24px;">Dimensiones</p>
+
+<p>Se usan haciendo JOIN desde el fact. En Power BI: arrastrar atributos de la dim y medidas del fact.</p>
+
+<table cellpadding="6" cellspacing="0" border="1" style="border-collapse: collapse; border: 1px solid #ccc; margin: 12px 0;">
+  <tr style="background: #f2f2f2;">
+    <th align="left">Tabla</th>
+    <th align="left">Pregunta que responde</th>
+  </tr>
+  <tr>
+    <td>DW_M_DIM_TIEMPO</td>
+    <td>¿Cuándo se firmó? (año, trimestre, mes). El fact apunta con ID_TIEMPO_FIRMA.</td>
+  </tr>
+  <tr>
+    <td>DW_M_DIM_ADMINISTRADO</td>
+    <td>¿Quién es el administrado?</td>
+  </tr>
+  <tr>
+    <td>DW_M_DIM_ORGANO_UNIDAD</td>
+    <td>¿Qué unidad de sede central (CMIN, CRES, …)?</td>
+  </tr>
+  <tr>
+    <td>DW_M_DIM_OD</td>
+    <td>¿Qué oficina desconcentrada? Distinta del órgano de sede central.</td>
+  </tr>
+  <tr>
+    <td>DW_M_DIM_FUENTE_REGISTRO</td>
+    <td>¿La fila nació en sede central o en OD?</td>
+  </tr>
+  <tr>
+    <td>DW_M_DIM_MATERIA_SUBSECTOR</td>
+    <td>¿Minería, hidrocarburos, …? (catálogo; puede quedar ND).</td>
+  </tr>
+  <tr>
+    <td>DW_M_DIM_ESTADO</td>
+    <td>Estados homologados. ID_ESTADO_MULTA / ID_ESTADO_PAGO salen de la planilla; ID_ESTADO_RESOLUCION de SISUD si match (TIPO_ESTADO='RESOLUCION').</td>
+  </tr>
+  <tr>
+    <td>DW_M_DIM_PARAMETRO_UIT</td>
+    <td>UIT del año, para leer montos en contexto.</td>
+  </tr>
+</table>
+
+<p style="font-size: 16px; font-weight: bold; margin-top: 24px;">Apoyo (no son la estrella)</p>
+
+<table cellpadding="6" cellspacing="0" border="1" style="border-collapse: collapse; border: 1px solid #ccc; margin: 12px 0;">
+  <tr style="background: #f2f2f2;">
+    <th align="left">Tabla</th>
+    <th align="left">Para qué</th>
+  </tr>
+  <tr>
+    <td>DW_M_DQ_HALLAZGO</td>
+    <td>Qué regla de calidad falló y en qué campo. La multa <b>no se borra</b> del fact.</td>
+  </tr>
+  <tr>
+    <td>DW_M_AUD_*</td>
+    <td>Foto 1:1 de lo que bajó Hop (Sheets y SISUD). Sirve para auditar la descarga, no para el tablero de negocio.</td>
+  </tr>
+</table>
+
+<p>No consultar en Oracle tablas <code>DW_M_FACT_MC_*</code>: son evidencia de corrida en memoria, no el entregable.</p>
+
+<p style="font-size: 16px; font-weight: bold; margin-top: 24px;">Consulta mínima</p>
+
+<pre style="font-family: Consolas, monospace; font-size: 12px; background: #f7f7f7; padding: 12px; border: 1px solid #ddd; white-space: pre-wrap;">SELECT
+    f.N_RES_MC,
+    f.MONTO_UIT,
+    f.CUM,
+    f.CAM,
+    f.MEDIDA_ADMINISTRATIVA,
+    f.MONTO_MULTA_REC,
+    f.MONTO_MULTA_TFA,
+    er.CODIGO AS ESTADO_RESOLUCION,  -- ACTIVO / INACTIVO; ND si ID = -1
+    fu.NOMBRE AS FUENTE,             -- Sede central o OD
+    o.SIGLA   AS ORGANO,
+    od.NOMBRE AS OD,
+    t.ANIO,
+    t.TRIMESTRE
+FROM DW_M_FACT_MULTA_COERCITIVA f
+JOIN DW_M_DIM_FUENTE_REGISTRO fu ON fu.ID_FUENTE = f.ID_FUENTE
+JOIN DW_M_DIM_ORGANO_UNIDAD   o  ON o.ID_ORGANO  = f.ID_ORGANO
+JOIN DW_M_DIM_OD              od ON od.ID_OD     = f.ID_OD
+JOIN DW_M_DIM_TIEMPO          t  ON t.ID_TIEMPO  = f.ID_TIEMPO_FIRMA
+JOIN DW_M_DIM_ESTADO         er ON er.ID_ESTADO = f.ID_ESTADO_RESOLUCION;</pre>
+
+<p>Diccionario del fact y equivalencia vs planillas: diccionario-fact.md.<br>
+Anexo técnico campo a campo: ANEXO_MAPEO_CAMPOS.md.<br>
+Cómo se construye el fact en código: manual-como-se-arma-el-fact.md.</p>
+
+</body>
+</html>
