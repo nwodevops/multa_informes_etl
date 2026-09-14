@@ -65,7 +65,7 @@ Prerrequisitos Win:
 
 Flujo: `inputs.yaml` → Hop `STG_*` (F1/F2/F5) → `python/main.py` → 3 facts evidencia + dims/QA/K → `cargar_dw.py` (wipe `DW_M_*`/`VW_*` + DDL + INSERT; esquema = **USER** Oracle) → SQL **`07_enrich_sheets_sisud.sql`** → `DW_M_FACT_MULTA_COERCITIVA`.
 
-**Diseño vigente:** evidencia `DW_M_FACT_MC_CSEP|_OD|_SISUD` + negocio enriquecido (Sheet manda, CUM/CAM de SISUD). F3/F4 fuera de ingestión. Guía: [`docs/modelo-kimball.md`](docs/modelo-kimball.md). Manual: [`docs/lineamientos/extra/manual-como-se-arma-el-fact.md`](docs/lineamientos/extra/manual-como-se-arma-el-fact.md).
+**Diseño vigente:** planillas **sede central (10) + OD (31)**; SISUD solo lookup CUM/CAM. No hay base CSEP. F3/F4 fuera de ingestión. Lectura: [`docs/adjunto/README.md`](docs/adjunto/README.md).
 
 ## Python (esta rama)
 

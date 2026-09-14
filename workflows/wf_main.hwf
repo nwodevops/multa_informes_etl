@@ -135,8 +135,8 @@ cd "${PROJECT_HOME}"
       <description>F2 CSEP Google Sheets → H2 STG_GS1_CSEP_MULTAS + STG_GS1_ETAPAS</description>
       <type>SHELL</type>
       <attributes/>
-      <xloc>552</xloc>
-      <yloc>192</yloc>
+      <xloc>512</xloc>
+      <yloc>64</yloc>
       <parallel>N</parallel>
       <attributes_hac/>
     </action>
@@ -162,8 +162,8 @@ cd "${PROJECT_HOME}"
       <description>31 Google Sheets F1 → H2 STG_GS2_OD_MULTAS (pl_stage_od_sheet.hpl + f1_ods_sheets.json)</description>
       <type>SHELL</type>
       <attributes/>
-      <xloc>608</xloc>
-      <yloc>256</yloc>
+      <xloc>704</xloc>
+      <yloc>272</yloc>
       <parallel>N</parallel>
       <attributes_hac/>
     </action>

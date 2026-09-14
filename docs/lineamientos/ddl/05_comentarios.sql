@@ -36,7 +36,7 @@ COMMENT ON TABLE DW_M_DIM_ORGANO_UNIDAD IS 'Dimensión de órganos desconcentrad
 COMMENT ON COLUMN DW_M_DIM_ORGANO_UNIDAD.ID_ORGANO IS 'Clave surrogate; -1 = NO ESPECIFICADO.';
 COMMENT ON COLUMN DW_M_DIM_ORGANO_UNIDAD.SIGLA IS 'Sigla del órgano (ej. CMIN, CRES, OD-LAM).';
 COMMENT ON COLUMN DW_M_DIM_ORGANO_UNIDAD.NOMBRE IS 'Nombre corto / igual a SIGLA si no hay alias.';
-COMMENT ON COLUMN DW_M_DIM_ORGANO_UNIDAD.DESCRIPCION IS 'Nombre largo legible (ej. Minería, Residuos Sólidos) desde catálogo F2 CSEP.';
+COMMENT ON COLUMN DW_M_DIM_ORGANO_UNIDAD.DESCRIPCION IS 'Nombre largo legible (ej. Minería, Residuos Sólidos) desde catálogo F2 sede central.';
 COMMENT ON COLUMN DW_M_DIM_ORGANO_UNIDAD.TIPO IS 'Tipo: DIRECCION, COORDINACION, ODES u OD.';
 COMMENT ON COLUMN DW_M_DIM_ORGANO_UNIDAD.ORGANO_SUPERIOR IS 'Sigla del órgano jerárquicamente superior.';
 COMMENT ON COLUMN DW_M_DIM_ORGANO_UNIDAD.FECHA_ACTUALIZACION IS 'Fecha de última actualización del registro en el DW.';
@@ -51,10 +51,10 @@ COMMENT ON COLUMN DW_M_DIM_OD.ORDEN IS 'Orden de la lista institucional de ofici
 COMMENT ON COLUMN DW_M_DIM_OD.FECHA_ACTUALIZACION IS 'Fecha de última actualización del registro en el DW.';
 
 -- DW_M_DIM_FUENTE_REGISTRO
-COMMENT ON TABLE DW_M_DIM_FUENTE_REGISTRO IS 'Dimensión de universo/fuente de registro (F1 Sheets OD, F2 CSEP, F4 GAPP, F5 SISUD).';
+COMMENT ON TABLE DW_M_DIM_FUENTE_REGISTRO IS 'Dimensión de universo/fuente de registro (F1 OD, F2 sede central, F4 GAPP, F5 SISUD). No hay base CSEP.';
 COMMENT ON COLUMN DW_M_DIM_FUENTE_REGISTRO.ID_FUENTE IS 'Clave surrogate; -1 = NO ESPECIFICADO.';
-COMMENT ON COLUMN DW_M_DIM_FUENTE_REGISTRO.CODIGO IS 'Código natural alineado a FUENTE_REGISTRO (OD_SHEETS, CAGR, GAPPS, SISUD_VW).';
-COMMENT ON COLUMN DW_M_DIM_FUENTE_REGISTRO.NOMBRE IS 'Etiqueta corta legible de la fuente.';
+COMMENT ON COLUMN DW_M_DIM_FUENTE_REGISTRO.CODIGO IS 'Código interno (OD_SHEETS, CAGR=sede central, GAPPS, SISUD_VW).';
+COMMENT ON COLUMN DW_M_DIM_FUENTE_REGISTRO.NOMBRE IS 'Etiqueta de negocio: Sede central u OD.';
 COMMENT ON COLUMN DW_M_DIM_FUENTE_REGISTRO.FAMILIA_TDR IS 'Familia TDR: F1, F2, F4 o F5.';
 COMMENT ON COLUMN DW_M_DIM_FUENTE_REGISTRO.DESCRIPCION IS 'Origen operativo y tabla STG asociada.';
 COMMENT ON COLUMN DW_M_DIM_FUENTE_REGISTRO.FECHA_ACTUALIZACION IS 'Fecha de última actualización del registro en el DW.';
@@ -82,10 +82,10 @@ COMMENT ON COLUMN DW_M_DIM_PARAMETRO_UIT.VALOR_UIT IS 'Valor oficial de la UIT e
 COMMENT ON COLUMN DW_M_DIM_PARAMETRO_UIT.FECHA_ACTUALIZACION IS 'Fecha de carga o actualización del parámetro.';
 
 -- DW_M_FACT_MULTA_COERCITIVA
-COMMENT ON TABLE DW_M_FACT_MULTA_COERCITIVA IS 'Hecho: una multa coercitiva integrando fuentes F1, F2, F4 y F5.';
+COMMENT ON TABLE DW_M_FACT_MULTA_COERCITIVA IS 'Hecho: una multa coercitiva de planilla (sede central o OD); CUM/CAM por lookup SISUD.';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.ID_MC IS 'Clave surrogate del hecho multa.';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.COD_MA IS 'Código de medida administrativa (clave natural Excel).';
-COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.COD_PROY_MC IS 'Código del proyecto interno de elaboración de la multa (CAGR).';
+COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.COD_PROY_MC IS 'Código del proyecto interno de elaboración de la multa (sede central).';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.NUMERO_EXPEDIENTE IS 'Expediente administrativo; puente de amarre H9 entre fuentes de multa.';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.EXP_RES_MC IS 'Expediente de la resolución de multa coercitiva.';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.N_RES_MC IS 'Número de resolución de multa coercitiva.';
@@ -137,21 +137,21 @@ COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.FLAG_AMERITA_MC IS '1 = amerita mul
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.FLAG_PAGADA IS '1 = multa pagada; 0 = pendiente o incumplida.';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.FLAG_EJECUCION_FORZOSA IS '1 = en ejecución forzosa; 0 = no.';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.FLAG_CUMPLIO_VERIF IS '1 = cumplió verificación posterior (K4); 0 = no.';
-COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.JEFE IS 'Jefe de equipo (Sheet F2); NULL en OD/SISUD.';
-COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.UF IS 'Unidad fiscalizable (texto Sheet F2).';
-COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.N_PROY_MC IS 'Número de proyecto MC en la unidad (F2).';
-COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.ETA_REG_PROY_MC IS 'Etapa de registro del proyecto (F2).';
-COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.ETA_REG_MC IS 'Etapa de registro de la multa coercitiva (F2).';
-COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.RESULT_PROY_MC IS 'Resultado del proyecto MC (F2).';
+COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.JEFE IS 'Jefe de equipo (planilla sede central); NULL en OD.';
+COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.UF IS 'Unidad fiscalizable (texto sede central).';
+COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.N_PROY_MC IS 'Número de proyecto MC en la unidad (sede central).';
+COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.ETA_REG_PROY_MC IS 'Etapa de registro del proyecto (sede central).';
+COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.ETA_REG_MC IS 'Etapa de registro de la multa coercitiva (sede central).';
+COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.RESULT_PROY_MC IS 'Resultado del proyecto MC (sede central).';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.ESTADO_MC_TXT IS 'Estado de multa tal cual Sheet (además de ID_ESTADO_MULTA).';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.ESTADO_PAGO_TXT IS 'Estado de pago tal cual Sheet (además de ID_ESTADO_PAGO).';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.FECHA_CARGA IS 'Fecha y hora de carga de la fila en el DW.';
 
 -- DW_M_DET_ETAPA_MC
-COMMENT ON TABLE DW_M_DET_ETAPA_MC IS 'Detalle de etapas del flujo interno de elaboración de la multa (F2-ET CAGR).';
+COMMENT ON TABLE DW_M_DET_ETAPA_MC IS 'Detalle de etapas del flujo interno de elaboración de la multa (sede central).';
 COMMENT ON COLUMN DW_M_DET_ETAPA_MC.ID_ETAPA_MC IS 'Clave surrogate de la etapa.';
 COMMENT ON COLUMN DW_M_DET_ETAPA_MC.ID_MC IS 'FK al hecho multa padre; NULL si aún no amarra.';
-COMMENT ON COLUMN DW_M_DET_ETAPA_MC.COD_PROY_MC IS 'Código del proyecto de multa en CAGR.';
+COMMENT ON COLUMN DW_M_DET_ETAPA_MC.COD_PROY_MC IS 'Código del proyecto de multa en sede central.';
 COMMENT ON COLUMN DW_M_DET_ETAPA_MC.NRO_ETAPA IS 'Número secuencial de la etapa dentro del proyecto.';
 COMMENT ON COLUMN DW_M_DET_ETAPA_MC.ACCION IS 'Acción de la etapa: ELABORACION, REVISION, CALCULO o FIRMA.';
 COMMENT ON COLUMN DW_M_DET_ETAPA_MC.PERFIL_ENCARGADO IS 'Perfil o rol del encargado de la etapa.';
@@ -161,7 +161,7 @@ COMMENT ON COLUMN DW_M_DET_ETAPA_MC.F_ENTREGA_DEV IS 'Fecha de entrega o devoluc
 COMMENT ON COLUMN DW_M_DET_ETAPA_MC.ESTADO_ETAPA IS 'Estado: TERMINADO o PENDIENTE.';
 COMMENT ON COLUMN DW_M_DET_ETAPA_MC.CONFORMIDAD IS 'Resultado de conformidad de la etapa.';
 COMMENT ON COLUMN DW_M_DET_ETAPA_MC.DIAS_ELABORACION IS 'Días hábiles de elaboración (DW_M_DIM_TIEMPO).';
-COMMENT ON COLUMN DW_M_DET_ETAPA_MC.ID_FUENTE IS 'FK a DW_M_DIM_FUENTE_REGISTRO; etapas F2 = CAGR.';
+COMMENT ON COLUMN DW_M_DET_ETAPA_MC.ID_FUENTE IS 'FK a DW_M_DIM_FUENTE_REGISTRO; etapas = sede central (CODIGO CAGR).';
 COMMENT ON COLUMN DW_M_DET_ETAPA_MC.FECHA_CARGA IS 'Fecha y hora de carga de la fila en el DW.';
 
 -- DW_M_QA_AMARRE

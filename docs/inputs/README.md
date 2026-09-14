@@ -5,8 +5,8 @@ Inventario de las fuentes que alimentan el pipeline **Hop → H2 (`STG_*`) → P
 Este data warehouse es **solo Multas**. F3 (informes de supervisión / `CSEP_INFORMES_VIEW`) **no entra** en Hop, Kimball ni Oracle.
 
 Manifiesto canónico: [`../../inputs.yaml`](../../inputs.yaml).  
-Catálogo F1 ODs (Google Sheets): [`f1_ods_sheets.json`](f1_ods_sheets.json).  
-Catálogo F2 CSEP (Google Sheets): [`f2_csep_sheets.json`](f2_csep_sheets.json).  
+Catálogo F1 OD (Google Sheets): [`f1_ods_sheets.json`](f1_ods_sheets.json).  
+Catálogo F2 sede central (Google Sheets): [`f2_csep_sheets.json`](f2_csep_sheets.json).  
 Detalle campo a campo: [`../lineamientos/ANEXO_MAPEO_CAMPOS.md`](../lineamientos/ANEXO_MAPEO_CAMPOS.md) y [`../lineamientos/extra/fuentes_datos/01-fuentes-de-datos.md`](../lineamientos/extra/fuentes_datos/01-fuentes-de-datos.md).
 
 ---
@@ -15,11 +15,11 @@ Detalle campo a campo: [`../lineamientos/ANEXO_MAPEO_CAMPOS.md`](../lineamientos
 
 | Universo | Fuente | Estado |
 |---|---|---|
-| **31 ODs** | F1 — Google Sheets medidas administrativas | Catálogo JSON + Hop `GoogleSheetsInput` |
-| **10 unidades CSEP** | F2 — Google Sheets multas + etapas (10 activas) | Catálogo JSON + Hop |
-| **Vista institucional multas** | F5 — Oracle SISUD | En uso |
+| **31 ODs** | F1 — Google Sheets de oficinas desconcentradas | Catálogo JSON + Hop `GoogleSheetsInput` |
+| **10 sede central** | F2 — Google Sheets de coordinaciones/unidades (+ etapas) | Catálogo JSON + Hop |
+| **Vista institucional multas** | F5 — Oracle SISUD (lookup, no planilla) | En uso |
 
-**Fuera de alcance:** F3 — Oracle SISUD informes; **F4 — MySQL GAPP** (`T_MVC_MULTACOERCITIVA_MC`); consolidados F1 (`CONSOLIDADO MEDIDAS ADMINISTRATIVAS` / `… CSEP`); unidad CODE (solo en `DW_M_DIM_OD`, sin sheet).
+**Fuera de alcance:** F3 — Oracle SISUD informes; **F4 — MySQL GAPP** (`T_MVC_MULTACOERCITIVA_MC`); consolidados F1 (`CONSOLIDADO MEDIDAS ADMINISTRATIVAS`); unidad CODE (solo en `DW_M_DIM_OD`, sin sheet). **No hay una base CSEP.**
 
 ---
 
@@ -29,7 +29,7 @@ Detalle campo a campo: [`../lineamientos/ANEXO_MAPEO_CAMPOS.md`](../lineamientos
 flowchart LR
   subgraph sheets [Google Sheets]
     F1["F1 31 ODs"]
-    F2["F2 10 CSEP"]
+    F2["F2 10 sede central"]
   end
 
   subgraph excel [Excel local legacy]
@@ -64,12 +64,12 @@ flowchart LR
 | ID | Nombre corto | Dominio | Pestaña | Tipo | Origen | Tabla STG | Pipeline Hop | Uso en el DW |
 |---|---|---|---|---|---|---|---|---|
 | **F1** | Familia OD | **Multas** | `5) Multas Coercitivas` | Google Sheets | [`f1_ods_sheets.json`](f1_ods_sheets.json) | `STG_GS2_OD_MULTAS` (+ `COD_OD`) | `pl_stage_od_sheet.hpl` vía `scripts/stage_ods_sheets.sh` | Evidencia `DW_M_FACT_MC_OD` + enriquecido; `ID_OD` |
-| **F2** | CSEP multas | **Multas** | `1) Multas coercitivas` | Google Sheets | [`f2_csep_sheets.json`](f2_csep_sheets.json) | `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | `pl_stage_csep_sheet.hpl` vía `scripts/stage_csep_sheets.sh` | Evidencia `DW_M_FACT_MC_CSEP` + enriquecido (`JEFE`/`UF`/…); `ID_ORGANO` |
-| **F2-ET** | CSEP etapas | **Multas** (detalle) | `2) Etapas` | Google Sheets | mismo catálogo F2 | `STG_GS1_ETAPAS` | `pl_stage_csep_etapa.hpl` vía `stage_csep_sheets.sh` | Detalle `DW_M_DET_ETAPA_MC` |
+| **F2** | Sede central | **Multas** | `1) Multas coercitivas` | Google Sheets | [`f2_csep_sheets.json`](f2_csep_sheets.json) | `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | `pl_stage_csep_sheet.hpl` vía `scripts/stage_csep_sheets.sh` | Fact enriquecido (`JEFE`/`UF`/…); `ID_ORGANO` |
+| **F2-ET** | Etapas sede central | **Multas** (detalle) | `2) Etapas` | Google Sheets | mismo catálogo F2 | `STG_GS1_ETAPAS` | `pl_stage_csep_etapa.hpl` vía `stage_csep_sheets.sh` | Detalle `DW_M_DET_ETAPA_MC` |
 | **F2-DIC** | Diccionario | Apoyo | `DIC_TABLAS` / `DIC_VARIABLES` | Excel legacy | `input_excel/legacy/CAGR_…xlsx` | `STG_GS1_DIC_*` | `pl_stage_excel.hpl` | Perfilamiento / diccionario |
 | **F5** | SISUD vista MC | **Multas** | — | Oracle | `SISUD.VW_MULTA_COERCITIVA` | `STG_ORA_VW_MULTA_COERCITIVA` | `pl_stage_oracle.hpl` | Evidencia `DW_M_FACT_MC_SISUD`; lookup CUM/CAM al enriquecido |
 
-Códigos de universo en staging/integración (`FUENTE_ORIGEN`): F1 = **`OD_SHEETS`**, F2 = **`CAGR`**, F5 = **`SISUD_VW`**. En el DW: **`ID_FUENTE`** → `DW_M_DIM_FUENTE_REGISTRO`. Territorio F2: `COORD` / `DW_M_DIM_ORGANO_UNIDAD`. Territorio F1: **`DW_M_DIM_OD`**. Reportes: `VW_MC_CSEP` / `VW_MC_OD` / `VW_MC_SISUD` / **`VW_MC_ENRIQUECIDA`**. Cómo se arma el enriquecido: [`../lineamientos/extra/manual-como-se-arma-el-fact.md`](../lineamientos/extra/manual-como-se-arma-el-fact.md).
+Códigos internos (`FUENTE_ORIGEN`): F1 = **`OD_SHEETS`** (NOMBRE **OD**), F2 = **`CAGR`** (NOMBRE **Sede central**), F5 = **`SISUD_VW`**. Territorio F2: `COORD` / `DW_M_DIM_ORGANO_UNIDAD`. Territorio F1: **`DW_M_DIM_OD`**. Cómo se arma el enriquecido: [`../lineamientos/extra/manual-como-se-arma-el-fact.md`](../lineamientos/extra/manual-como-se-arma-el-fact.md).
 
 Auth Google: `client_secret.json` en la raíz del proyecto (**gitignored**). Cada spreadsheet debe estar compartido con el service account.
 
@@ -90,9 +90,9 @@ Auth Google: `client_secret.json` en la raíz del proyecto (**gitignored**). Cad
 
 ---
 
-## Catálogo F2 (`f2_csep_sheets.json`)
+## Catálogo F2 (`f2_csep_sheets.json`) — sede central
 
-- 10 unidades CSEP activas (`cod_unidad`: CMIN, CHID, CELE, CIND, CPES, CAGR, CRES, CCAM, UFED, UFSAVC).
+- 10 unidades de sede central activas (`cod_unidad`: CMIN, CHID, CELE, CIND, CPES, CAGR, CRES, CCAM, UFED, UFSAVC).
 - Hoja multas: `1) Multas coercitivas`, headers fila 3 (48 cols hasta `FN_URESOL_MC`).
 - Hop: rango `'1) Multas coercitivas'!A3:AV`; etapas `'2) Etapas'!A2:L`.
 - `CCAM` / `UFSAVC`: sin filas de multas hoy; código tomado del título del sheet (no hay `COORD` poblado).
@@ -118,8 +118,8 @@ Auth Google: `client_secret.json` en la raíz del proyecto (**gitignored**). Cad
 
 | Salida intermedia | Fuentes |
 |---|---|
-| `DF_MULTAS` | F1 (31 ODs en `GS2`) + F2 CSEP + F5 (`FUENTE_ORIGEN`: `OD_SHEETS` / `CAGR` / `SISUD_VW`) |
-| `DF_ETAPAS` | F2-ET (Sheets CSEP) |
+| `DF_MULTAS` | F1 (31 ODs en `GS2`) + F2 sede central + F5 (`FUENTE_ORIGEN`: `OD_SHEETS` / `CAGR` / `SISUD_VW`) |
+| `DF_ETAPAS` | F2-ET (Sheets sede central) |
 
 Mapa: [`../../logica/dwh/constantes.py`](../../logica/dwh/constantes.py) (`STG_FUENTE`, mapa de códigos → `DW_M_DIM_FUENTE_REGISTRO`).
 

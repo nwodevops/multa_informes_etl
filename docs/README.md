@@ -2,13 +2,14 @@
 
 Orden de lectura recomendado:
 
-1. [`modelo-kimball.md`](modelo-kimball.md) — estrella DIM/FACT + evidencia / enriquecido  
-2. [`arquitectura.md`](arquitectura.md) — detalle Hop + H2 + Python  
-3. [`inputs/README.md`](inputs/README.md) — fuentes vigentes F1/F2/F5  
-4. [`lineamientos/extra/manual-como-se-arma-el-fact.md`](lineamientos/extra/manual-como-se-arma-el-fact.md) — cómo se arma el FACT  
-5. [`lineamientos/PROPUESTA_ADAPTADA_ETL.md`](lineamientos/PROPUESTA_ADAPTADA_ETL.md) — lineamiento canónico  
-6. [`verification.md`](verification.md) — smoke (`init.sh` / `init.bat`)  
-7. [`TDR REQ 3629-2026.pdf`](TDR%20REQ%203629-2026.pdf) — requerimiento  
+1. [`adjunto/README.md`](adjunto/README.md) — cómo leer el DW (sede central + OD, lookup SISUD)  
+2. [`modelo-kimball.md`](modelo-kimball.md) — estrella DIM/FACT + evidencia / enriquecido  
+3. [`arquitectura.md`](arquitectura.md) — detalle Hop + H2 + Python  
+4. [`inputs/README.md`](inputs/README.md) — fuentes vigentes F1/F2/F5  
+5. [`lineamientos/extra/manual-como-se-arma-el-fact.md`](lineamientos/extra/manual-como-se-arma-el-fact.md) — cómo se arma el FACT  
+6. [`lineamientos/PROPUESTA_ADAPTADA_ETL.md`](lineamientos/PROPUESTA_ADAPTADA_ETL.md) — lineamiento canónico  
+7. [`verification.md`](verification.md) — smoke (`init.sh` / `init.bat`)  
+8. [`TDR REQ 3629-2026.pdf`](TDR%20REQ%203629-2026.pdf) — requerimiento  
 
 > Guías de entrega / informe viven fuera del repo en `workspace_etl/adjuntos/` (no versionadas aquí).
 
@@ -16,6 +17,10 @@ Orden de lectura recomendado:
 
 | Ruta | Contenido |
 |---|---|
+| [`adjunto/README.md`](adjunto/README.md) | Lectura del DW para negocio / reporte |
+| [`adjunto/diccionario-fact.md`](adjunto/diccionario-fact.md) | Diccionario `DW_M_FACT_MULTA_COERCITIVA` + equivalencia sede central / OD |
+| [`adjunto/fuera-del-fact.md`](adjunto/fuera-del-fact.md) | Columnas F1 / F2 / F5 que no entran al fact |
+| [`adjunto/det-etapa-mc.md`](adjunto/det-etapa-mc.md) | Detalle `DW_M_DET_ETAPA_MC` (etapas sede central) |
 | [`modelo-kimball.md`](modelo-kimball.md) | Estrella Kimball + DET / DQ / KPI |
 | [`arquitectura.md`](arquitectura.md) | Arquitectura técnica |
 | [`verification.md`](verification.md) | Smoke / harness |

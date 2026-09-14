@@ -154,6 +154,7 @@ def homologar_estado(val, tipo_default: str = "MULTA") -> tuple[str | None, str 
     """H8: texto libre → (TIPO_ESTADO, CODIGO) vía catalogos.MAPEO_ESTADO.
 
     Ej.: "INCUMPLIDO" → ("MULTA","INCUMPLIDO"); "PAGADO" → ("PAGO","PAGADO").
+    ACTIVO/INACTIVO: si tipo_default es RESOLUCION, se conserva ese tipo (no MULTA).
     Si no está en el mapa: (tipo_default, TEXTO_CON_GUIONES).
     dimensional._resolve_estado usa esto para obtener ID_ESTADO_*.
     """
@@ -161,7 +162,10 @@ def homologar_estado(val, tipo_default: str = "MULTA") -> tuple[str | None, str 
         return None, None
     u = str(val).strip().upper()
     if u in MAPEO_ESTADO:
-        return MAPEO_ESTADO[u]
+        t, c = MAPEO_ESTADO[u]
+        if tipo_default == "RESOLUCION" and c in ("ACTIVO", "INACTIVO"):
+            return "RESOLUCION", c
+        return t, c
     return tipo_default, u.replace(" ", "_")[:50]
 
 

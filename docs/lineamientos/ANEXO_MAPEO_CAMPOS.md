@@ -4,10 +4,8 @@
 > entre "qué tablas construir" y "de dónde sale exactamente cada columna", para que la capa
 > lógica (Python) se pueda escribir sin ambigüedad.
 >
-> **Diseño vigente:** 3 facts de evidencia (`DW_M_FACT_MC_CSEP` / `_OD` / `_SISUD`) + enrich Oracle
-> (`07_enrich_sheets_sisud.sql` → `DW_M_FACT_MULTA_COERCITIVA`). Attrs operativos en hechos:
-> `JEFE`, `UF`, `N_PROY_MC`, `ETA_REG_PROY_MC`, `ETA_REG_MC`, `RESULT_PROY_MC`, `ESTADO_MC_TXT`, `ESTADO_PAGO_TXT`.
-> Manual: [`extra/manual-como-se-arma-el-fact.md`](extra/manual-como-se-arma-el-fact.md).
+> **Diseño vigente:** fact de negocio `DW_M_FACT_MULTA_COERCITIVA` = planillas **sede central (10) + OD (31)**; SISUD lookup CUM/CAM. **No hay base CSEP.** Attrs operativos en el hecho: `JEFE`, `UF`, `N_PROY_MC`, `ETA_REG_*`, `RESULT_PROY_MC`, `ESTADO_*_TXT`.
+> Manual: [`extra/manual-como-se-arma-el-fact.md`](extra/manual-como-se-arma-el-fact.md) · Lectura: [`../adjunto/README.md`](../adjunto/README.md).
 >
 > Inventario de fuentes: [`extra/fuentes_datos/01-fuentes-de-datos.md`](extra/fuentes_datos/01-fuentes-de-datos.md).
 > Inputs runtime: [`docs/inputs/README.md`](../inputs/README.md) · catálogos F1/F2 JSON · `inputs.yaml`.
@@ -20,15 +18,15 @@
 | ID | Fuente (vigente) | Objeto / STG | Columnas |
 |---|---|---|---|
 | F1 | **31 Google Sheets** OD (`f1_ods_sheets.json`) | hoja `5) Multas Coercitivas` → `STG_GS2_OD_MULTAS` (+ `COD_OD`) | 32 |
-| F2 | **10 Google Sheets** CSEP (`f2_csep_sheets.json`) | hoja `1) Multas coercitivas` → `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | 48 (32 comunes F1 + 16 propias) |
+| F2 | **10 Google Sheets** sede central (`f2_csep_sheets.json`) | hoja `1) Multas coercitivas` → `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | 48 (32 comunes F1 + 16 propias) |
 | F2-ET | Mismos sheets F2 | hoja `2) Etapas` → `STG_GS1_ETAPAS` | 12 |
 | F4 | MySQL gapps | **fuera de ingestión** (semilla histórica `GAPPS`) | — |
 | F5 | Oracle SISUD | `VW_MULTA_COERCITIVA` → `STG_ORA_*` | 13 |
 
 | `CODIGO` (`DW_M_DIM_FUENTE_REGISTRO`) | Significado |
 |---|---|
-| `OD_SHEETS` | Fila procedente de F1 (Sheets OD) |
-| `CAGR` | Fila procedente de F2 (Sheets CSEP; unidad en `COORD` / `COD_UNIDAD`) |
+| `OD_SHEETS` | Fila procedente de F1 (OD). NOMBRE en dim: **OD**. |
+| `CAGR` | Fila procedente de F2 (sede central; unidad en `COORD` / `COD_UNIDAD`). NOMBRE en dim: **Sede central**. |
 | `GAPPS` | Semilla histórica F4 (no hay filas de evidencia MySQL) |
 | `SISUD_VW` | Fila procedente de F5 Oracle |
 

@@ -13,7 +13,7 @@ Guía modelo: [`../modelo-kimball.md`](../modelo-kimball.md).
 flowchart TB
   subgraph fuentes [Fuentes activas]
     F1["F1 Sheets OD"]
-    F2["F2 Sheets CSEP + etapas"]
+    F2["F2 sede central + etapas"]
     F5["F5 Oracle SISUD"]
   end
 
@@ -88,7 +88,7 @@ flowchart LR
 | `DW_M_DQ_HALLAZGO` | 4 | Sí |
 | `DW_M_QA_AMARRE` / `DW_M_QA_AMARRE_DETALLE` | 4 | Sí |
 | `DW_M_DIM_*` / `DW_M_FACT_MC_CSEP` / `_OD` / `_SISUD` / `DW_M_DET_ETAPA_MC` | 5–6 | Sí |
-| `DW_M_FACT_MULTA_COERCITIVA` | 6 (SQL 07) | Sí — (CSEP∪OD) LEFT JOIN SISUD |
+| `DW_M_FACT_MULTA_COERCITIVA` | 6 | Sí — sede central + OD, lookup SISUD |
 | `DW_M_INDICADOR_RESULTADO` | 7 | Sí |
 | `VW_MC_CSEP` / `_OD` / `_SISUD` / `VW_MC_ENRIQUECIDA` | 6 | Sí (vistas) |
 | `RESULTADO` | 2–7 | No — resumen de corrida |
@@ -104,8 +104,8 @@ Se recrean al inicio: `reset_and_create.sh` (DDL base) + `create_stg.py` (DDL st
 | Tabla | Origen | Quién crea el DDL | Quién carga filas |
 |---|---|---|---|
 | `DEMO_TABLA_EJEMPLO` | Smoke arquetipo | `h2/sql/01_schema.sql` | Insert fijo en DDL |
-| `STG_GS1_CSEP_MULTAS` | F2 Google Sheets CSEP | `create_stg.py` | `pl_stage_csep_sheet.hpl` + `stage_csep_sheets.sh` |
-| `STG_GS1_ETAPAS` | F2 Sheets CSEP etapas | `create_stg.py` | `stage_csep_sheets.sh` |
+| `STG_GS1_CSEP_MULTAS` | F2 Google Sheets sede central | `create_stg.py` | `pl_stage_csep_sheet.hpl` + `stage_csep_sheets.sh` |
+| `STG_GS1_ETAPAS` | F2 etapas sede central | `create_stg.py` | `stage_csep_sheets.sh` |
 | `STG_GS2_OD_MULTAS` | F1 Google Sheets OD | `create_stg.py` | `pl_stage_od_sheet.hpl` + `stage_ods_sheets.sh` |
 | `STG_GS1_DIC_TABLAS` | F2 hoja DIC_TABLAS (Excel legacy) | `create_stg.py` | `pl_stage_excel.hpl` |
 | `STG_GS1_DIC_VARIABLES` | F2 hoja DIC_VARIABLES (Excel legacy) | `create_stg.py` | `pl_stage_excel.hpl` |
@@ -145,7 +145,7 @@ flowchart LR
   STG8 --> MI
 ```
 
-**Conteos de referencia:** CSEP~990 · OD~281 · SISUD~534 · enriquecido~1271.
+**Conteos de referencia:** sede central~990 · OD~281 · SISUD~534 · enriquecido~1271.
 
 ---
 
@@ -154,7 +154,7 @@ flowchart LR
 | ID | Fuente | STG H2 | Carga Hop | Notas |
 |---|---|---|:---:|---|
 | F1 | Google Sheets OD | `STG_GS2_OD_MULTAS` | Sí | `stage_ods_sheets.sh` |
-| F2 | Google Sheets CSEP | `STG_GS1_CSEP_MULTAS` / `ETAPAS` | Sí | `stage_csep_sheets.sh` |
+| F2 | Google Sheets sede central | `STG_GS1_CSEP_MULTAS` / `ETAPAS` | Sí | `stage_csep_sheets.sh` |
 | F2 | DIC (Excel legacy) | `STG_GS1_DIC_*` | Sí | `pl_stage_excel.hpl` |
 | F3 | Informes SISUD | — | **No** | Fuera de alcance |
 | F4 | MySQL GAPP | — | **No** | Fuera de ingestión; semilla `GAPPS` en dim |
