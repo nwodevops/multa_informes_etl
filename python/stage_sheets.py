@@ -76,6 +76,32 @@ def update_conn(root: Path, variables: dict[str, str], statement: str, value: st
         conn.close()
 
 
+def classify_error(output: str) -> str:
+    low = output.lower()
+    if any(token in low for token in (
+        "429", "resource_exhausted", "quota exceeded", "userratelimit",
+        "ratelimit", "rate limit",
+    )):
+        return "causa=POSIBLE CUOTA/RATE-LIMIT de Google (HTTP 429)"
+    if any(token in low for token in (
+        "connect timed out", "sockettimeoutexception", "connectexception",
+        "socketexception", "connection refused", "timed out",
+    )):
+        return "causa=TIMEOUT/SIN RED hacia Google (OAuth o Sheets)"
+    if any(token in low for token in (
+        "401", "403", "invalid credentials", "invalid_grant",
+        "access token", "unauthorized", "insufficient permissions",
+    )):
+        return "causa=ERROR DE AUTENTICACION/PERMISOS (service account)"
+    if any(token in low for token in (
+        "400", "bad request", "failed to initialize", "transform",
+    )):
+        return "causa=FALLO DE INICIALIZACION del transform (revisar pipeline/hoja/rango)"
+    if not output.strip():
+        return "causa=sin detalle Hop (rc no cero sin mensaje)"
+    return "causa=no clasificada (revisar detalle Hop abajo)"
+
+
 def run_with_retry(
     hop: str,
     project: str,
@@ -86,8 +112,8 @@ def run_with_retry(
     retry_sleep: int,
     label: str,
 ) -> None:
-    attempt = 1
-    while True:
+    max_attempts = retries + 1
+    for attempt in range(1, max_attempts + 1):
         cmd = [
             hop,
             "-j",
@@ -99,15 +125,37 @@ def run_with_retry(
             "-p",
             params,
         ]
-        rc = subprocess.run(cmd, cwd=str(root)).returncode
+        proc = subprocess.run(cmd, cwd=str(root), capture_output=True)
+        output = (
+            (proc.stdout or b"").decode("utf-8", errors="ignore")
+            + (proc.stderr or b"").decode("utf-8", errors="ignore")
+        ).rstrip()
+        if output:
+            print(output)
+        rc = int(proc.returncode)
         if rc == 0:
+            if attempt == 1:
+                print(f"OK: {label} completo al primer intento (rc=0)")
+            else:
+                print(
+                    f"OK: {label} completo en ejecucion {attempt}/{max_attempts}"
+                    f" (tras {attempt - 1} reintento(s))"
+                )
             return
-        if attempt >= retries:
-            print(f"FAIL: {label} tras {retries} intentos (rc={rc})")
+        cause = classify_error(output)
+        if attempt >= max_attempts:
+            print(
+                f"FAIL: {label} agotado tras {max_attempts} ejecuciones"
+                f" (1 inicial + {retries} reintentos); rc={rc}; {cause}"
+            )
             raise SystemExit(rc)
-        print(f"AVISO: {label} fallo (rc={rc}); reintento {attempt}/{retries} en {retry_sleep}s")
+        remain = max_attempts - attempt
+        print(
+            f"AVISO: {label} fallo en ejecucion {attempt}/{max_attempts} (rc={rc});"
+            f" {cause}; reintento {attempt} de {retries} en {retry_sleep}s"
+            f" (quedan {remain} ejecuciones)"
+        )
         time.sleep(retry_sleep)
-        attempt += 1
 
 
 def load_catalog(root: Path, name: str) -> dict:
