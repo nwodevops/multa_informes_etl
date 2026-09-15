@@ -48,11 +48,12 @@ Divergencias se registran como hallazgo de calidad (R… según regla aplicable,
 | `COD_PROY_MC` | F2 `COD_PROY_MC` | — | ninguna |
 | `NUMERO_EXPEDIENTE` | F5 `NUMERO_EXPEDIENTE` | F1/F2 `EXP_INF_INCUMP` | normalizar formato `NNNN-AAAA-SIGLA` |
 | `EXP_RES_MC` | F1/F2 `EXP_RES_MC` | — | ninguna |
-| `N_RES_MC` | F1/F2 `N_RES_MC` | F5 `RESOLUCION` (conciliar) | ninguna |
+| `N_RES_MC` | F1/F2 `N_RES_MC` | — | ninguna; F5 `RESOLUCION` **no** pisa (va a `N_RES_SISUD`) |
+| `N_RES_SISUD` | F5 `RESOLUCION` | — | sombra si hay match; `NULL` si no; no reemplaza `N_RES_MC` |
 | `CUM` | F5 `CUM` | F4 `TX_IDCUM` (conciliar, regla R04) | solo dígitos, relleno a 11 posiciones (H2) |
 | `CAM` | F5 `CAM` | F4 `TX_IDCAM` (conciliar, regla R04) | patrón `AAAA`(4)+segmento(2)+correlativo(7)=13 (H2) |
 | `NUMERO_REGISTRO_SIGED` | F5 `NUMERO_REGISTRO` | F1/F2 `SIGED`; F4 `TX_EXP_SIGED_DOC` | ninguna |
-| `ID_ADMINISTRADO` | F5 `ADMINISTRADO` | F2 `ADM` / nombre si existe | lookup en `DW_M_DIM_ADMINISTRADO` (`NOM-…`); `-1` si no resuelve |
+| `ID_ADMINISTRADO` | F2 `ADM` / nombre si existe | F5 `ADMINISTRADO` si la planilla quedó `-1` (típico OD) | lookup en `DW_M_DIM_ADMINISTRADO` (`NOM-…`); no pisa sede central; `-1` si no resuelve |
 | `ID_ORGANO` | F2 `COORD` (o `COD_UNIDAD` inyectado) | sigla final de `NUMERO_EXPEDIENTE` | lookup `DW_M_DIM_ORGANO_UNIDAD.SIGLA`; `-1` si no resuelve |
 | `ID_OD` | F1 `COD_OD` (inyectado desde catálogo OD) | — | lookup `DW_M_DIM_OD`; `-1` si no aplica (filas F2/F4/F5) |
 | `ID_FUENTE` | `FUENTE_ORIGEN` → código | catálogo `DW_M_DIM_FUENTE_REGISTRO` | lookup por `CODIGO`; alias `LAM_OD`/`OD_EXCEL` → `OD_SHEETS` |
@@ -70,17 +71,22 @@ Divergencias se registran como hallazgo de calidad (R… según regla aplicable,
 | `F_FIRMA_RES_MC` | F1/F2 `F_FIRMA_RES_MC` | — | parseo a `DATE` |
 | `F_NOTIF_RES_MC` | F1/F2 `FN_RES_MC` | — | parseo a `DATE` |
 | `F_VENC_MC` | F1/F2 `F_VENC_MC` | — | parseo a `DATE` |
+| `F_VERIF_CAMPO` | F1/F2 `F_VERIF_CAMPO` | — | parseo a `DATE`; distinta de `F_VERIF_POST_MC` |
 | `F_VERIF_POST_MC` | F1/F2 `F_VERIF_POST_MC` | F4 `FE_F_VERIF_POST_MC` (conciliar) | parseo a `DATE` |
 | `F_PAGO` | no existe columna explícita en ninguna fuente | inferir de `ESTADO_MC='PAGADO'` + fecha de última modificación (F4 `FE_FECHA_MODIFICACION`) si aplica | **dato derivado, documentar como tal**; puede quedar `NULL` |
 | `F_REMISION_MEMO` | F1/F2 `F_REMIS` | — | parseo a `DATE` |
 | `PRESENTO_DESCARGOS` | F1/F2 `PRESENT_DCG_ADM` | — | `SI`→`S`, `NO`→`N`, variantes homologadas |
 | `AMERITA_MC` | F1/F2 `AMERIT_MC` | — | `SI`→`S`, `NO`→`N` |
 | `REQUIERE_VERIF_CAMPO` | F1/F2 `REQ_VERIF_CAMPO` | — | `SI`→`S`, `NO`→`N` |
+| `N_CARTA_DCG` | F1/F2 `N_CARTA_DCG` | — | ninguna |
+| `MOTIVO_NO_AMERIT` | F1/F2 `MOTIVO_NO_AMERIT` | — | ninguna |
 | `MEDIDA_ADMINISTRATIVA` | F5 `MEDIDA_ADMINISTRATIVA` | — | quitar saltos de línea embebidos (H3) |
 | `MEMO_EF` | F1/F2 `MEMO_EF` | — | ninguna |
 | `SIGED` | F1/F2 `SIGED` | — | ninguna |
+| `DOC_SIGED_DESCARGOS` | F1/F2 `DOC_SIGED` | — | rename; distinto de `SIGED` de cobranza |
 | `DOC_VERIF_MC` | F1/F2 `DOC_VERIF_MC` | F4 `TX_DOC_VERIF_MC` | ninguna |
-| `MONTO_UIT` | F1/F2 `MULTA_UIT` | F4 `NU_MONTOMCUIT`; F5 `MONTO_MULTA` (conciliar, regla R05) | ninguna |
+| `MONTO_UIT` | F1/F2 `MULTA_UIT` | F4 `NU_MONTOMCUIT` (conciliar, regla R05) | ninguna; F5 `MONTO_MULTA` **no** pisa (va a `MONTO_UIT_SISUD`) |
+| `MONTO_UIT_SISUD` | F5 `MONTO_MULTA` | — | UIT; sombra si hay match; `NULL` si no; no reemplaza `MONTO_UIT` |
 | `VALOR_UIT_APLICADO` | `DW_M_DIM_PARAMETRO_UIT.VALOR_UIT` del año resuelto en `ID_UIT` | — | lookup (catálogo MEF en Python) |
 | `MONTO_S` | F1/F2 `MULTA_S` (puede venir `#N/A` / token de error) | F4 `NU_MONTOMCS` | tokens de error → `NULL` |
 | `MONTO_S_CALC` | calculado | `MONTO_UIT × VALOR_UIT_APLICADO` | fuente de verdad cuando `MONTO_S` es `NULL` o difiere (regla R05) |
