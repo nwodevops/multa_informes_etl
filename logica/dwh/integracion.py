@@ -49,15 +49,19 @@ COLS_MULTAS = [
     "F_FIRMA_RES_MC",
     "F_NOTIF_RES_MC",
     "F_VENC_MC",
+    "F_VERIF_CAMPO",
     "F_VERIF_POST_MC",
     "F_PAGO",
     "F_REMISION_MEMO",
     "PRESENTO_DESCARGOS",
     "AMERITA_MC",
     "REQUIERE_VERIF_CAMPO",
+    "N_CARTA_DCG",
+    "MOTIVO_NO_AMERIT",
     "MEDIDA_ADMINISTRATIVA",
     "MEMO_EF",
     "SIGED",
+    "DOC_SIGED_DESCARGOS",
     "DOC_VERIF_MC",
     "MONTO_UIT",
     "MONTO_S",
@@ -117,6 +121,7 @@ def _integrar_gs2(gs2: pd.DataFrame, cod_od: str | None = None) -> pd.DataFrame:
         "EXP_INF_INCUMP": "NUMERO_EXPEDIENTE",
         "MULTA_UIT": "MONTO_UIT",  # crítico: sin esto el fact queda sin montos F1
         "MULTA_S": "MONTO_S",
+        "DOC_SIGED": "DOC_SIGED_DESCARGOS",
     }
     h = _renombrar(h, m)
     if cod_od:
@@ -143,6 +148,7 @@ def _integrar_gs1(gs1: pd.DataFrame) -> pd.DataFrame:
         "ADM": "ADMINISTRADO",
         "MULTA_UIT": "MONTO_UIT",  # crítico: sin esto el fact queda sin montos F2
         "MULTA_S": "MONTO_S",
+        "DOC_SIGED": "DOC_SIGED_DESCARGOS",
     }
     h = _renombrar(h, m)
     # Territorio CSEP: COORD manda; si vacío, COD_UNIDAD del catálogo de staging

@@ -179,3 +179,15 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 - `./init.sh` → HARNESS OK: 1271 = 990+281; 0153/64 con CUM+CAM.
 - Evidencia: `progress/impl_canonico-flaco-enrich-py.md`
 - Siguiente: rama `windows_v2` + re-corrida Win.
+
+---
+
+## 2026-09-14 — siete campos al fact (`linux_v2`)
+
+**Feature:** `fact-siete-campos` → `done`
+
+- Planilla: `N_CARTA_DCG`, `DOC_SIGED_DESCARGOS`, `F_VERIF_CAMPO`, `MOTIVO_NO_AMERIT`.
+- SISUD: `ID_ADMINISTRADO` si planilla `-1`; sombras `N_RES_SISUD` / `MONTO_UIT_SISUD` (no pisan Sheet).
+- DDL 02+05 + docs adjunto/ANEXO. Sin `./init.sh` en la sesión.
+- Evidencia: `progress/impl_fact-siete-campos.md`
+- Siguiente: `windows_v2` + `fase-remote-deploy`.

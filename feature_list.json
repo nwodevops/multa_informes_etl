@@ -256,6 +256,15 @@
       "doc": "logica/dwh/enrich.py",
       "evidencia": "progress/impl_canonico-flaco-enrich-py.md",
       "nota": "HARNESS OK 1271=990+281; 0153/64 con CUM+CAM. Merge a linux/windows pendiente."
+    },
+    {
+      "id": "fact-siete-campos",
+      "title": "Siete campos al fact (carta, SIGED descargos, campo, motivo, admin SISUD, sombras res/UIT)",
+      "status": "done",
+      "criterio": "N_CARTA_DCG, DOC_SIGED_DESCARGOS, F_VERIF_CAMPO, MOTIVO_NO_AMERIT copiados de F1/F2; ID_ADMINISTRADO SISUD solo si planilla -1; N_RES_SISUD/MONTO_UIT_SISUD sombra (no pisan Sheet); DDL 02+05; diccionario/fuera-del-fact/ANEXO",
+      "doc": "docs/adjunto/diccionario-fact.md",
+      "evidencia": "progress/impl_fact-siete-campos.md",
+      "nota": "Materializa en el próximo wipe Oracle. Sin corrida init.sh en esta sesión."
     }
   ]
 }

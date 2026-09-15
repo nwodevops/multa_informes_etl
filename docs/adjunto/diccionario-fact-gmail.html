@@ -58,7 +58,7 @@
   </tr>
 </table>
 
-<p>Celda vacía / #N/A en planilla → NULL en columnas de texto, fecha o monto. La fila <b>no se borra</b>. SISUD <b>no</b> pisa <code>N_RES_MC</code> ni <code>MONTO_UIT</code> / <code>MONTO_S</code> de la planilla.</p>
+<p>Celda vacía / #N/A en planilla → NULL en columnas de texto, fecha o monto. La fila <b>no se borra</b>. SISUD <b>no</b> pisa <code>N_RES_MC</code> ni <code>MONTO_UIT</code> / <code>MONTO_S</code> de la planilla: si hay match, esos valores SISUD van a <code>N_RES_SISUD</code> / <code>MONTO_UIT_SISUD</code>.</p>
 
 <p style="font-size: 16px; font-weight: bold; margin-top: 24px;">Qué significa -1 (en Oracle, no en la leyenda)</p>
 
@@ -118,13 +118,15 @@
   <tr><td>NUMERO_EXPEDIENTE</td><td>Expediente del incumplimiento</td><td>EXP_INF_INCUMP</td><td>EXP_INF_INCUMP</td></tr>
   <tr><td>EXP_RES_MC</td><td>Expediente de la resolución</td><td>EXP_RES_MC</td><td>EXP_RES_MC</td></tr>
   <tr><td>N_RES_MC</td><td>N.° de resolución (vacío en planilla → NULL)</td><td>N_RES_MC</td><td>N_RES_MC</td></tr>
+  <tr><td>N_RES_SISUD</td><td>Resolución en SISUD; <b>no</b> pisa N_RES_MC</td><td>— (SISUD si match)</td><td>— (SISUD si match)</td></tr>
   <tr><td>CUM</td><td>Código único de medida (11 dígitos)</td><td>— (SISUD si match)</td><td>— (SISUD si match)</td></tr>
   <tr><td>CAM</td><td>Código de acto de medida</td><td>— (SISUD si match)</td><td>— (SISUD si match)</td></tr>
   <tr><td>NUMERO_REGISTRO_SIGED</td><td>Registro SIGED institucional</td><td>— (SISUD si match)</td><td>— (SISUD si match)</td></tr>
   <tr><td>SIGED</td><td>SIGED de la planilla (memo / cobranza)</td><td>SIGED</td><td>SIGED</td></tr>
+  <tr><td>DOC_SIGED_DESCARGOS</td><td>SIGED del escrito de descargos</td><td>DOC_SIGED</td><td>DOC_SIGED</td></tr>
   <tr><td>DOC_VERIF_MC</td><td>Documento de verificación posterior</td><td>DOC_VERIF_MC</td><td>DOC_VERIF_MC</td></tr>
   <tr><td>MEMO_EF</td><td>Memo de ejecución forzosa</td><td>MEMO_EF</td><td>MEMO_EF</td></tr>
-  <tr><td>ID_ADMINISTRADO</td><td>Administrado (-1 si no hay)</td><td>ADM</td><td>—</td></tr>
+  <tr><td>ID_ADMINISTRADO</td><td>Administrado (-1 si no hay)</td><td>ADM (SISUD no pisa)</td><td>ADM si hay; si no, SISUD si match</td></tr>
   <tr><td>ID_ORGANO</td><td>Unidad (CMIN, CRES, …); -1 si no hay</td><td>COORD (si vacío, unidad del libro)</td><td>—</td></tr>
   <tr><td>ID_OD</td><td>Oficina desconcentrada; -1 en sede central</td><td>—</td><td>oficina del libro (AMAZONAS, ICA, …)</td></tr>
   <tr><td>ID_TIEMPO_FIRMA</td><td>Día de firma (-1 si no hay fecha)</td><td>F_FIRMA_RES_MC</td><td>F_FIRMA_RES_MC</td></tr>
@@ -143,18 +145,22 @@
   <tr><td>F_FIRMA_RES_MC</td><td>Firma de la resolución</td><td>F_FIRMA_RES_MC</td><td>F_FIRMA_RES_MC</td></tr>
   <tr><td>F_NOTIF_RES_MC</td><td>Notificación de la resolución</td><td>FN_RES_MC</td><td>FN_RES_MC</td></tr>
   <tr><td>F_VENC_MC</td><td>Vencimiento para pagar</td><td>F_VENC_MC</td><td>F_VENC_MC</td></tr>
+  <tr><td>F_VERIF_CAMPO</td><td>Verificación en campo durante el análisis</td><td>F_VERIF_CAMPO</td><td>F_VERIF_CAMPO</td></tr>
   <tr><td>F_VERIF_POST_MC</td><td>Verificación posterior</td><td>F_VERIF_POST_MC</td><td>F_VERIF_POST_MC</td></tr>
   <tr><td>F_PAGO</td><td>Fecha de pago</td><td>F_PAGO</td><td>F_PAGO</td></tr>
   <tr><td>F_REMISION_MEMO</td><td>Remisión del memo de ejecución forzosa</td><td>F_REMIS</td><td>F_REMIS</td></tr>
   <tr><td>PRESENTO_DESCARGOS</td><td>¿Presentó descargos? (SI/NO → S/N)</td><td>PRESENT_DCG_ADM</td><td>PRESENT_DCG_ADM</td></tr>
   <tr><td>AMERITA_MC</td><td>¿Amerita multa? (SI/NO → S/N)</td><td>AMERIT_MC</td><td>AMERIT_MC</td></tr>
   <tr><td>REQUIERE_VERIF_CAMPO</td><td>¿Requiere verificación en campo?</td><td>REQ_VERIF_CAMPO</td><td>REQ_VERIF_CAMPO</td></tr>
+  <tr><td>N_CARTA_DCG</td><td>N.° de carta de descargos</td><td>N_CARTA_DCG</td><td>N_CARTA_DCG</td></tr>
+  <tr><td>MOTIVO_NO_AMERIT</td><td>Motivo de no ameritar MC</td><td>MOTIVO_NO_AMERIT</td><td>MOTIVO_NO_AMERIT</td></tr>
   <tr><td>FLAG_PRESENTO_DCG</td><td>1 si PRESENTO_DESCARGOS = S</td><td>no está en Excel</td><td>no está en Excel</td></tr>
   <tr><td>FLAG_AMERITA_MC</td><td>1 si AMERITA_MC = S</td><td>no está en Excel</td><td>no está en Excel</td></tr>
   <tr><td>FLAG_PAGADA</td><td>1 si el estado de pago homologa a pagado</td><td>no está en Excel</td><td>no está en Excel</td></tr>
   <tr><td>FLAG_EJECUCION_FORZOSA</td><td>1 si hay MEMO_EF</td><td>no está en Excel</td><td>no está en Excel</td></tr>
   <tr><td>FLAG_CUMPLIO_VERIF</td><td>1 si hay F_VERIF_POST_MC</td><td>no está en Excel</td><td>no está en Excel</td></tr>
   <tr><td>MONTO_UIT</td><td>Multa en UIT</td><td>MULTA_UIT</td><td>MULTA_UIT</td></tr>
+  <tr><td>MONTO_UIT_SISUD</td><td>UIT en SISUD; <b>no</b> pisa MONTO_UIT</td><td>— (SISUD si match)</td><td>— (SISUD si match)</td></tr>
   <tr><td>MONTO_S</td><td>Multa en soles (#N/A → NULL)</td><td>MULTA_S</td><td>MULTA_S</td></tr>
   <tr><td>VALOR_UIT_APLICADO</td><td>UIT MEF del año (soles)</td><td>catálogo MEF</td><td>catálogo MEF</td></tr>
   <tr><td>MONTO_S_CALC</td><td>MONTO_UIT × VALOR_UIT_APLICADO</td><td>no está en Excel</td><td>no está en Excel</td></tr>
@@ -182,7 +188,7 @@
 <p>“—” no quiere decir “esa multa no entra”. Quiere decir: <b>esa planilla nunca tuvo esa columna</b>.</p>
 <ul>
   <li>Si la celda dice solo “—” (p. ej. JEFE en OD): texto/fecha/monto → NULL; FK (ID_ORGANO en OD, ID_OD en sede central) → -1.</li>
-  <li>Si dice “— (SISUD si match)”: no está en Excel, pero <b>sí puede llenarse</b> desde SISUD. Sin match: NULL en CUM/medida/montos; -1 en ID_ESTADO_RESOLUCION.</li>
+  <li>Si dice “— (SISUD si match)”: no está en Excel, pero <b>sí puede llenarse</b> desde SISUD. Sin match: NULL en CUM/medida/montos/sombras; -1 en ID_ESTADO_RESOLUCION (y en ID_ADMINISTRADO si la planilla tampoco trajo ADM).</li>
 </ul>
 
 <table cellpadding="6" cellspacing="0" border="1" style="border-collapse: collapse; border: 1px solid #ccc; margin: 12px 0; font-size: 13px;">
@@ -195,6 +201,11 @@
     <td>ID_ESTADO_RESOLUCION</td>
     <td>ESTADO_RESOLUCION (ACTIVO / INACTIVO)</td>
     <td>FK a DW_M_DIM_ESTADO (TIPO_ESTADO='RESOLUCION'). -1 si no hubo match o SISUD venía vacío.</td>
+  </tr>
+  <tr>
+    <td>ID_ADMINISTRADO</td>
+    <td>ADMINISTRADO</td>
+    <td>Solo si la planilla quedó -1 (típico OD). No pisa ADM de sede central.</td>
   </tr>
   <tr>
     <td>MEDIDA_ADMINISTRATIVA</td>
@@ -215,6 +226,16 @@
     <td>CUM / CAM / NUMERO_REGISTRO_SIGED</td>
     <td>CUM / CAM / NUMERO_REGISTRO</td>
     <td>Igual: solo si match y la planilla los traía vacíos.</td>
+  </tr>
+  <tr>
+    <td>N_RES_SISUD</td>
+    <td>RESOLUCION</td>
+    <td>Sombra: no reemplaza N_RES_MC. NULL sin match.</td>
+  </tr>
+  <tr>
+    <td>MONTO_UIT_SISUD</td>
+    <td>MONTO_MULTA (ya es UIT)</td>
+    <td>Sombra: no reemplaza MONTO_UIT. NULL sin match.</td>
   </tr>
 </table>
 

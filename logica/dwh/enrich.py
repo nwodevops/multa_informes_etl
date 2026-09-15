@@ -20,6 +20,13 @@ _COLS_SISUD = (
     "MEDIDA_ADMINISTRATIVA",
     "MONTO_MULTA_REC",
     "MONTO_MULTA_TFA",
+    "ID_ADMINISTRADO",
+)
+
+# Sombra: valores SISUD con otro nombre para no pisar N_RES_MC / MONTO_UIT del Sheet.
+_SOMBRA_SISUD = (
+    ("N_RES_MC", "N_RES_SISUD"),
+    ("MONTO_UIT", "MONTO_UIT_SISUD"),
 )
 
 
@@ -66,7 +73,9 @@ def enriquecer_sheets_sisud(
 
     Filas = F1∪F2. SISUD no agrega filas; pega CUM/CAM/NUMERO_REGISTRO_SIGED
     y, si hay match, ID_ESTADO_RESOLUCION / MEDIDA_ADMINISTRATIVA / montos REC/TFA
-    cuando la planilla los trae vacíos (o ID = -1).
+    cuando la planilla los trae vacíos (o ID = -1). ID_ADMINISTRADO se rellena
+    igual si la planilla quedó ND (típico OD sin ADM).
+    N_RES_SISUD / MONTO_UIT_SISUD son sombra: no pisan el Sheet.
     Empate SISUD: primera fila por CUM, CAM, ID_MC.
     ID_MC 1..N en orden CSEP luego OD (DET CSEP sigue en 1..n_csep).
     """
@@ -79,7 +88,10 @@ def enriquecer_sheets_sisud(
     out["_CLAVE"] = _serie_clave(out)
 
     sis = fact_sisud.copy() if fact_sisud is not None else pd.DataFrame()
-    lookup_cols = ["_CLAVE"] + [f"_S_{c}" for c in _COLS_SISUD]
+    sombra_dest = [dest for _, dest in _SOMBRA_SISUD]
+    lookup_cols = ["_CLAVE"] + [f"_S_{c}" for c in _COLS_SISUD] + [
+        f"_S_{c}" for c in sombra_dest
+    ]
     lookup = pd.DataFrame(columns=lookup_cols)
     if not sis.empty:
         sis["_CLAVE"] = _serie_clave(sis)
@@ -94,8 +106,10 @@ def enriquecer_sheets_sisud(
             for c in _COLS_SISUD:
                 if c not in sis.columns:
                     sis[c] = pd.NA
-            lookup = sis[["_CLAVE", *_COLS_SISUD]].rename(
-                columns={c: f"_S_{c}" for c in _COLS_SISUD}
+            for src, dest in _SOMBRA_SISUD:
+                sis[dest] = sis[src] if src in sis.columns else pd.NA
+            lookup = sis[["_CLAVE", *_COLS_SISUD, *sombra_dest]].rename(
+                columns={c: f"_S_{c}" for c in (*_COLS_SISUD, *sombra_dest)}
             )
 
     out = out.merge(lookup, on="_CLAVE", how="left")
@@ -109,6 +123,10 @@ def enriquecer_sheets_sisud(
         _tomar_si_nd(a, b)
         for a, b in zip(out["ID_ESTADO_RESOLUCION"], out["_S_ID_ESTADO_RESOLUCION"])
     ]
+    out["ID_ADMINISTRADO"] = [
+        _tomar_si_nd(a, b)
+        for a, b in zip(out["ID_ADMINISTRADO"], out["_S_ID_ADMINISTRADO"])
+    ]
     out["MEDIDA_ADMINISTRATIVA"] = [
         _tomar_si_vacio(a, b)
         for a, b in zip(out["MEDIDA_ADMINISTRATIVA"], out["_S_MEDIDA_ADMINISTRATIVA"])
@@ -121,4 +139,8 @@ def enriquecer_sheets_sisud(
         _tomar_si_vacio(a, b)
         for a, b in zip(out["MONTO_MULTA_TFA"], out["_S_MONTO_MULTA_TFA"])
     ]
+    out["N_RES_SISUD"] = out["_S_N_RES_SISUD"] if "_S_N_RES_SISUD" in out.columns else None
+    out["MONTO_UIT_SISUD"] = (
+        out["_S_MONTO_UIT_SISUD"] if "_S_MONTO_UIT_SISUD" in out.columns else None
+    )
     return out.drop(columns=["_CLAVE", *lookup_cols[1:]], errors="ignore")
