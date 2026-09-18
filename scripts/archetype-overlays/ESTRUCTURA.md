@@ -33,4 +33,5 @@ mi_etl/
 └── output/          (generado)
 ```
 
-Regenerar desde repo padre OEFA: `./scripts/sync_archetype.sh`
+Nuevo proyecto: `./scripts/nuevo_etl.sh /ruta/mi_etl`  
+Regenerar cascarón: `./scripts/sync_archetype.sh`

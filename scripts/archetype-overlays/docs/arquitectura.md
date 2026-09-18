@@ -7,7 +7,7 @@ ETL **Apache Hop + H2 in-memory + Python**. Demo: `DEMO_TABLA_EJEMPLO` → `logi
 ```mermaid
 flowchart TB
   subgraph fuentes [Fuentes opcionales]
-    EX["Excel / Oracle / MySQL / Sheets"]
+    EX["Excel / Oracle / Sheets"]
   end
 
   YAML["inputs.yaml"]
@@ -42,4 +42,4 @@ flowchart TB
 
 Ver [`README.md`](../README.md) y skill [`.agents/skills/hop-python-etl/`](../.agents/skills/hop-python-etl/SKILL.md).
 
-Para consultoría OEFA (DW, indicadores): copiar módulos desde repo `etl_phyton_cursor`.
+Para un DW Oracle (dims/facts): copiar `cargar_dw.py` y, si aplica, `logica/dwh/` desde el repo de referencia (multa).

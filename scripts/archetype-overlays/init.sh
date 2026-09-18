@@ -35,7 +35,13 @@ step "Prerrequisitos"
 command -v java >/dev/null 2>&1 || fail "java no está en PATH"
 [ -f h2/lib/h2-2.4.240.jar ] || fail "jar H2 no encontrado"
 if [ ! -x .venv/bin/python ]; then
-  warn "venv ausente; crear: python3 -m venv .venv && .venv/bin/pip install -r python/requirements.txt"
+  fail "venv ausente o roto. Desde el repo padre: ./scripts/nuevo_etl.sh lo crea. A mano: python3 -m venv .venv && .venv/bin/python -m pip install -r python/requirements.txt"
+fi
+"$PY" -c "import yaml, pandas, jaydebeapi" 2>/dev/null \
+  || fail "el .venv no tiene dependencias (¿venv sin pip?). .venv/bin/python -m pip install -r python/requirements.txt"
+if [ ! -f project-config.json ]; then
+  step "Generando project-config.json (switch-env local)"
+  ./switch-env.sh local
 fi
 
 step "Reset H2 + DDL"

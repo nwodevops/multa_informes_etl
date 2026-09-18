@@ -1,4 +1,4 @@
-# AGENTS.md — mapa para agentes (arquetipo mínimo)
+# AGENTS.md — mapa para agentes (cascarón Hop + H2 + Python)
 
 ETL **Apache Hop + H2 in-memory + Python**. Arquitectura: [`docs/arquitectura.md`](docs/arquitectura.md).
 
@@ -21,19 +21,18 @@ ETL **Apache Hop + H2 in-memory + Python**. Arquitectura: [`docs/arquitectura.md
 ## Inicio rápido
 
 ```bash
-./init.sh
 ./switch-env.sh local
+./init.sh
 ~/apps/hop/hop-gui.sh   # → wf_main.hwf
 ```
 
 ## Reglas críticas
 
-1. **Un solo `.py`** en `logica/`.
-2. **Sin secretos** en git (`project-config.json`, `environments/`).
+1. **Un solo `.py`** en `logica/` (reemplazar `demo.py` al escribir la lógica real).
+2. **Sin secretos** en git (`project-config.json` es generado).
 3. **Sin `${VAR}` literal** en logs Hop = variable mal definida.
+4. `logica/` no abre conexiones. I/O en `python/io/`.
 
-Detalle plataforma → [`docs/harness/platform.md`](docs/harness/platform.md).
+## Nuevo proyecto
 
-## Consultoría avanzada
-
-Para DW Oracle, cuarentena blanda e indicadores: extender desde repo OEFA (`etl_phyton_cursor`). Ver [`README.md`](README.md) sección «Extender a consultoría OEFA».
+Este repo es un cascarón. Fuentes → `inputs.yaml`. Lecturas → `python/io/leer_h2.py`. Transformación → `logica/<tu>.py`. Destino demo → Excel.
