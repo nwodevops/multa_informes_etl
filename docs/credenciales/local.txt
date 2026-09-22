@@ -2,22 +2,23 @@
 # Aplicar: ./switch-env.sh local  |  .\switch-env.ps1 local  →  regenera project-config.json
 
 # INPUT — MySQL (conexión Hop: mysql → DB_MYSQL_*)
-Host: localhost
-Port: 3307
+# localhost:3307 solo tiene T_MVC_MULTACOERCITIVA_MC (stub).
+# Schema completo + VW_MULTAS_APP: 209.45.104.78
+Host: 209.45.104.78
+Port: 3306
 Database: gappsdb
 User: gapps
-Password: gapps2026
-RootPassword: MysqlRoot2026
-Tabla: T_MVC_MULTACOERCITIVA_MC
+Password: Knjux4a9tJCbrly!
+Tabla: VW_MULTAS_APP
 
 # INPUT — Oracle SISUD (conexión Hop: oracle_sisud → DB_ORA_SISUD_*)
+# Este txt es solo memo. Hop lee project-config.json ← environments/local.json
 Host: localhost
-Port: 1523
-Service: XEPDB1
-SysPassword: OraclePwd2026
+Port: 1525
+Service: CSEP
 User: SISUD
 Password: sisud2026
-Tablas: CSEP_INFORMES_VIEW, VW_MULTA_COERCITIVA
+Tablas: VW_MULTA_COERCITIVA
 
 # OUTPUT — Oracle DW / BD_CURSOR (DB_ORA_DW_* y DB_ORA_REPO_*)
 Host: localhost

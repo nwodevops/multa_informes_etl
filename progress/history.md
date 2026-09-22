@@ -198,7 +198,7 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 
 **Feature:** `f4-mysql-aud-fact` → `in_progress`
 
-- Query `vw_multas_app.sql` → `STG_MYSQL_MULTAS` → `DW_M_AUD_F4_GAPPS`.
+- Query `vw_multas_app.sql` → `STG_MYSQL_MULTAS` → `DW_M_AUD_F4_FORM`.
 - Fact UNION F1∪F2∪GAPPS; sin lookup SISUD en filas GAPPS.
 - Cableado Hop/init + `integracion`/`enrich`. HARNESS OK pendiente de MySQL vivo.
 - Evidencia: `progress/impl_f4-mysql-aud-fact.md`

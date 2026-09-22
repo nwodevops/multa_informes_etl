@@ -122,33 +122,33 @@
     },
     {
       "name": "DB_MYSQL_URL",
-      "value": "jdbc:mysql://localhost:3307/gappsdb",
-      "description": "JDBC URL MySQL LOCAL"
+      "value": "jdbc:mysql://209.45.104.78:3306/gappsdb",
+      "description": "JDBC URL MySQL GAPPS (schema completo + VW_MULTAS_APP)"
     },
     {
       "name": "DB_MYSQL_HOST",
-      "value": "localhost",
-      "description": "Host MySQL LOCAL"
+      "value": "209.45.104.78",
+      "description": "Host MySQL GAPPS"
     },
     {
       "name": "DB_MYSQL_PORT",
-      "value": "3307",
-      "description": "Puerto MySQL LOCAL"
+      "value": "3306",
+      "description": "Puerto MySQL GAPPS"
     },
     {
       "name": "DB_MYSQL_DATABASE",
       "value": "gappsdb",
-      "description": "Database MySQL LOCAL"
+      "description": "Database MySQL GAPPS"
     },
     {
       "name": "DB_MYSQL_USERNAME",
       "value": "gapps",
-      "description": "Usuario MySQL LOCAL"
+      "description": "Usuario MySQL GAPPS"
     },
     {
       "name": "DB_MYSQL_PASSWORD",
-      "value": "gapps2026",
-      "description": "Password MySQL LOCAL"
+      "value": "Knjux4a9tJCbrly!",
+      "description": "Password MySQL GAPPS"
     }
   ]
 }
