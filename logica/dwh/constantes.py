@@ -42,8 +42,6 @@ STG_FUENTE = {
     "ETAPAS": ("F2-ET", "STG_GS1_ETAPAS", "Etapas sede central (Sheets)"),
     "ORA": ("F5", "STG_ORA_VW_MULTA_COERCITIVA", "SISUD vista multas"),
     "MYSQL": ("F4", "STG_MYSQL_MULTAS", "MySQL gapps query vw_multas_app"),
-    "DIC_TABLAS": ("F2", "STG_GS1_DIC_TABLAS", "DIC_TABLAS"),
-    "DIC_VARIABLES": ("F2", "STG_GS1_DIC_VARIABLES", "DIC_VARIABLES"),
 }
 
 HALLAZGOS = {

@@ -305,7 +305,7 @@ if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
     </hop>
     <hop>
       <from>Python create STG</from>
-      <to>Stage Excel</to>
+      <to>Stage CSEP Sheets</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
       <enabled>Y</enabled>
@@ -315,7 +315,7 @@ if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
       <to>Stage CSEP Sheets</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
     </hop>
     <hop>
       <from>Stage CSEP Sheets</from>
@@ -366,7 +366,7 @@ if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
 Equivalente de wf_main.hwf para entorno Windows.
 H2 se resetea en cada corrida: verifica/levanta el server (tarea) + DDL (h2\scripts\reset_and_create.bat).
 Python create STG: python python\create_stg.py.
-Stage Excel: pl_stage_excel.hpl. Stage Oracle VW: TableInput truncate a H2.
+Stage CSEP/ODs Sheets + Oracle VW + MySQL GAPPS. No Excel.
 Pipeline demo: lee DEMO_TABLA_EJEMPLO.
 Run Python: python python\main.py.
 Conexiones: h2 / oracle_sisud / oracle_BD_CURSOR.</note>

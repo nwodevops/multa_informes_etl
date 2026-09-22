@@ -95,20 +95,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-call :step "Staging Excel local (Hop pl_stage_excel)"
-if /I "%HOP_RUN%"=="hop-run" (
-    where hop-run >nul 2>&1
-    if errorlevel 1 (
-        call :warn "hop-run no encontrado; STG Excel puede quedar vacio"
-        goto :after_excel
-    )
-) else if not exist "%HOP_RUN%" (
-    call :warn "hop-run no encontrado (%HOP_RUN%); STG Excel puede quedar vacio"
-    goto :after_excel
-)
-call "%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_excel.hpl" -r local >> "%RUN_LOG%" 2>&1
-:after_excel
-
 call :step "Staging F2 CSEP Google Sheets (unidades activas)"
 call scripts\stage_csep_sheets.cmd >> "%RUN_LOG%" 2>&1
 if errorlevel 1 (

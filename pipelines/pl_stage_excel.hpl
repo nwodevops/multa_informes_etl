@@ -21,7 +21,7 @@
   </info>
   <notepads>
     <notepad>
-      <note>Solo DIC_TABLAS / DIC_VARIABLES desde input_excel/legacy (Excel CAGR).
+      <note>Solo DIC_TABLAS / DIC_VARIABLES desde input_legacy/input_excel/legacy (Excel CAGR).
 F2 multas+etapas: scripts/stage_csep_sheets.sh + f2_csep_sheets.json.
 </note>
       <xloc>32</xloc>
@@ -105,7 +105,7 @@ F2 multas+etapas: scripts/stage_csep_sheets.sh + f2_csep_sheets.json.
     </field>
     </fields>
     <file>
-      <name>${PROJECT_HOME}/input_excel/legacy/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx</name>
+      <name>${PROJECT_HOME}/input_legacy/input_excel/legacy/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx</name>
       <filemask/>
       <exclude_filemask/>
       <file_required>Y</file_required>
@@ -297,7 +297,7 @@ F2 multas+etapas: scripts/stage_csep_sheets.sh + f2_csep_sheets.json.
     </field>
     </fields>
     <file>
-      <name>${PROJECT_HOME}/input_excel/legacy/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx</name>
+      <name>${PROJECT_HOME}/input_legacy/input_excel/legacy/CAGR_ MA OEFA - 3) MULTAS COERCITIVAS.xlsx</name>
       <filemask/>
       <exclude_filemask/>
       <file_required>Y</file_required>
