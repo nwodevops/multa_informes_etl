@@ -310,7 +310,7 @@ PY=python3
     </hop>
     <hop>
       <from>Python create STG</from>
-      <to>Stage Excel</to>
+      <to>Stage CSEP Sheets</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
       <enabled>Y</enabled>
@@ -320,7 +320,7 @@ PY=python3
       <to>Stage CSEP Sheets</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
-      <enabled>Y</enabled>
+      <enabled>N</enabled>
     </hop>
     <hop>
       <from>Stage CSEP Sheets</from>
@@ -370,8 +370,8 @@ PY=python3
       <note>CORRIDA / smoke (no uses este workflow para mapear STG por primera vez).
 Diseño: Play workflows/wf_create_stg.hwf (deja H2 vivo) y luego pinta pl_stage_*.hpl.
 H2 se resetea en cada corrida: stop + start + DDL (h2/scripts/reset_and_create.sh).
-Python create STG: lee inputs.yaml, CREATE TABLE STG_* (excel + oracle + sheets).
-Stage Excel: pl_stage_excel.hpl (DIC legacy). Stage CSEP Sheets: scripts/stage_csep_sheets.sh. Stage ODs Sheets: scripts/stage_ods_sheets.sh. Stage Oracle VW: TableInput truncate a H2. Stage MySQL GAPPS: pl_stage_mysql.hpl (vw_multas_app.sql).
+Python create STG: lee inputs.yaml, CREATE TABLE STG_* (sheets + oracle + mysql).
+Stage CSEP Sheets: scripts/stage_csep_sheets.sh. Stage ODs Sheets: scripts/stage_ods_sheets.sh. Stage Oracle VW: TableInput truncate a H2. Stage MySQL GAPPS: pl_stage_mysql.hpl (vw_multas_app.sql).
 Pipeline demo: lee DEMO_TABLA_EJEMPLO.
 Run Python: python/main.py. Conexiones: h2 / oracle_sisud / oracle_BD_CURSOR.</note>
       <markdown>N</markdown>

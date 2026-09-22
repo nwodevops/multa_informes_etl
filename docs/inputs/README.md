@@ -33,10 +33,6 @@ flowchart LR
     F2["F2 10 sede central"]
   end
 
-  subgraph excel [Excel local legacy]
-    DIC["F2-DIC CAGR"]
-  end
-
   subgraph remoto [Bases fuente]
     F5only["F5 SISUD"]
     F5["F5 SISUD vista MC"]
@@ -53,7 +49,6 @@ flowchart LR
 
   F1 --> STG
   F2 --> STG
-  DIC --> STG
   F5 --> STG
   STG --> EV --> ENR
 ```
@@ -67,7 +62,6 @@ flowchart LR
 | **F1** | Familia OD | **Multas** | `5) Multas Coercitivas` | Google Sheets | [`f1_ods_sheets.json`](f1_ods_sheets.json) | `STG_GS2_OD_MULTAS` (+ `COD_OD`) | `pl_stage_od_sheet.hpl` vía `scripts/stage_ods_sheets.sh` | Evidencia `DW_M_FACT_MC_OD` + enriquecido; `ID_OD` |
 | **F2** | Sede central | **Multas** | `1) Multas coercitivas` | Google Sheets | [`f2_csep_sheets.json`](f2_csep_sheets.json) | `STG_GS1_CSEP_MULTAS` (+ `COD_UNIDAD`) | `pl_stage_csep_sheet.hpl` vía `scripts/stage_csep_sheets.sh` | Fact enriquecido (`JEFE`/`UF`/…); `ID_ORGANO` |
 | **F2-ET** | Etapas sede central | **Multas** (detalle) | `2) Etapas` | Google Sheets | mismo catálogo F2 | `STG_GS1_ETAPAS` | `pl_stage_csep_etapa.hpl` vía `stage_csep_sheets.sh` | Detalle `DW_M_DET_ETAPA_MC` |
-| **F2-DIC** | Diccionario | Apoyo | `DIC_TABLAS` / `DIC_VARIABLES` | Excel legacy | `input_excel/legacy/CAGR_…xlsx` | `STG_GS1_DIC_*` | `pl_stage_excel.hpl` | Perfilamiento / diccionario |
 | **F5** | SISUD vista MC | **Multas** | — | Oracle | `SISUD.VW_MULTA_COERCITIVA` | `STG_ORA_VW_MULTA_COERCITIVA` | `pl_stage_oracle.hpl` | Evidencia `DW_M_FACT_MC_SISUD`; lookup CUM/CAM al enriquecido |
 | **F4** | App GAPPS | **Multas** | — | MySQL | [`vw_multas_app.sql`](../../input_legacy/input_mysql/vw_multas_app.sql) | `STG_MYSQL_MULTAS` | `pl_stage_mysql.hpl` | AUD `DW_M_AUD_F4_GAPPS` + filas fact (`GAPPS`); grano `NU_IDMC` |
 
@@ -82,7 +76,7 @@ Auth Google: `client_secret.json` en la raíz del proyecto (**gitignored**). Cad
 - 31 ODs activas (`cod_od`, `spreadsheet_key`, `activo`).
 - Hoja: `5) Multas Coercitivas`, headers en fila 3 (`COD_MA`, …).
 - Hop: rango `'5) Multas Coercitivas'!A3:AF` (el plugin salta la 1ª fila del rango = códigos).
-- Excel bajo `input_excel/medidas_administrativas/` **ya no es input** (legacy en `legacy/` si hace falta comparar).
+- Excel histórico no entra al pipeline (queda en `input_legacy/` solo como referencia).
 
 ### Cómo añadir / desactivar una OD
 
@@ -98,7 +92,7 @@ Auth Google: `client_secret.json` en la raíz del proyecto (**gitignored**). Cad
 - Hoja multas: `1) Multas coercitivas`, headers fila 3 (48 cols hasta `FN_URESOL_MC`).
 - Hop: rango `'1) Multas coercitivas'!A3:AV`; etapas `'2) Etapas'!A2:L`.
 - `CCAM` / `UFSAVC`: sin filas de multas hoy; código tomado del título del sheet (no hay `COORD` poblado).
-- Excel CAGR original en `input_excel/legacy/` (solo DIC en Hop).
+- El diccionario se arma en Python (catálogo + columnas STG vivas); no hay Excel DIC.
 
 ### Cómo añadir / desactivar una unidad
 

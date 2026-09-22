@@ -25,15 +25,12 @@ _root = Path(__file__).resolve().parent.parent
 #   ETAPAS  = F2 etapas      (STG_GS1_ETAPAS)
 #   ORA     = F5 SISUD       (STG_ORA_VW_MULTA_COERCITIVA)
 #   MYSQL   = F4 gapps       (STG_MYSQL_MULTAS)
-#   DIC_*   = diccionario legacy (perfilamiento)
 # STEP 4.1: delegar las fases de negocio al pipeline DWH.
 _out = ejecutar(
     GS1,
     GS2,
     ETAPAS,
     ORA,
-    dic_tablas=DIC_TABLAS,
-    dic_variables=DIC_VARIABLES,
     mysql=MYSQL,
     root=_root,
 )

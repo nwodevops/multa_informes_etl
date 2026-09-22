@@ -29,8 +29,6 @@ Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F4 MySQL GAPPS, F5 SISU
 | `ETAPAS` | `STG_GS1_ETAPAS` | F2-ET (Sheets CSEP) |
 | `ORA` | `STG_ORA_VW_MULTA_COERCITIVA` | F5 |
 | `MYSQL` | `STG_MYSQL_MULTAS` | F4 gapps (`vw_multas_app.sql`) |
-| `DIC_TABLAS` | `STG_GS1_DIC_TABLAS` | F2 diccionario |
-| `DIC_VARIABLES` | `STG_GS1_DIC_VARIABLES` | F2 diccionario |
 
 ## Salida
 

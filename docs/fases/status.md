@@ -107,8 +107,6 @@ Se recrean al inicio: `reset_and_create.sh` (DDL base) + `create_stg.py` (DDL st
 | `STG_GS1_CSEP_MULTAS` | F2 Google Sheets sede central | `create_stg.py` | `pl_stage_csep_sheet.hpl` + `stage_csep_sheets.sh` |
 | `STG_GS1_ETAPAS` | F2 etapas sede central | `create_stg.py` | `stage_csep_sheets.sh` |
 | `STG_GS2_OD_MULTAS` | F1 Google Sheets OD | `create_stg.py` | `pl_stage_od_sheet.hpl` + `stage_ods_sheets.sh` |
-| `STG_GS1_DIC_TABLAS` | F2 hoja DIC_TABLAS (Excel legacy) | `create_stg.py` | `pl_stage_excel.hpl` |
-| `STG_GS1_DIC_VARIABLES` | F2 hoja DIC_VARIABLES (Excel legacy) | `create_stg.py` | `pl_stage_excel.hpl` |
 | `STG_ORA_VW_MULTA_COERCITIVA` | F5 Oracle SISUD | `create_stg.py` | `pl_stage_oracle.hpl` |
 
 H2 es **efímero**: al parar el server o al Reset desaparece todo. No es entregable.
@@ -155,7 +153,6 @@ flowchart LR
 |---|---|---|:---:|---|
 | F1 | Google Sheets OD | `STG_GS2_OD_MULTAS` | Sí | `stage_ods_sheets.sh` |
 | F2 | Google Sheets sede central | `STG_GS1_CSEP_MULTAS` / `ETAPAS` | Sí | `stage_csep_sheets.sh` |
-| F2 | DIC (Excel legacy) | `STG_GS1_DIC_*` | Sí | `pl_stage_excel.hpl` |
 | F3 | Informes SISUD | — | **No** | Fuera de alcance |
 | F4 | MySQL GAPP | `STG_MYSQL_MULTAS` | **Sí** | AUD + filas fact (`GAPPS`); sin lookup SISUD |
 | F5 | SISUD vista multas | `STG_ORA_VW_*` | Sí | credenciales Oracle |

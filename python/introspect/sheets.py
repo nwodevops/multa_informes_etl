@@ -33,12 +33,20 @@ def introspect(source: dict, variables: dict[str, str], root: Path | None = None
     if catalog_rel:
         familia = (source.get("familia") or "").strip().lower()
         if familia == "f2_csep" or "f2_csep" in catalog_rel:
-            from f2_csep_catalog import load_catalog, stg_columns
+            from f2_csep_catalog import etapas_columns, load_catalog, stg_columns
         else:
             from f1_ods_catalog import load_catalog, stg_columns
 
         catalog = load_catalog(root, catalog_rel)
-        cols = _columns_from_names(stg_columns(catalog))
+        stg = source.get("stg_table") or ""
+        if familia == "f2_csep" or "f2_csep" in catalog_rel:
+            if stg == (catalog.get("etapas_stg_table") or "STG_GS1_ETAPAS"):
+                names = etapas_columns(catalog)
+            else:
+                names = stg_columns(catalog)
+        else:
+            names = stg_columns(catalog)
+        cols = _columns_from_names(names)
         if not cols:
             raise ValueError(f"{source.get('stg_table')}: catálogo sin columns")
         return cols
