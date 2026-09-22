@@ -2,15 +2,13 @@
 
 ## Feature activa
 
-Ninguna `in_progress`. Última cerrada: `fact-siete-campos`.
+`f4-mysql-aud-fact` (`in_progress`).
 
 ## Hecho reciente
 
-- Siete campos en el fact (planilla + admin SISUD si `-1` + sombras res/UIT).
-- Oracle flaco: enrich en pandas. Sin `DW_M_FACT_MC_*` publicadas.
+- F4 cableado: STG_MYSQL_MULTAS → AUD_F4_GAPPS + filas GAPPS al fact (sin lookup SISUD).
 
 ## Siguiente
 
-1. PC Win: `git checkout windows_v2` → `.\switch-env.ps1 remote` → `init.bat` (materializa las 6 columnas nuevas).
-2. Si Win OK → retomar `fase-remote-deploy`.
-3. Merge a `linux` / `windows` cuando se pida.
+1. Corrida Hop/MySQL: `./switch-env.sh local` (o remote) + `./init.sh` → HARNESS OK.
+2. Confirmar `enriquecida = AUD_F2+AUD_F1+AUD_F4` y `ID_FUENTE=GAPPS` en las filas nuevas.

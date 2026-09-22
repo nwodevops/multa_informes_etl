@@ -161,6 +161,29 @@ def _integrar_gs1(gs1: pd.DataFrame) -> pd.DataFrame:
     return _a_canonico(h, COLS_MULTAS)
 
 
+def _integrar_mysql(mysql: pd.DataFrame) -> pd.DataFrame:
+    """F4 gapps query → bloque canónico GAPPS (sin lookup SISUD)."""
+    if mysql is None or mysql.empty:
+        return _a_canonico(pd.DataFrame(), COLS_MULTAS)
+    h = aplicar_homologacion(mysql, FUENTE_REGISTRO["MYSQL"])
+    m = {
+        "FN_MC": "F_NOTIF_DCG",
+        "FN_RES_MC": "F_NOTIF_RES_MC",
+        "F_REMIS": "F_REMISION_MEMO",
+        "PRESENT_DCG_ADM": "PRESENTO_DESCARGOS",
+        "AMERIT_MC": "AMERITA_MC",
+        "REQ_VERIF_CAMPO": "REQUIERE_VERIF_CAMPO",
+        "EXP_INF_INCUMP": "NUMERO_EXPEDIENTE",
+        "ADM": "ADMINISTRADO",
+        "MULTA_UIT": "MONTO_UIT",
+        "MULTA_S": "MONTO_S",
+        "DOC_SIGED": "DOC_SIGED_DESCARGOS",
+    }
+    h = _renombrar(h, m)
+    h["FUENTE_ORIGEN"] = FUENTE_REGISTRO["MYSQL"]
+    return _a_canonico(h, COLS_MULTAS)
+
+
 def _integrar_ora(ora: pd.DataFrame) -> pd.DataFrame:
     """F5 SISUD → bloque canónico SISUD_VW (ya trae CUM/CAM; MONTO_MULTA = UIT)."""
     if ora is None or ora.empty:
@@ -200,10 +223,12 @@ def integrar(
     gs2: pd.DataFrame,
     etapas: pd.DataFrame,
     ora: pd.DataFrame,
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    """Devuelve (df_csep, df_od, df_sisud, df_etapas). Tres evidencias + etapas; sin enrich."""
+    mysql: pd.DataFrame | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Devuelve (df_csep, df_od, df_sisud, df_etapas, df_gapps). Evidencias + etapas; sin enrich."""
     df_csep = _integrar_gs1(gs1)
     df_od = _integrar_gs2(gs2, None)
     df_sisud = _integrar_ora(ora)
     df_etapas = _integrar_etapas(etapas)
-    return df_csep, df_od, df_sisud, df_etapas
+    df_gapps = _integrar_mysql(mysql if mysql is not None else pd.DataFrame())
+    return df_csep, df_od, df_sisud, df_etapas, df_gapps

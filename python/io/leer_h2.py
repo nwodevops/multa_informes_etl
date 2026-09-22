@@ -3,7 +3,7 @@
 Lo llama python/main.py justo después de la acción Hop «Run Python».
 Las claves del dict (GS1, GS2, …) se inyectan en logica/ejecutar.py.
 
-Contrato: F1=GS2 OD, F2=GS1 CSEP (+ETAPAS), F5=ORA SISUD, + DIC_* legacy.
+Contrato: F1=GS2 OD, F2=GS1 CSEP (+ETAPAS), F4=MYSQL GAPPS, F5=ORA SISUD, + DIC_* legacy.
 Si una tabla STG no existe, se avisa y se deja DataFrame vacío (no aborta toda la corrida).
 """
 
@@ -21,6 +21,7 @@ LECTURAS: dict[str, str] = {
     "ETAPAS": "SELECT * FROM PUBLIC.STG_GS1_ETAPAS",  # F2 etapas
     "GS2": "SELECT * FROM PUBLIC.STG_GS2_OD_MULTAS",  # F1 OD multas
     "ORA": "SELECT * FROM PUBLIC.STG_ORA_VW_MULTA_COERCITIVA",  # F5 SISUD
+    "MYSQL": "SELECT * FROM PUBLIC.STG_MYSQL_MULTAS",  # F4 gapps
     "DIC_TABLAS": "SELECT * FROM PUBLIC.STG_GS1_DIC_TABLAS",
     "DIC_VARIABLES": "SELECT * FROM PUBLIC.STG_GS1_DIC_VARIABLES",
 }

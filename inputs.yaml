@@ -1,7 +1,7 @@
 # Manifiesto de fuentes STG. Python (python/create_stg.py) lo lee y crea
 # CREATE TABLE en H2. Hop extrae las filas. No commitear keys/passwords.
 #
-# type: oracle | sheets | excel
+# type: oracle | sheets | excel | mysql
 # Contrato: .agents/skills/hop-python-etl/inputs.example.yaml
 # Excel local: path relativo a la raíz, header_row = fila de códigos (1-based).
 # F1 ODs: catálogo docs/inputs/f1_ods_sheets.json (Google Sheets; no Excel local).
@@ -45,3 +45,9 @@ sources:
     type: oracle
     connection: oracle_sisud
     object: SISUD.VW_MULTA_COERCITIVA
+
+  - stg_table: STG_MYSQL_MULTAS
+    type: mysql
+    connection: mysql
+    sql_file: input_legacy/input_mysql/vw_multas_app.sql
+    types: varchar

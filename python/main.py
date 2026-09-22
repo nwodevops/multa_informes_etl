@@ -136,6 +136,7 @@ def main() -> int:
         "DW_M_FACT_MC_CSEP",
         "DW_M_FACT_MC_OD",
         "DW_M_FACT_MC_SISUD",
+        "DW_M_FACT_MC_GAPPS",
     }
     tablas_dw = {
         k: v

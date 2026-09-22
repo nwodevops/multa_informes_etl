@@ -24,6 +24,7 @@ _root = Path(__file__).resolve().parent.parent
 #   GS2     = F1 OD multas   (STG_GS2_OD_MULTAS)
 #   ETAPAS  = F2 etapas      (STG_GS1_ETAPAS)
 #   ORA     = F5 SISUD       (STG_ORA_VW_MULTA_COERCITIVA)
+#   MYSQL   = F4 gapps       (STG_MYSQL_MULTAS)
 #   DIC_*   = diccionario legacy (perfilamiento)
 # STEP 4.1: delegar las fases de negocio al pipeline DWH.
 _out = ejecutar(
@@ -33,6 +34,7 @@ _out = ejecutar(
     ORA,
     dic_tablas=DIC_TABLAS,
     dic_variables=DIC_VARIABLES,
+    mysql=MYSQL,
     root=_root,
 )
 
@@ -45,6 +47,7 @@ DF_MULTAS = _out["DF_MULTAS"]          # UNION auxiliar CSEP∪OD∪SISUD (calid
 DF_CSEP = _out["DF_CSEP"]              # bloque canónico F2
 DF_OD = _out["DF_OD"]                  # bloque canónico F1
 DF_SISUD = _out["DF_SISUD"]            # bloque canónico F5
+DF_GAPPS = _out["DF_GAPPS"]            # bloque canónico F4
 DF_ETAPAS = _out["DF_ETAPAS"]
 DW_M_DQ_HALLAZGO = _out["DW_M_DQ_HALLAZGO"]
 DW_M_QA_AMARRE = _out["DW_M_QA_AMARRE"]
@@ -61,6 +64,7 @@ DW_M_DIM_PARAMETRO_UIT = _out["DW_M_DIM_PARAMETRO_UIT"]
 DW_M_FACT_MC_CSEP = _out["DW_M_FACT_MC_CSEP"]
 DW_M_FACT_MC_OD = _out["DW_M_FACT_MC_OD"]
 DW_M_FACT_MC_SISUD = _out["DW_M_FACT_MC_SISUD"]
+DW_M_FACT_MC_GAPPS = _out["DW_M_FACT_MC_GAPPS"]
 DW_M_FACT_MULTA_COERCITIVA = _out["DW_M_FACT_MULTA_COERCITIVA"]
 DW_M_DET_ETAPA_MC = _out["DW_M_DET_ETAPA_MC"]
 DW_M_INDICADOR_RESULTADO = _out["DW_M_INDICADOR_RESULTADO"]

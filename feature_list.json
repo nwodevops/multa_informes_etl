@@ -265,6 +265,14 @@
       "doc": "docs/adjunto/diccionario-fact.md",
       "evidencia": "progress/impl_fact-siete-campos.md",
       "nota": "Materializa en el próximo wipe Oracle. Sin corrida init.sh en esta sesión."
+    },
+    {
+      "id": "f4-mysql-aud-fact",
+      "title": "F4 MySQL gapps: AUD 1:1 + filas GAPPS al fact (sin lookup SISUD)",
+      "status": "in_progress",
+      "criterio": "Hop STG_MYSQL_MULTAS desde vw_multas_app.sql; DW_M_AUD_F4_GAPPS 1:1; fact UNION F1∪F2∪GAPPS (ID_FUENTE=GAPPS); sin lookup SISUD en filas GAPPS; enriquecida = AUD_F2+AUD_F1+AUD_F4; ./init.sh HARNESS OK",
+      "doc": "input_legacy/input_mysql/vw_multas_app.sql",
+      "evidencia": "progress/impl_f4-mysql-aud-fact.md"
     }
   ]
 }

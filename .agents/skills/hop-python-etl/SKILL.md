@@ -12,8 +12,7 @@ description: >-
 ## Arquitectura (no mezclar capas)
 
 ```
-Fuentes este proyecto: Sheets F1/F2 + Oracle SISUD F5
-  (F4 MySQL fuera de ingestión; arquetipo genérico puede declarar MySQL en otros repos)
+Fuentes este proyecto: Sheets F1/F2 + MySQL F4 (vw_multas_app.sql) + Oracle SISUD F5
   → inputs.yaml          (declara STG_*)
   → Python create_stg    (DDL H2; no extrae filas)
   → Hop extract          (TableInput → TableOutput H2, truncate)

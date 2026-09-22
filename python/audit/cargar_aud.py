@@ -8,6 +8,7 @@ Mapeo STG lógico → tabla audit:
   ETAPAS → DW_M_AUD_F2_CSEP_ETAPAS
   GS2    → DW_M_AUD_F1_OD_MULTAS
   ORA    → DW_M_AUD_F5_SISUD_VW
+  MYSQL  → DW_M_AUD_F4_GAPPS
 
 Todas las columnas se guardan como VARCHAR2 (foto 1:1 textual) + FECHA_CARGA.
 """
@@ -30,6 +31,7 @@ MAPEO_AUD: dict[str, str] = {
     "ETAPAS": "DW_M_AUD_F2_CSEP_ETAPAS",
     "GS2": "DW_M_AUD_F1_OD_MULTAS",
     "ORA": "DW_M_AUD_F5_SISUD_VW",
+    "MYSQL": "DW_M_AUD_F4_GAPPS",
 }
 
 VARCHAR_LEN = 4000
@@ -142,7 +144,7 @@ def cargar_aud(
     stg: dict[str, pd.DataFrame],
     root: Path | None = None,
 ) -> dict[str, int]:
-    """Punto de entrada desde main.py: crea/llena DW_M_AUD_* desde STG (GS1/ETAPAS/GS2/ORA)."""
+    """Punto de entrada desde main.py: crea/llena DW_M_AUD_* desde STG (GS1/ETAPAS/GS2/ORA/MYSQL)."""
     root = root or project_root()
     # STEP 8.1: abrir Oracle para guardar la fotografía cruda del staging.
     conn, _cv = _connect(root)

@@ -196,6 +196,34 @@ cd "${PROJECT_HOME}"
       <attributes_hac/>
     </action>
     <action>
+      <filename>${PROJECT_HOME}/pipelines/pl_stage_mysql.hpl</filename>
+      <params_from_previous>N</params_from_previous>
+      <exec_per_row>N</exec_per_row>
+      <clear_rows>N</clear_rows>
+      <clear_files>N</clear_files>
+      <create_parent_folder>N</create_parent_folder>
+      <set_logfile>N</set_logfile>
+      <set_append_logfile>N</set_append_logfile>
+      <logfile/>
+      <logext/>
+      <add_date>N</add_date>
+      <add_time>N</add_time>
+      <loglevel>Basic</loglevel>
+      <wait_until_finished>Y</wait_until_finished>
+      <parameters>
+        <pass_all_parameters>Y</pass_all_parameters>
+      </parameters>
+      <run_configuration>local</run_configuration>
+      <name>Stage MySQL GAPPS</name>
+      <description>gappsdb vw_multas_app.sql → H2 STG_MYSQL_MULTAS (pl_stage_mysql.hpl)</description>
+      <type>PIPELINE</type>
+      <attributes/>
+      <xloc>832</xloc>
+      <yloc>96</yloc>
+      <parallel>N</parallel>
+      <attributes_hac/>
+    </action>
+    <action>
       <filename/>
       <work_directory>${PROJECT_HOME}</work_directory>
       <arguments/>
@@ -310,6 +338,13 @@ PY=python3
     </hop>
     <hop>
       <from>Stage Oracle VW</from>
+      <to>Stage MySQL GAPPS</to>
+      <evaluation>Y</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Stage MySQL GAPPS</from>
       <to>Pipeline demo</to>
       <evaluation>Y</evaluation>
       <unconditional>N</unconditional>
@@ -336,7 +371,7 @@ PY=python3
 Diseño: Play workflows/wf_create_stg.hwf (deja H2 vivo) y luego pinta pl_stage_*.hpl.
 H2 se resetea en cada corrida: stop + start + DDL (h2/scripts/reset_and_create.sh).
 Python create STG: lee inputs.yaml, CREATE TABLE STG_* (excel + oracle + sheets).
-Stage Excel: pl_stage_excel.hpl (DIC legacy). Stage CSEP Sheets: scripts/stage_csep_sheets.sh. Stage ODs Sheets: scripts/stage_ods_sheets.sh. Stage Oracle VW: TableInput truncate a H2.
+Stage Excel: pl_stage_excel.hpl (DIC legacy). Stage CSEP Sheets: scripts/stage_csep_sheets.sh. Stage ODs Sheets: scripts/stage_ods_sheets.sh. Stage Oracle VW: TableInput truncate a H2. Stage MySQL GAPPS: pl_stage_mysql.hpl (vw_multas_app.sql).
 Pipeline demo: lee DEMO_TABLA_EJEMPLO.
 Run Python: python/main.py. Conexiones: h2 / oracle_sisud / oracle_BD_CURSOR.</note>
       <markdown>N</markdown>

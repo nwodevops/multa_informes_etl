@@ -1,4 +1,4 @@
-"""Constantes de corrida y mapa de fuentes F1/F2/F5 (multas). Semilla GAPPS (F4) histórica.
+"""Constantes de corrida y mapa de fuentes F1/F2/F4/F5 (multas).
 
 ID_CARGA / FECHA_CARGA: se fijan al importar el módulo (una corrida = un id).
 FUENTE_REGISTRO: alias staging Hop → código de linaje que viaja en FUENTE_ORIGEN / ID_FUENTE.
@@ -21,6 +21,7 @@ FUENTE_REGISTRO = {
     "GS2": "OD_SHEETS",
     "GS1": "CAGR",
     "ORA": "SISUD_VW",
+    "MYSQL": "GAPPS",
     "ETAPAS": "CAGR",
 }
 
@@ -30,7 +31,7 @@ SEMILLAS_FUENTE_REGISTRO = (
     (-1, "ND", "NO ESPECIFICADO", "ND", "NO ESPECIFICADO"),
     (1, "OD_SHEETS", "OD", "F1", "31 Google Sheets OD → STG_GS2_OD_MULTAS"),
     (2, "CAGR", "Sede central", "F2", "10 Google Sheets sede central → STG_GS1_CSEP_MULTAS / ETAPAS"),
-    (3, "GAPPS", "MySQL GAPP (histórico)", "F4", "Fuera de ingestión; semilla conservada"),
+    (3, "GAPPS", "MySQL GAPP", "F4", "gappsdb query → STG_MYSQL_MULTAS / DW_M_AUD_F4_GAPPS"),
     (4, "SISUD_VW", "Oracle SISUD", "F5", "SISUD.VW_MULTA_COERCITIVA → STG_ORA_*"),
     (5, "OD_EXCEL", "Excel OD (legacy)", "F1", "Alias histórico; el ETL normaliza a OD_SHEETS"),
 )
@@ -40,6 +41,7 @@ STG_FUENTE = {
     "GS2": ("F1", "STG_GS2_OD_MULTAS", "OD Google Sheets multas"),
     "ETAPAS": ("F2-ET", "STG_GS1_ETAPAS", "Etapas sede central (Sheets)"),
     "ORA": ("F5", "STG_ORA_VW_MULTA_COERCITIVA", "SISUD vista multas"),
+    "MYSQL": ("F4", "STG_MYSQL_MULTAS", "MySQL gapps query vw_multas_app"),
     "DIC_TABLAS": ("F2", "STG_GS1_DIC_TABLAS", "DIC_TABLAS"),
     "DIC_VARIABLES": ("F2", "STG_GS1_DIC_VARIABLES", "DIC_VARIABLES"),
 }

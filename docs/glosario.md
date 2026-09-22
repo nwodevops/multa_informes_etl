@@ -51,7 +51,7 @@ El `_` al final (`STG_`, `DW_M_`) significa “todas las tablas de esa capa”.
 | **F2 / GS1** | Planillas sede central (+ etapas) → filas del fact con `ID_FUENTE` = Sede central. |
 | **F5 / SISUD** | Vista Oracle `VW_MULTA_COERCITIVA` (CUM/CAM al enrich). No agrega filas al fact. |
 | **F3** | Informes SISUD — **fuera de alcance**. |
-| **F4 / GAPP** | MySQL histórico — **fuera de ingestión** (semilla `GAPPS` en dim). |
+| **F4 / GAPP** | MySQL gapps — AUD + filas al fact (`ID_FUENTE=GAPPS`), sin lookup SISUD. |
 | **MC** | Multa coercitiva. |
 | **Evidencia** | Fact 1:1 por fuente, en memoria, sin merge. |
-| **Enriquecida** | Negocio sede central + OD, con CUM/CAM SISUD a la derecha. |
+| **Enriquecida** | Negocio sede central + OD + GAPPS; CUM/CAM SISUD solo sobre planillas. |

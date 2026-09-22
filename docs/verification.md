@@ -16,11 +16,11 @@ Debe terminar con **`HARNESS OK`**. El script:
 1. Valida `feature_list.json` (máx. una `in_progress`).
 2. Resetea H2 y aplica DDL (`reset_and_create.sh`).
 3. Crea tablas `STG_*` (`python/create_stg.py`).
-4. Carga Sheets F1/F2 + Excel DIC + Oracle SISUD vía Hop / scripts (**sin MySQL**).
+4. Carga Sheets F1/F2 + Excel DIC + Oracle SISUD + MySQL GAPPS vía Hop / scripts.
 5. Ejecuta `python/main.py` y comprueba salidas PROF/DIM/FACT evidencia + `DW_M_DQ_HALLAZGO` + INDICADOR (memoria).
 6. Valida Oracle canónico:
-   - hechos evidencia + enriquecida (= CSEP+OD); `ID_TIEMPO_FIRMA`; sin F3 / sin `FUENTE_REGISTRO` VARCHAR
-   - `DW_M_DQ_HALLAZGO` presente; `DW_M_AUD_*` alineados a STG
+   - hechos evidencia + enriquecida (= CSEP+OD+GAPPS); `ID_TIEMPO_FIRMA`; sin F3 / sin `FUENTE_REGISTRO` VARCHAR
+   - `DW_M_DQ_HALLAZGO` presente; `DW_M_AUD_*` (F1/F2/F4/F5) alineados a STG
    - **sin** `VW_MC_*`, **sin** `DW_M_QA_*`, **sin** `DW_M_INDICADOR_*` en Oracle
    - `DW_M_DIM_ORGANO_UNIDAD` ≤ 20 (~11 CSEP+ND)
 
