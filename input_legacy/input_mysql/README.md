@@ -1,6 +1,6 @@
 # MySQL (gappsdb) — F4 input del ETL
 
-Query ancha al molde Excel F2. Hop la stagea a `STG_MYSQL_MULTAS`.
+Query ancha al molde Excel F2. En gappsdb vive como `VW_MULTAS_APP`; Hop hace `SELECT *` hacia `STG_MYSQL_MULTAS`.
 
 | Archivo | Contenido |
 |---|---|

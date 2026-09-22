@@ -351,6 +351,13 @@ PY=python3
       <enabled>Y</enabled>
     </hop>
     <hop>
+      <from>Stage MySQL GAPPS</from>
+      <to>Pipeline demo</to>
+      <evaluation>N</evaluation>
+      <unconditional>N</unconditional>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
       <from>Pipeline demo</from>
       <to>Run Python</to>
       <evaluation>Y</evaluation>

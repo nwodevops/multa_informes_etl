@@ -98,11 +98,41 @@ def _drop_table(cur, tabla: str) -> None:
     print(f"AUD: DROP TABLE {tabla}", flush=True)
 
 
-def _create_and_load(cur, tabla: str, df: pd.DataFrame) -> int:
-    """DROP+CREATE+INSERT de una tabla DW_M_AUD_* a partir de un DataFrame STG."""
+def _columnas_plantilla(stg_key: str, df: pd.DataFrame | None, root: Path) -> list[str]:
+    """Columnas de la foto AUD. Si MySQL no bajó filas, usa aliases del sql_file."""
+    if df is not None and len(df.columns):
+        return [str(c) for c in df.columns]
+    if stg_key == "MYSQL":
+        from introspect.mysql import introspect
+
+        cols = introspect(
+            {
+                "stg_table": "STG_MYSQL_MULTAS",
+                "sql_file": "input_legacy/input_mysql/vw_multas_app.sql",
+                "types": "varchar",
+            },
+            {},
+            root,
+        )
+        return [c.name for c in cols]
+    return []
+
+
+def _create_and_load(
+    cur,
+    tabla: str,
+    df: pd.DataFrame | None,
+    *,
+    stg_key: str,
+    root: Path,
+) -> int:
+    """DROP+CREATE+INSERT de una tabla DW_M_AUD_* a partir de un DataFrame STG.
+
+    STG vacío o MySQL caído: crea la tabla (columnas de plantilla) con 0 filas.
+    """
     _drop_table(cur, tabla)
-    if df is None or df.empty:
-        # Tabla mínima para que exista el objeto aunque STG venga vacío
+    names = _columnas_plantilla(stg_key, df, root)
+    if not names:
         cur.execute(
             f"CREATE TABLE {ESQUEMA}.{tabla} ("
             f"FECHA_CARGA DATE DEFAULT SYSDATE)"
@@ -110,7 +140,7 @@ def _create_and_load(cur, tabla: str, df: pd.DataFrame) -> int:
         print(f"AUD: {tabla}: 0 filas (STG vacío)", flush=True)
         return 0
 
-    cols = [_safe_col(c) for c in df.columns]
+    cols = [_safe_col(c) for c in names]
     # Evitar duplicados tras truncar a 30 chars
     seen: dict[str, int] = {}
     unique_cols: list[str] = []
@@ -127,8 +157,9 @@ def _create_and_load(cur, tabla: str, df: pd.DataFrame) -> int:
     col_list = ", ".join(unique_cols)
     binds = ", ".join(f":{i + 1}" for i in range(len(unique_cols)))
     rows = []
-    for row in df.itertuples(index=False, name=None):
-        rows.append(tuple(_as_str(v) for v in row))
+    if df is not None and not df.empty:
+        for row in df.itertuples(index=False, name=None):
+            rows.append(tuple(_as_str(v) for v in row))
     if rows:
         cur.executemany(
             f"INSERT INTO {ESQUEMA}.{tabla} ({col_list}) VALUES ({binds})",
@@ -136,7 +167,8 @@ def _create_and_load(cur, tabla: str, df: pd.DataFrame) -> int:
         )
     cur.execute(f"SELECT COUNT(*) FROM {ESQUEMA}.{tabla}")
     n = int(cur.fetchone()[0])
-    print(f"AUD: {tabla}: {len(df)} filas STG -> {n} en BD", flush=True)
+    n_stg = 0 if df is None else len(df)
+    print(f"AUD: {tabla}: {n_stg} filas STG -> {n} en BD", flush=True)
     return n
 
 
@@ -157,10 +189,17 @@ def cargar_aud(
             print(f"AUD: foto cruda STG → {ESQUEMA}.DW_M_AUD_*", flush=True)
             for stg_key, tabla in MAPEO_AUD.items():
                 df = stg.get(stg_key)
-                if df is None:
+                if df is None and stg_key != "MYSQL":
                     print(f"AUD: AVISO falta STG '{stg_key}' → skip {tabla}", flush=True)
                     continue
-                counts[tabla] = _create_and_load(cur, tabla, df)
+                if df is None:
+                    print(f"AUD: AVISO MySQL no stageado; {tabla} vacía", flush=True)
+                    df = pd.DataFrame()
+                elif df.empty and stg_key == "MYSQL":
+                    print(f"AUD: AVISO STG MySQL vacío; {tabla} vacía", flush=True)
+                counts[tabla] = _create_and_load(
+                    cur, tabla, df, stg_key=stg_key, root=root
+                )
                 conn.commit()
         finally:
             cur.close()
