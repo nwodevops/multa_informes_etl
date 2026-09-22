@@ -35,6 +35,7 @@ def ejecutar(
     ora: pd.DataFrame,
     dic_tablas: pd.DataFrame | None = None,
     dic_variables: pd.DataFrame | None = None,
+    mysql: pd.DataFrame | None = None,
     root: Path | None = None,
 ) -> dict[str, pd.DataFrame]:
     """Ejecuta Fases 2–7 y devuelve todos los DataFrames de salida (clave = nombre lógico/tabla)."""
@@ -43,6 +44,7 @@ def ejecutar(
         "GS2": gs2,
         "ETAPAS": etapas,
         "ORA": ora,
+        "MYSQL": mysql if mysql is not None else pd.DataFrame(),
         "DIC_TABLAS": dic_tablas if dic_tablas is not None else pd.DataFrame(),
         "DIC_VARIABLES": dic_variables if dic_variables is not None else pd.DataFrame(),
     }
@@ -54,12 +56,16 @@ def ejecutar(
 
     # STEP 2: homologar y llevar cada fuente a su bloque canónico.
     # CSEP, OD y SISUD permanecen separados; aquí no se hace JOIN entre fuentes.
-    df_csep, df_od, df_sisud, df_etapas = integrar(gs1, gs2, etapas, ora)
+    df_csep, df_od, df_sisud, df_etapas, df_gapps = integrar(
+        gs1, gs2, etapas, ora, mysql
+    )
 
     # STEP 3: formar una UNION auxiliar para calidad y KPIs.
     # DF_MULTAS no es el fact de negocio ni reemplaza los facts de evidencia.
     df_sheets = pd.concat([df_csep, df_od], ignore_index=True, sort=False)
-    df_multas = pd.concat([df_sheets, df_sisud], ignore_index=True, sort=False)
+    df_multas = pd.concat(
+        [df_sheets, df_sisud, df_gapps], ignore_index=True, sort=False
+    )
 
     # STEP 4: aplicar calidad y amarre H9 con cuarentena blanda.
     # Se marcan defectos en DQ/FG_CONFORME; las filas no se eliminan.
@@ -67,13 +73,14 @@ def ejecutar(
     df_multas, dq_hallazgo, qa_amarre, qa_amarre_det = aplicar_calidad(df_multas, df_sisud)
 
     # STEP 5: construir dimensiones, facts de evidencia (memoria) y detalle de etapas.
-    modelo = construir_modelo(df_csep, df_od, df_sisud, df_etapas)
+    modelo = construir_modelo(df_csep, df_od, df_sisud, df_etapas, df_gapps)
 
-    # STEP 5b: fact de negocio — vertical F1∪F2, horizontal lookup SISUD.
+    # STEP 5b: fact de negocio — F1∪F2 + lookup SISUD, luego UNION GAPPS.
     fact_enriq = enriquecer_sheets_sisud(
         modelo["DW_M_FACT_MC_CSEP"],
         modelo["DW_M_FACT_MC_OD"],
         modelo["DW_M_FACT_MC_SISUD"],
+        modelo["DW_M_FACT_MC_GAPPS"],
     )
 
     # STEP 6: calcular indicadores en memoria usando evidencia y hallazgos.
@@ -82,6 +89,7 @@ def ejecutar(
             modelo["DW_M_FACT_MC_CSEP"],
             modelo["DW_M_FACT_MC_OD"],
             modelo["DW_M_FACT_MC_SISUD"],
+            modelo["DW_M_FACT_MC_GAPPS"],
         ],
         ignore_index=True,
         sort=False,
@@ -110,12 +118,14 @@ def ejecutar(
                 "N_DF_CSEP": len(df_csep),
                 "N_DF_OD": len(df_od),
                 "N_DF_SISUD": len(df_sisud),
+                "N_DF_GAPPS": len(df_gapps),
                 "N_DF_ETAPAS": len(df_etapas),
                 "N_DW_M_DQ_HALLAZGO": len(dq_hallazgo),
                 "N_MULTAS_CONFORMES": n_conf_m,
                 "N_FACT_CSEP": len(modelo["DW_M_FACT_MC_CSEP"]),
                 "N_FACT_OD": len(modelo["DW_M_FACT_MC_OD"]),
                 "N_FACT_SISUD": len(modelo["DW_M_FACT_MC_SISUD"]),
+                "N_FACT_GAPPS": len(modelo["DW_M_FACT_MC_GAPPS"]),
                 "N_FACT_ENRIQUECIDA": len(fact_enriq),
                 "N_DET_ETAPAS": len(modelo["DW_M_DET_ETAPA_MC"]),
                 "N_INDICADORES": len(indicadores),
@@ -132,6 +142,7 @@ def ejecutar(
         "DF_CSEP": df_csep,
         "DF_OD": df_od,
         "DF_SISUD": df_sisud,
+        "DF_GAPPS": df_gapps,
         "DF_ETAPAS": df_etapas,
         "DW_M_DQ_HALLAZGO": dq_hallazgo,
         "DW_M_QA_AMARRE": qa_amarre,

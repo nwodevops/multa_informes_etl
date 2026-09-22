@@ -615,10 +615,14 @@ def construir_modelo(
     df_od: pd.DataFrame,
     df_sisud: pd.DataFrame,
     df_etapas: pd.DataFrame,
+    df_gapps: pd.DataFrame | None = None,
 ) -> dict[str, pd.DataFrame]:
-    """Fase 5: 3 facts evidencia (memoria) + dims + etapas. Enrich en enrich.py."""
+    """Fase 5: facts evidencia (memoria) + dims + etapas. Enrich en enrich.py."""
     # df_all solo para poblar dims que miran valores distintos (estado, administrado)
-    df_all = pd.concat([df_csep, df_od, df_sisud], ignore_index=True, sort=False)
+    bloques = [df_csep, df_od, df_sisud]
+    if df_gapps is not None:
+        bloques.append(df_gapps)
+    df_all = pd.concat(bloques, ignore_index=True, sort=False)
 
     dim_tiempo = _build_dim_tiempo()
     dim_estado = _build_dim_estado(df_all)
@@ -634,6 +638,9 @@ def construir_modelo(
     fact_csep = _build_fact_multas(df_csep, *args)    # → DW_M_FACT_MC_CSEP
     fact_od = _build_fact_multas(df_od, *args)        # → DW_M_FACT_MC_OD
     fact_sisud = _build_fact_multas(df_sisud, *args)  # → DW_M_FACT_MC_SISUD
+    fact_gapps = _build_fact_multas(
+        df_gapps if df_gapps is not None else pd.DataFrame(), *args
+    )
     det_etapas = _build_det_etapas(df_etapas, fact_csep, dim_fuente)
 
     return {
@@ -648,5 +655,6 @@ def construir_modelo(
         "DW_M_FACT_MC_CSEP": fact_csep,
         "DW_M_FACT_MC_OD": fact_od,
         "DW_M_FACT_MC_SISUD": fact_sisud,
+        "DW_M_FACT_MC_GAPPS": fact_gapps,
         "DW_M_DET_ETAPA_MC": det_etapas,
     }

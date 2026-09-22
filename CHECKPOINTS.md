@@ -75,9 +75,9 @@ Módulo: `logica/dwh/dimensional.py`. Manual: `docs/lineamientos/extra/manual-co
 
 - [ ] Wipe canónico `DW_M_*` / `VW_*` → DDL `01`+`02` + `DW_M_DQ_HALLAZGO` (03 filtrado) (+`05`) → INSERT enriquecida/DET/DQ → `DW_M_AUD_*`.
 - [ ] **Sin** `04`/`06`/`07` en runtime; sin `DW_M_FACT_MC_*` ni vistas `VW_MC_*` en destino.
-- [ ] Enriquecida COUNT = AUD_F2 + AUD_F1 (mismo grano que F1∪F2).
+- [ ] Enriquecida COUNT = AUD_F2 + AUD_F1 + AUD_F4 (F1∪F2∪GAPPS; SISUD no suma filas).
 - [ ] Log `DW: <tabla>: N filas -> N en BD (OK)` para dims/facts/DET/DQ.
-- [ ] `DW_M_AUD_*` alineados a STG (F1/F2/F5); `python/verify_dw.py` OK.
+- [ ] `DW_M_AUD_*` alineados a STG (F1/F2/F4/F5); `python/verify_dw.py` OK.
 
 Módulo: `python/io/cargar_dw.py` + `python/audit/cargar_aud.py`. Skill: `.agents/skills/oracle-cargar-dw/`.
 

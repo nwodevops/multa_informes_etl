@@ -18,7 +18,7 @@ CAPA POST-STAGING (lineamientos Fases 2–7)
   python/audit/cargar_aud.py  DW_M_AUD_* 1:1 desde STG (fuera de estrella)
 ```
 
-Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F5 SISUD. **Sin MySQL.**
+Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F4 MySQL GAPPS, F5 SISUD.
 
 ## Entrada (`python/io/leer_h2.py`)
 
@@ -28,6 +28,7 @@ Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F5 SISUD. **Sin MySQL.*
 | `GS2` | `STG_GS2_OD_MULTAS` | F1 ODs Google Sheets (`COD_OD` por fila) |
 | `ETAPAS` | `STG_GS1_ETAPAS` | F2-ET (Sheets CSEP) |
 | `ORA` | `STG_ORA_VW_MULTA_COERCITIVA` | F5 |
+| `MYSQL` | `STG_MYSQL_MULTAS` | F4 gapps (`vw_multas_app.sql`) |
 | `DIC_TABLAS` | `STG_GS1_DIC_TABLAS` | F2 diccionario |
 | `DIC_VARIABLES` | `STG_GS1_DIC_VARIABLES` | F2 diccionario |
 
@@ -38,16 +39,16 @@ Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F5 SISUD. **Sin MySQL.*
 | Nombre | Qué es |
 |---|---|
 | `DW_M_DIM_*` / `DW_M_DET_ETAPA_MC` | Estrella (DET FK al enriquecido) |
-| `DW_M_FACT_MULTA_COERCITIVA` | Negocio: F1∪F2 + lookup SISUD (`logica/dwh/enrich.py`) |
+| `DW_M_FACT_MULTA_COERCITIVA` | Negocio: F1∪F2 + lookup SISUD ∪ GAPPS (`logica/dwh/enrich.py`) |
 | `DW_M_DQ_HALLAZGO` | Bitácora R01–R05 (cuarentena blanda; no elimina filas) |
-| `DW_M_AUD_F1_OD_MULTAS` / `DW_M_AUD_F2_CSEP_MULTAS` / `DW_M_AUD_F2_CSEP_ETAPAS` / `DW_M_AUD_F5_SISUD_VW` | Foto cruda STG 1:1 |
+| `DW_M_AUD_F1_OD_MULTAS` / `DW_M_AUD_F2_CSEP_MULTAS` / `DW_M_AUD_F2_CSEP_ETAPAS` / `DW_M_AUD_F5_SISUD_VW` / `DW_M_AUD_F4_GAPPS` | Foto cruda STG 1:1 |
 
 ### Solo memoria de corrida (no Oracle)
 
 | Nombre | Fase | Qué es |
 |---|---|---|
 | `PROF_*` / `DICCIONARIO` / `DF_*` | 2–4 | Intermedios |
-| `DW_M_FACT_MC_CSEP` / `_OD` / `_SISUD` | 5 | Evidencia por fuente (no se publica) |
+| `DW_M_FACT_MC_CSEP` / `_OD` / `_SISUD` / `_GAPPS` | 5 | Evidencia por fuente (no se publica) |
 | `DW_M_QA_AMARRE*` | 4 | Amarre H9 (resumen/detalle) |
 | `DW_M_INDICADOR_RESULTADO` | 7 | KPIs K1–K5 |
 | `RESULTADO` | 2–7 | Resumen de corrida |

@@ -1,6 +1,6 @@
 # Manifiesto de fuentes — copiar a inputs.yaml en la raíz del proyecto.
 # Python (create_stg.py) solo DDL STG_*; Hop extrae filas.
-# Types: oracle | sheets | excel (sin mysql).
+# Types: oracle | sheets | excel | mysql.
 # Sheets/Excel: types varchar (#N/A). Ver reference.md
 
 sources:
@@ -20,4 +20,10 @@ sources:
     path: input_excel/ejemplo.xlsx
     worksheet: "Datos"
     header_row: 3
+    types: varchar
+
+  - stg_table: STG_MYSQL_MULTAS
+    type: mysql
+    connection: mysql
+    sql_file: input_legacy/input_mysql/vw_multas_app.sql
     types: varchar

@@ -47,7 +47,7 @@ flowchart TB
   FACT --> VW
 ```
 
-> **F3 OUT.** **F4 MySQL fuera de ingestión** (semilla `GAPPS` en dim fuente únicamente).
+> **F3 OUT.** **F4 MySQL activo:** `STG_MYSQL_MULTAS` → AUD + filas fact (`GAPPS`), sin lookup SISUD.
 
 ---
 
@@ -157,7 +157,7 @@ flowchart LR
 | F2 | Google Sheets sede central | `STG_GS1_CSEP_MULTAS` / `ETAPAS` | Sí | `stage_csep_sheets.sh` |
 | F2 | DIC (Excel legacy) | `STG_GS1_DIC_*` | Sí | `pl_stage_excel.hpl` |
 | F3 | Informes SISUD | — | **No** | Fuera de alcance |
-| F4 | MySQL GAPP | — | **No** | Fuera de ingestión; semilla `GAPPS` en dim |
+| F4 | MySQL GAPP | `STG_MYSQL_MULTAS` | **Sí** | AUD + filas fact (`GAPPS`); sin lookup SISUD |
 | F5 | SISUD vista multas | `STG_ORA_VW_*` | Sí | credenciales Oracle |
 
 ---

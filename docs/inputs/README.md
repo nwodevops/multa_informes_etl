@@ -18,8 +18,9 @@ Detalle campo a campo: [`../lineamientos/ANEXO_MAPEO_CAMPOS.md`](../lineamientos
 | **31 ODs** | F1 — Google Sheets de oficinas desconcentradas | Catálogo JSON + Hop `GoogleSheetsInput` |
 | **10 sede central** | F2 — Google Sheets de coordinaciones/unidades (+ etapas) | Catálogo JSON + Hop |
 | **Vista institucional multas** | F5 — Oracle SISUD (lookup, no planilla) | En uso |
+| **App transaccional MC** | F4 — MySQL gapps (`vw_multas_app.sql`) | AUD + filas al fact (`ID_FUENTE=GAPPS`), sin lookup SISUD |
 
-**Fuera de alcance:** F3 — Oracle SISUD informes; **F4 — MySQL GAPP** (`T_MVC_MULTACOERCITIVA_MC`); consolidados F1 (`CONSOLIDADO MEDIDAS ADMINISTRATIVAS`); unidad CODE (solo en `DW_M_DIM_OD`, sin sheet). **No hay una base CSEP.**
+**Fuera de alcance:** F3 — Oracle SISUD informes; consolidados F1 (`CONSOLIDADO MEDIDAS ADMINISTRATIVAS`); unidad CODE (solo en `DW_M_DIM_OD`, sin sheet). **No hay una base CSEP.**
 
 ---
 
@@ -68,6 +69,7 @@ flowchart LR
 | **F2-ET** | Etapas sede central | **Multas** (detalle) | `2) Etapas` | Google Sheets | mismo catálogo F2 | `STG_GS1_ETAPAS` | `pl_stage_csep_etapa.hpl` vía `stage_csep_sheets.sh` | Detalle `DW_M_DET_ETAPA_MC` |
 | **F2-DIC** | Diccionario | Apoyo | `DIC_TABLAS` / `DIC_VARIABLES` | Excel legacy | `input_excel/legacy/CAGR_…xlsx` | `STG_GS1_DIC_*` | `pl_stage_excel.hpl` | Perfilamiento / diccionario |
 | **F5** | SISUD vista MC | **Multas** | — | Oracle | `SISUD.VW_MULTA_COERCITIVA` | `STG_ORA_VW_MULTA_COERCITIVA` | `pl_stage_oracle.hpl` | Evidencia `DW_M_FACT_MC_SISUD`; lookup CUM/CAM al enriquecido |
+| **F4** | App GAPPS | **Multas** | — | MySQL | [`vw_multas_app.sql`](../../input_legacy/input_mysql/vw_multas_app.sql) | `STG_MYSQL_MULTAS` | `pl_stage_mysql.hpl` | AUD `DW_M_AUD_F4_GAPPS` + filas fact (`GAPPS`); grano `NU_IDMC` |
 
 Códigos internos (`FUENTE_ORIGEN`): F1 = **`OD_SHEETS`** (NOMBRE **OD**), F2 = **`CAGR`** (NOMBRE **Sede central**), F5 = **`SISUD_VW`**. Territorio F2: `COORD` / `DW_M_DIM_ORGANO_UNIDAD`. Territorio F1: **`DW_M_DIM_OD`**. Cómo se arma el enriquecido: [`../lineamientos/extra/manual-como-se-arma-el-fact.md`](../lineamientos/extra/manual-como-se-arma-el-fact.md).
 

@@ -140,6 +140,13 @@ if errorlevel 1 (
     exit /b 1
 )
 
+call :step "Staging MySQL GAPPS (Hop directo)"
+call "%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_mysql.hpl" -r local >> "%RUN_LOG%" 2>&1
+if errorlevel 1 (
+    call :fail "pl_stage_mysql.hpl failed"
+    exit /b 1
+)
+
 call :step "Python main (logica Fases 2-7 + carga DW)"
 echo --- python\main.py --->> "%RUN_LOG%"
 "%PY%" python\main.py >> "%RUN_LOG%" 2>&1
@@ -173,6 +180,11 @@ if errorlevel 1 (
 findstr /C:"Salida DW_M_FACT_MC_SISUD" "%LOG%" >nul 2>&1
 if errorlevel 1 (
     call :fail "no hay salida DW_M_FACT_MC_SISUD en el log"
+    exit /b 1
+)
+findstr /C:"Salida DW_M_FACT_MC_GAPPS" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida DW_M_FACT_MC_GAPPS en el log"
     exit /b 1
 )
 findstr /C:"Salida DW_M_FACT_MULTA_COERCITIVA" "%LOG%" >nul 2>&1

@@ -8,6 +8,7 @@ Tablas `DW_M_AUD_*` en BD_CURSOR / REPOCSEP: copia 1:1 de staging H2, columnas V
 | `DW_M_AUD_F2_CSEP_MULTAS` | `STG_GS1_CSEP_MULTAS` (`GS1`) | Sheets F2 |
 | `DW_M_AUD_F2_CSEP_ETAPAS` | `STG_GS1_ETAPAS` (`ETAPAS`) | Sheets F2 etapas |
 | `DW_M_AUD_F5_SISUD_VW` | `STG_ORA_VW_MULTA_COERCITIVA` (`ORA`) | Vista F5 |
+| `DW_M_AUD_F4_GAPPS` | `STG_MYSQL_MULTAS` (`MYSQL`) | Query F4 `vw_multas_app.sql` |
 
 Runtime: `python/audit/cargar_aud.py` (CREATE dinámico). No forma parte del wipe DDL `01`/`02`;
 se regeneran **después** de `cargar_dw` (el wipe canónico borra todo `DW_M_%` y luego AUD se recrea).

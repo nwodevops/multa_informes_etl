@@ -191,3 +191,14 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 - DDL 02+05 + docs adjunto/ANEXO. Sin `./init.sh` en la sesión.
 - Evidencia: `progress/impl_fact-siete-campos.md`
 - Siguiente: `windows_v2` + `fase-remote-deploy`.
+
+---
+
+## 2026-09-21 — F4 MySQL AUD + fact (`linux_v2`)
+
+**Feature:** `f4-mysql-aud-fact` → `in_progress`
+
+- Query `vw_multas_app.sql` → `STG_MYSQL_MULTAS` → `DW_M_AUD_F4_GAPPS`.
+- Fact UNION F1∪F2∪GAPPS; sin lookup SISUD en filas GAPPS.
+- Cableado Hop/init + `integracion`/`enrich`. HARNESS OK pendiente de MySQL vivo.
+- Evidencia: `progress/impl_f4-mysql-aud-fact.md`

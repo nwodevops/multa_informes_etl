@@ -24,6 +24,7 @@ CONNECTION_PREFIX = {
     "oracle_BD_CURSOR": "DB_ORA_REPO",   # alias histórico / repo
     "oracle_dw": "DB_ORA_DW",            # destino DW (APP / REPOCSEP)
     "h2": "DB_H2",                       # staging in-memory
+    "mysql": "DB_MYSQL",                 # fuente F4 gappsdb
 }
 
 

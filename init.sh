@@ -83,6 +83,13 @@ else
   fail "hop-run no encontrado ($HOP_RUN); requerido para staging Oracle"
 fi
 
+step "Staging MySQL GAPPS (Hop directo)"
+if [ -x "$HOP_RUN" ]; then
+  "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_mysql.hpl" -r local
+else
+  fail "hop-run no encontrado ($HOP_RUN); requerido para staging MySQL F4"
+fi
+
 step "Python main (logica Fases 2-7 + carga DW)"
 set +e
 "$PY" python/main.py 2>&1 | tee "$LOG"
@@ -96,6 +103,7 @@ grep -q "Salida DW_M_DIM_" "$LOG" || fail "no hay salida DW_M_DIM_* en el log"
 grep -q "Salida DW_M_FACT_MC_CSEP" "$LOG" || fail "no hay salida DW_M_FACT_MC_CSEP en el log"
 grep -q "Salida DW_M_FACT_MC_OD" "$LOG" || fail "no hay salida DW_M_FACT_MC_OD en el log"
 grep -q "Salida DW_M_FACT_MC_SISUD" "$LOG" || fail "no hay salida DW_M_FACT_MC_SISUD en el log"
+grep -q "Salida DW_M_FACT_MC_GAPPS" "$LOG" || fail "no hay salida DW_M_FACT_MC_GAPPS en el log"
 grep -q "Salida DW_M_FACT_MULTA_COERCITIVA" "$LOG" || fail "no hay salida DW_M_FACT_MULTA_COERCITIVA en el log"
 grep -q "Salida DW_M_DQ_HALLAZGO" "$LOG" || fail "no hay salida DW_M_DQ_HALLAZGO en el log"
 grep -q "Salida DW_M_INDICADOR_RESULTADO" "$LOG" || fail "no hay DW_M_INDICADOR_RESULTADO en el log (memoria de corrida)"
@@ -212,6 +220,7 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
             "DW_M_AUD_F2_CSEP_MULTAS",
             "DW_M_AUD_F2_CSEP_ETAPAS",
             "DW_M_AUD_F5_SISUD_VW",
+            "DW_M_AUD_F4_GAPPS",
         ):
             if not exists_table(t):
                 sys.exit(f"falta tabla canónica {t}")
@@ -222,6 +231,7 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
             "DW_M_FACT_MC_CSEP",
             "DW_M_FACT_MC_OD",
             "DW_M_FACT_MC_SISUD",
+            "DW_M_FACT_MC_GAPPS",
             "DW_M_QA_AMARRE",
             "DW_M_QA_AMARRE_DETALLE",
             "DW_M_INDICADOR_RESULTADO",
@@ -250,17 +260,18 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
             "AUD_F2": count("DW_M_AUD_F2_CSEP_MULTAS"),
             "AUD_ET": count("DW_M_AUD_F2_CSEP_ETAPAS"),
             "AUD_F5": count("DW_M_AUD_F5_SISUD_VW"),
+            "AUD_F4": count("DW_M_AUD_F4_GAPPS"),
         }
         print(f"Conteos canónicos: {by_tbl}")
-        expected_min = {"AUD_F2": 200, "AUD_F1": 50, "AUD_F5": 50}
+        expected_min = {"AUD_F2": 200, "AUD_F1": 50, "AUD_F5": 50, "AUD_F4": 1}
         for cod, mn in expected_min.items():
             n = by_tbl.get(cod, 0)
             if n < mn:
                 sys.exit(f"conteo {cod}={n} bajo mínimo esperado {mn} (posible fallo de staging)")
         n_enriq = by_tbl["ENRIQUECIDA"]
-        n_sheets = by_tbl["AUD_F2"] + by_tbl["AUD_F1"]
-        if n_enriq != n_sheets:
-            sys.exit(f"enriquecida={n_enriq} debe igualar AUD_F2+AUD_F1={n_sheets}")
+        n_union = by_tbl["AUD_F2"] + by_tbl["AUD_F1"] + by_tbl["AUD_F4"]
+        if n_enriq != n_union:
+            sys.exit(f"enriquecida={n_enriq} debe igualar AUD_F2+AUD_F1+AUD_F4={n_union}")
         print(f"DW_M_DQ_HALLAZGO: {by_tbl['DQ']} filas (R01–R05; 0 es válido si no hay hallazgos)")
 
         cur.execute(
