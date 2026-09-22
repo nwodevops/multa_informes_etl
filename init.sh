@@ -79,7 +79,7 @@ fi
 step "Staging MySQL GAPPS (Hop directo, opcional)"
 if [ -x "$HOP_RUN" ]; then
   if ! "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_mysql.hpl" -r local; then
-    warn "MySQL GAPPS no disponible; STG_MYSQL_MULTAS vacío; DW_M_AUD_F4_GAPPS se crea vacía"
+    warn "MySQL GAPPS no disponible; STG_MYSQL_MULTAS vacío; DW_M_AUD_F4_FORM se crea vacía"
   fi
 else
   warn "hop-run no encontrado ($HOP_RUN); F4 queda vacío y AUD_F4 se crea vacía"
@@ -215,7 +215,7 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
             "DW_M_AUD_F2_CSEP_MULTAS",
             "DW_M_AUD_F2_CSEP_ETAPAS",
             "DW_M_AUD_F5_SISUD_VW",
-            "DW_M_AUD_F4_GAPPS",
+            "DW_M_AUD_F4_FORM",
         ):
             if not exists_table(t):
                 sys.exit(f"falta tabla canónica {t}")
@@ -255,7 +255,7 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
             "AUD_F2": count("DW_M_AUD_F2_CSEP_MULTAS"),
             "AUD_ET": count("DW_M_AUD_F2_CSEP_ETAPAS"),
             "AUD_F5": count("DW_M_AUD_F5_SISUD_VW"),
-            "AUD_F4": count("DW_M_AUD_F4_GAPPS"),
+            "AUD_F4": count("DW_M_AUD_F4_FORM"),
         }
         print(f"Conteos canónicos: {by_tbl}")
         expected_min = {"AUD_F2": 200, "AUD_F1": 50, "AUD_F5": 50, "AUD_F4": 0}

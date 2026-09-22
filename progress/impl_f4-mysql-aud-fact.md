@@ -7,7 +7,7 @@ Rama: `linux_v2`.
 F4 (query [`input_legacy/input_mysql/vw_multas_app.sql`](../input_legacy/input_mysql/vw_multas_app.sql)) vuelve a ingestión:
 
 - Hop `pl_stage_mysql.hpl` → `STG_MYSQL_MULTAS`
-- Foto cruda `DW_M_AUD_F4_GAPPS` (1:1 STG)
+- Foto cruda `DW_M_AUD_F4_FORM` (1:1 STG)
 - Fact de negocio = F1∪F2 (+ lookup SISUD) **∪ GAPPS** (`ID_FUENTE=3`)
 - Sin lookup SISUD sobre filas GAPPS
 - Grano GAPPS: `NU_IDMC` (queda en AUD; el fact usa el molde `COLS_MULTAS`)

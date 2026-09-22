@@ -39,7 +39,7 @@ Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F4 MySQL GAPPS, F5 SISU
 | `DW_M_DIM_*` / `DW_M_DET_ETAPA_MC` | Estrella (DET FK al enriquecido) |
 | `DW_M_FACT_MULTA_COERCITIVA` | Negocio: F1∪F2 + lookup SISUD ∪ GAPPS (`logica/dwh/enrich.py`) |
 | `DW_M_DQ_HALLAZGO` | Bitácora R01–R05 (cuarentena blanda; no elimina filas) |
-| `DW_M_AUD_F1_OD_MULTAS` / `DW_M_AUD_F2_CSEP_MULTAS` / `DW_M_AUD_F2_CSEP_ETAPAS` / `DW_M_AUD_F5_SISUD_VW` / `DW_M_AUD_F4_GAPPS` | Foto cruda STG 1:1 |
+| `DW_M_AUD_F1_OD_MULTAS` / `DW_M_AUD_F2_CSEP_MULTAS` / `DW_M_AUD_F2_CSEP_ETAPAS` / `DW_M_AUD_F5_SISUD_VW` / `DW_M_AUD_F4_FORM` | Foto cruda STG 1:1 |
 
 ### Solo memoria de corrida (no Oracle)
 

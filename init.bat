@@ -129,7 +129,7 @@ if errorlevel 1 (
 call :step "Staging MySQL GAPPS (Hop directo, opcional)"
 call "%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_mysql.hpl" -r local >> "%RUN_LOG%" 2>&1
 if errorlevel 1 (
-    call :warn "MySQL GAPPS no disponible; STG vacio; DW_M_AUD_F4_GAPPS se crea vacia"
+    call :warn "MySQL GAPPS no disponible; STG vacio; DW_M_AUD_F4_FORM se crea vacia"
 )
 
 call :step "Python main (logica Fases 2-7 + carga DW)"

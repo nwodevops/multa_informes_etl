@@ -9,7 +9,7 @@
 >
 > Inventario de fuentes: [`extra/fuentes_datos/01-fuentes-de-datos.md`](extra/fuentes_datos/01-fuentes-de-datos.md).
 > Inputs runtime: [`docs/inputs/README.md`](../inputs/README.md) · catálogos F1/F2 JSON · `inputs.yaml`.
-> F3 (informes) está **fuera de ingestión**. F4 MySQL entra vía `STG_MYSQL_MULTAS` / `DW_M_AUD_F4_GAPPS` y suma filas al fact (`ID_FUENTE=GAPPS`), sin lookup SISUD.
+> F3 (informes) está **fuera de ingestión**. F4 MySQL entra vía `STG_MYSQL_MULTAS` / `DW_M_AUD_F4_FORM` y suma filas al fact (`ID_FUENTE=GAPPS`), sin lookup SISUD.
 
 ---
 

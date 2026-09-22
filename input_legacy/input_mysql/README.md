@@ -7,6 +7,6 @@ Query ancha al molde Excel F2. En gappsdb vive como `VW_MULTAS_APP`; Hop hace `S
 | [`vw_multas_app.sql`](vw_multas_app.sql) | 1 fila = 1 multa (`NU_IDMC`); códigos Excel + CUM/CAM |
 | [`tablas.txt`](tablas.txt) | Tablas `T_MVC_*` de interés |
 
-En el DW: `DW_M_AUD_F4_GAPPS` (foto 1:1) y filas del fact con `ID_FUENTE=GAPPS` (sin lookup SISUD).
+En el DW: `DW_M_AUD_F4_FORM` (foto 1:1) y filas del fact con `ID_FUENTE=GAPPS` (sin lookup SISUD).
 
 Credenciales: `docs/credenciales/` / `environments/*.json` (`DB_MYSQL_*`). No versionar passwords aquí.

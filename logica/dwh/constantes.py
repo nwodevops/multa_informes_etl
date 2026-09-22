@@ -31,7 +31,7 @@ SEMILLAS_FUENTE_REGISTRO = (
     (-1, "ND", "NO ESPECIFICADO", "ND", "NO ESPECIFICADO"),
     (1, "OD_SHEETS", "OD", "F1", "31 Google Sheets OD → STG_GS2_OD_MULTAS"),
     (2, "CAGR", "Sede central", "F2", "10 Google Sheets sede central → STG_GS1_CSEP_MULTAS / ETAPAS"),
-    (3, "GAPPS", "MySQL GAPP", "F4", "gappsdb query → STG_MYSQL_MULTAS / DW_M_AUD_F4_GAPPS"),
+    (3, "GAPPS", "MySQL GAPP", "F4", "gappsdb query → STG_MYSQL_MULTAS / DW_M_AUD_F4_FORM"),
     (4, "SISUD_VW", "Oracle SISUD", "F5", "SISUD.VW_MULTA_COERCITIVA → STG_ORA_*"),
     (5, "OD_EXCEL", "Excel OD (legacy)", "F1", "Alias histórico; el ETL normaliza a OD_SHEETS"),
 )

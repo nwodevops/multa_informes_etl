@@ -8,7 +8,7 @@ Mapeo STG lógico → tabla audit:
   ETAPAS → DW_M_AUD_F2_CSEP_ETAPAS
   GS2    → DW_M_AUD_F1_OD_MULTAS
   ORA    → DW_M_AUD_F5_SISUD_VW
-  MYSQL  → DW_M_AUD_F4_GAPPS
+  MYSQL  → DW_M_AUD_F4_FORM
 
 Todas las columnas se guardan como VARCHAR2 (foto 1:1 textual) + FECHA_CARGA.
 """
@@ -31,7 +31,7 @@ MAPEO_AUD: dict[str, str] = {
     "ETAPAS": "DW_M_AUD_F2_CSEP_ETAPAS",
     "GS2": "DW_M_AUD_F1_OD_MULTAS",
     "ORA": "DW_M_AUD_F5_SISUD_VW",
-    "MYSQL": "DW_M_AUD_F4_GAPPS",
+    "MYSQL": "DW_M_AUD_F4_FORM",
 }
 
 VARCHAR_LEN = 4000
