@@ -6,7 +6,7 @@
 
 ## Hecho reciente
 
-- F4 cableado: STG_MYSQL_MULTAS → AUD_F4_GAPPS + filas GAPPS al fact (sin lookup SISUD).
+- F4 cableado: STG_MYSQL_MULTAS → AUD_F4_FORM + filas GAPPS al fact (sin lookup SISUD).
 
 ## Siguiente
 
