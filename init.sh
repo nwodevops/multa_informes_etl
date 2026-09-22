@@ -76,11 +76,13 @@ else
   fail "hop-run no encontrado ($HOP_RUN); requerido para staging Oracle"
 fi
 
-step "Staging MySQL GAPPS (Hop directo)"
+step "Staging MySQL GAPPS (Hop directo, opcional)"
 if [ -x "$HOP_RUN" ]; then
-  "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_mysql.hpl" -r local
+  if ! "$HOP_RUN" -j "$HOP_PROJECT" -f "$ROOT/pipelines/pl_stage_mysql.hpl" -r local; then
+    warn "MySQL GAPPS no disponible; STG_MYSQL_MULTAS vacío; DW_M_AUD_F4_GAPPS se crea vacía"
+  fi
 else
-  fail "hop-run no encontrado ($HOP_RUN); requerido para staging MySQL F4"
+  warn "hop-run no encontrado ($HOP_RUN); F4 queda vacío y AUD_F4 se crea vacía"
 fi
 
 step "Python main (logica Fases 2-7 + carga DW)"
@@ -256,7 +258,7 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
             "AUD_F4": count("DW_M_AUD_F4_GAPPS"),
         }
         print(f"Conteos canónicos: {by_tbl}")
-        expected_min = {"AUD_F2": 200, "AUD_F1": 50, "AUD_F5": 50, "AUD_F4": 1}
+        expected_min = {"AUD_F2": 200, "AUD_F1": 50, "AUD_F5": 50, "AUD_F4": 0}
         for cod, mn in expected_min.items():
             n = by_tbl.get(cod, 0)
             if n < mn:
