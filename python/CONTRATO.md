@@ -9,16 +9,20 @@ CAPA STG / DDL
   python/introspect/        schema vivo. No extrae filas.
 
 CAPA POST-STAGING (lineamientos Fases 2–7)
-  python/main.py            orquesta: leer_h2 → logica/ → cargar_dw → audit/cargar_aud
+  python/main.py            orquesta: leer_h2 → logica/ → cargar_dw → audit
+                            → cargar_dw_mysql → audit MySQL (espejo soft-fail)
   python/io/leer_h2.py      ENTRADA: H2 STG_* → DataFrames
   logica/ejecutar.py        delega a logica/dwh/
   logica/dwh/               perfil … dimensional (3 facts memoria) … enrich.py … KPIs
-  python/io/cargar_dw.py    SALIDA: wipe canónico DW_M_*/VW_* + DDL 01+02+DQ(+05)
-                            + INSERT dims/enriquecida/DET/DW_M_DQ_HALLAZGO
-  python/audit/cargar_aud.py  DW_M_AUD_* 1:1 desde STG (fuera de estrella)
+  python/io/cargar_dw.py    SALIDA Oracle: wipe + DDL + INSERT canónico
+  python/io/cargar_dw_mysql.py  SALIDA MySQL DW (`DB_MYSQL_DW_*`): espejo dims/fact/DET/DQ
+  python/audit/cargar_aud.py      DW_M_AUD_* Oracle 1:1 desde STG
+  python/audit/cargar_aud_mysql.py  DW_M_AUD_* MySQL DW (soft-fail)
 ```
 
-Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F4 MySQL GAPPS, F5 SISUD.
+Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F4 MySQL GAPPS **INPUT**, F5 SISUD.
+
+Destinos: Oracle `DB_ORA_DW_*` **y** MySQL `DB_MYSQL_DW_*` (OUTPUT; distinto de INPUT F4).
 
 ## Entrada (`python/io/leer_h2.py`)
 
@@ -32,16 +36,18 @@ Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F4 MySQL GAPPS, F5 SISU
 
 ## Salida
 
-### Publicada en Oracle (canónico)
+### Publicada en Oracle **y** MySQL DW (mismo canónico)
 
 | Nombre | Qué es |
 |---|---|
 | `DW_M_DIM_*` / `DW_M_DET_ETAPA_MC` | Estrella (DET FK al enriquecido) |
 | `DW_M_FACT_MULTA_COERCITIVA` | Negocio: F1∪F2 + lookup SISUD ∪ GAPPS (`logica/dwh/enrich.py`) |
 | `DW_M_DQ_HALLAZGO` | Bitácora R01–R05 (cuarentena blanda; no elimina filas) |
-| `DW_M_AUD_F1_OD_MULTAS` / `DW_M_AUD_F2_CSEP_MULTAS` / `DW_M_AUD_F2_CSEP_ETAPAS` / `DW_M_AUD_F5_SISUD_VW` / `DW_M_AUD_F4_FORM` | Foto cruda STG 1:1 |
+| `DW_M_AUD_*` | Foto cruda STG 1:1 (`F1`/`F2`/`F4_FORM`/`F5`) |
 
-### Solo memoria de corrida (no Oracle)
+MySQL DW: wipe solo `DW_M_%` (no toca `T_MVC_*`). Si `DB_MYSQL_DW_*` no responde → aviso y la corrida sigue (Oracle ya cargó).
+
+### Solo memoria de corrida (no se publica)
 
 | Nombre | Fase | Qué es |
 |---|---|---|

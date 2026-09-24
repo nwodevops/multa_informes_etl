@@ -12,7 +12,8 @@ Flujo interno:
   1. SETUP   : root + variables de project-config.json
   2. ENTRADA : io/leer_h2.py → DataFrames (claves = LECTURAS)
   3. LOGICA  : único .py en logica/ → PROF_*, DF_*, DW_M_DIM_*, DW_M_FACT_*, …
-  4. SALIDA  : cargar_dw (dims + enriquecida + DET + DQ) + cargar_aud (DW_M_AUD_*)
+  4. SALIDA  : cargar_dw Oracle + cargar_aud Oracle
+               + cargar_dw_mysql / cargar_aud_mysql (espejo DB_MYSQL_DW_*; soft-fail)
                evidencia FACT_MC_* / QA/K quedan en memoria (no se publican)
 
 Contrato: python/CONTRATO.md
@@ -157,8 +158,14 @@ def main() -> int:
         aud = _load("cargar_aud", HERE / "audit" / "cargar_aud.py")
         aud.cargar_aud(datos, root)
 
+        # Espejo MySQL DW (DB_MYSQL_DW_*). Soft-fail si no hay conexión.
+        cargar_my = _load("cargar_dw_mysql", HERE / "io" / "cargar_dw_mysql.py")
+        cargar_my.cargar_dw_mysql(tablas_dw, root)
+        aud_my = _load("cargar_aud_mysql", HERE / "audit" / "cargar_aud_mysql.py")
+        aud_my.cargar_aud_mysql(datos, root)
+
     print(
-        "Listo (H2 -> logica -> Oracle canónico dims/enriquecida/DET/DQ + DW_M_AUD_*). "
+        "Listo (H2 -> logica -> Oracle + MySQL DW: dims/enriquecida/DET/DQ + DW_M_AUD_*). "
         "Evidencia FACT_MC_* y QA/K solo en memoria de corrida."
     )
     return 0

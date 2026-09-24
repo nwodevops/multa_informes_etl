@@ -119,6 +119,66 @@
       "name": "DB_ORA_DW_PASSWORD",
       "value": "<PASSWORD>",
       "description": "Password Oracle DW REMOTO"
+    },
+    {
+      "name": "DB_MYSQL_URL",
+      "value": "jdbc:mysql://<HOST>:3306/gappsdb",
+      "description": "JDBC URL MySQL INPUT F4"
+    },
+    {
+      "name": "DB_MYSQL_HOST",
+      "value": "<HOST>",
+      "description": "Host MySQL INPUT F4"
+    },
+    {
+      "name": "DB_MYSQL_PORT",
+      "value": "3306",
+      "description": "Puerto MySQL INPUT F4"
+    },
+    {
+      "name": "DB_MYSQL_DATABASE",
+      "value": "gappsdb",
+      "description": "Database MySQL INPUT F4"
+    },
+    {
+      "name": "DB_MYSQL_USERNAME",
+      "value": "<USER>",
+      "description": "Usuario MySQL INPUT F4"
+    },
+    {
+      "name": "DB_MYSQL_PASSWORD",
+      "value": "<PASSWORD>",
+      "description": "Password MySQL INPUT F4"
+    },
+    {
+      "name": "DB_MYSQL_DW_URL",
+      "value": "jdbc:mysql://<HOST>:3306/gappsdb",
+      "description": "JDBC URL MySQL DW OUTPUT"
+    },
+    {
+      "name": "DB_MYSQL_DW_HOST",
+      "value": "<HOST>",
+      "description": "Host MySQL DW OUTPUT"
+    },
+    {
+      "name": "DB_MYSQL_DW_PORT",
+      "value": "3306",
+      "description": "Puerto MySQL DW OUTPUT"
+    },
+    {
+      "name": "DB_MYSQL_DW_DATABASE",
+      "value": "gappsdb",
+      "description": "Database MySQL DW OUTPUT"
+    },
+    {
+      "name": "DB_MYSQL_DW_USERNAME",
+      "value": "<USER>",
+      "description": "Usuario MySQL DW OUTPUT"
+    },
+    {
+      "name": "DB_MYSQL_DW_PASSWORD",
+      "value": "<PASSWORD>",
+      "description": "Password MySQL DW OUTPUT"
     }
   ]
 }

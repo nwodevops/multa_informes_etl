@@ -202,3 +202,14 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 - Fact UNION F1∪F2∪GAPPS; sin lookup SISUD en filas GAPPS.
 - Cableado Hop/init + `integracion`/`enrich`. HARNESS OK pendiente de MySQL vivo.
 - Evidencia: `progress/impl_f4-mysql-aud-fact.md`
+
+---
+
+## 2026-09-24 — Dual-write MySQL DW (`linux_v3`)
+
+**Feature:** `dual-write-mysql-dw` → `in_progress`
+
+- Rama `linux_v3` desde `linux_v2`.
+- `DB_MYSQL_DW_*` OUTPUT separado de `DB_MYSQL_*` INPUT F4.
+- `cargar_dw_mysql` + `cargar_aud_mysql` (soft-fail); wipe solo `DW_M_%`.
+- Evidencia: `progress/impl_dual-write-mysql-dw.md`

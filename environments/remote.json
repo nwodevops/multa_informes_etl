@@ -148,7 +148,37 @@
     {
       "name": "DB_MYSQL_PASSWORD",
       "value": "Knjux4a9tJCbrly!",
-      "description": "Password MySQL REMOTO"
+      "description": "Password MySQL INPUT F4 REMOTO"
+    },
+    {
+      "name": "DB_MYSQL_DW_URL",
+      "value": "jdbc:mysql://10.1.1.217:3306/gappsdb",
+      "description": "JDBC URL MySQL DW OUTPUT REMOTO"
+    },
+    {
+      "name": "DB_MYSQL_DW_HOST",
+      "value": "10.1.1.217",
+      "description": "Host MySQL DW OUTPUT REMOTO"
+    },
+    {
+      "name": "DB_MYSQL_DW_PORT",
+      "value": "3306",
+      "description": "Puerto MySQL DW OUTPUT REMOTO"
+    },
+    {
+      "name": "DB_MYSQL_DW_DATABASE",
+      "value": "gappsdb",
+      "description": "Database MySQL DW OUTPUT REMOTO"
+    },
+    {
+      "name": "DB_MYSQL_DW_USERNAME",
+      "value": "gapps",
+      "description": "Usuario MySQL DW OUTPUT REMOTO"
+    },
+    {
+      "name": "DB_MYSQL_DW_PASSWORD",
+      "value": "Knjux4a9tJCbrly!",
+      "description": "Password MySQL DW OUTPUT REMOTO"
     }
   ]
 }
