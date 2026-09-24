@@ -292,6 +292,38 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
         print(f"DW_M_DIM_ORGANO_UNIDAD: {n_org}")
 PY
 
+step "Comprobando espejo MySQL DW (opcional, soft-fail)"
+"$PY" - <<'PY' || true
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path("python").resolve()))
+from config import is_placeholder, load_vars, project_root
+
+root = project_root()
+v = load_vars(root)
+if is_placeholder(v.get("DB_MYSQL_DW_HOST")) or is_placeholder(v.get("DB_MYSQL_DW_PASSWORD")):
+    print("MySQL DW: variables placeholder; skip")
+    raise SystemExit(0)
+try:
+    import mysql.connector
+    conn = mysql.connector.connect(
+        host=v["DB_MYSQL_DW_HOST"],
+        port=int(v.get("DB_MYSQL_DW_PORT") or 3306),
+        user=v["DB_MYSQL_DW_USERNAME"],
+        password=v["DB_MYSQL_DW_PASSWORD"],
+        database=v["DB_MYSQL_DW_DATABASE"],
+        connection_timeout=8,
+    )
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) FROM DW_M_FACT_MULTA_COERCITIVA")
+    n = int(cur.fetchone()[0])
+    print(f"MySQL DW: DW_M_FACT_MULTA_COERCITIVA = {n}")
+    cur.close()
+    conn.close()
+except Exception as exc:
+    print(f"MySQL DW: AVISO no verificado ({exc})")
+PY
+
 echo ""
 echo -e "${GREEN}HARNESS OK${NC} — ver CHECKPOINTS.md y docs/verification.md"
 exit 0

@@ -1,15 +1,15 @@
 # Credenciales REMOTO — referencia humana (no commitear secretos en git)
 # Aplicar: ./switch-env.sh remote  |  .\switch-env.ps1 remote  →  regenera project-config.json
 
-# INPUT — MySQL (conexión Hop: mysql → DB_MYSQL_*)
+# INPUT — MySQL F4 (Hop: mysql → DB_MYSQL_*)
 Host: 10.1.1.217
 Port: 3306
 Database: gappsdb
 User: gapps
 Password: Knjux4a9tJCbrly!
-Tabla: T_MVC_MULTACOERCITIVA_MC
+Tabla: VW_MULTAS_APP / T_MVC_*
 
-# INPUT — Oracle SISUD (conexión Hop: oracle_sisud → DB_ORA_SISUD_*)
+# INPUT — Oracle SISUD (Hop: oracle_sisud → DB_ORA_SISUD_*)
 # Nota: usuario remoto CSEPDV (no SISUD); schema preferido en metadata sigue SISUD
 Host: odaprod-scan
 Port: 1534
@@ -18,12 +18,17 @@ User: CSEPDV
 Password: vWqFlNPWZQ0Fov
 Tablas: CSEP_INFORMES_VIEW, VW_MULTA_COERCITIVA
 
-# OUTPUT — 
+############################ OUTPUT ############################
+# Oracle DW (DB_ORA_DW_*)
 Host: 10.6.0.15
 Port: 1532
 Service: dvoefacore
 User: REPOCSEP
 Password: desarrollo24
 
-
-
+# MySQL DW espejo (DB_MYSQL_DW_*) — wipe solo DW_M_%
+Host: 10.1.1.217
+Port: 3306
+Database: gappsdb
+User: gapps
+Password: Knjux4a9tJCbrly!

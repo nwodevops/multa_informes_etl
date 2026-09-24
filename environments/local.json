@@ -148,7 +148,37 @@
     {
       "name": "DB_MYSQL_PASSWORD",
       "value": "Knjux4a9tJCbrly!",
-      "description": "Password MySQL GAPPS"
+      "description": "Password MySQL GAPPS INPUT F4"
+    },
+    {
+      "name": "DB_MYSQL_DW_URL",
+      "value": "jdbc:mysql://localhost:3307/gappsdb",
+      "description": "JDBC URL MySQL DW OUTPUT LOCAL"
+    },
+    {
+      "name": "DB_MYSQL_DW_HOST",
+      "value": "localhost",
+      "description": "Host MySQL DW OUTPUT LOCAL"
+    },
+    {
+      "name": "DB_MYSQL_DW_PORT",
+      "value": "3307",
+      "description": "Puerto MySQL DW OUTPUT LOCAL"
+    },
+    {
+      "name": "DB_MYSQL_DW_DATABASE",
+      "value": "gappsdb",
+      "description": "Database MySQL DW OUTPUT LOCAL"
+    },
+    {
+      "name": "DB_MYSQL_DW_USERNAME",
+      "value": "gapps",
+      "description": "Usuario MySQL DW OUTPUT LOCAL"
+    },
+    {
+      "name": "DB_MYSQL_DW_PASSWORD",
+      "value": "gapps2026",
+      "description": "Password MySQL DW OUTPUT LOCAL"
     }
   ]
 }

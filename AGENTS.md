@@ -61,9 +61,9 @@ Prerrequisitos Win:
 - `.venv` + `pip install -r python\requirements.txt`
 - `input_excel\*.xlsx` / `client_secret.json` (Sheets)
 - Hop: `D:\Eder\hop\hop-run.bat` (o `set HOP_RUN=...`)
-- Red/VPN a Oracle SISUD y Oracle DW (`REPOCSEP` @ `10.6.0.15`)
+- Red/VPN a Oracle SISUD, Oracle DW (`REPOCSEP` @ `10.6.0.15`) y MySQL DW OUTPUT (`DB_MYSQL_DW_*`)
 
-Flujo: `inputs.yaml` → Hop `STG_*` (F1/F2/F5) → `python/main.py` → 3 facts evidencia + dims/QA/K → `cargar_dw.py` (wipe `DW_M_*`/`VW_*` + DDL + INSERT; esquema = **USER** Oracle) → SQL **`07_enrich_sheets_sisud.sql`** → `DW_M_FACT_MULTA_COERCITIVA`.
+Flujo: `inputs.yaml` → Hop `STG_*` (F1/F2/F4/F5) → `python/main.py` → facts evidencia en memoria + dims → `cargar_dw.py` (Oracle) + `cargar_dw_mysql.py` (espejo `DB_MYSQL_DW_*`) + AUD en ambos destinos → `DW_M_FACT_MULTA_COERCITIVA`.
 
 **Diseño vigente:** planillas **sede central (10) + OD (31) + GAPPS (F4)**; SISUD solo lookup CUM/CAM sobre F1∪F2. No hay base CSEP. F3 fuera de ingestión. Lectura: [`docs/adjunto/README.md`](docs/adjunto/README.md).
 
@@ -75,7 +75,9 @@ python/
   config.py / h2_conn.py / plantilla_logica.py
   introspect/     # DDL STG
   io/leer_h2.py   # entrada
-  io/cargar_dw.py # salida DW (wipe+DDL+INSERT+07)
+  io/cargar_dw.py # salida Oracle DW
+  io/cargar_dw_mysql.py # espejo MySQL DW (DB_MYSQL_DW_*)
+  audit/cargar_aud.py + cargar_aud_mysql.py
 ```
 
 Sin escritores legacy (`escribir_*`). Contrato: [`python/CONTRATO.md`](python/CONTRATO.md).

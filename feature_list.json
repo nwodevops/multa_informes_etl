@@ -269,10 +269,18 @@
     {
       "id": "f4-mysql-aud-fact",
       "title": "F4 MySQL gapps: AUD 1:1 + filas GAPPS al fact (sin lookup SISUD)",
-      "status": "in_progress",
+      "status": "done",
       "criterio": "Hop STG_MYSQL_MULTAS desde vw_multas_app.sql; DW_M_AUD_F4_FORM 1:1; fact UNION F1∪F2∪GAPPS (ID_FUENTE=GAPPS); sin lookup SISUD en filas GAPPS; enriquecida = AUD_F2+AUD_F1+AUD_F4; ./init.sh HARNESS OK",
       "doc": "input_legacy/input_mysql/vw_multas_app.sql",
       "evidencia": "progress/impl_f4-mysql-aud-fact.md"
+    },
+    {
+      "id": "dual-write-mysql-dw",
+      "title": "Dual-write: espejo canónico Oracle + MySQL DW (DB_MYSQL_DW_*)",
+      "status": "in_progress",
+      "criterio": "Tras Oracle, wipe solo DW_M_% en MySQL OUTPUT y cargar dims/fact/DET/DQ + AUD; INPUT F4 sigue DB_MYSQL_*; soft-fail si MySQL DW cae; ./switch-env.sh local + corrida Success",
+      "doc": "python/io/cargar_dw_mysql.py",
+      "evidencia": "progress/impl_dual-write-mysql-dw.md"
     }
   ]
 }
