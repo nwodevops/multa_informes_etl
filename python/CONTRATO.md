@@ -16,6 +16,7 @@ CAPA POST-STAGING (lineamientos Fases 2–7)
   python/io/cargar_dw.py    SALIDA: wipe canónico DW_M_*/VW_* + DDL 01+02+DQ(+05)
                             + INSERT dims/enriquecida/DET/DW_M_DQ_HALLAZGO
   python/audit/cargar_aud.py  DW_M_AUD_* 1:1 desde STG (fuera de estrella)
+                             + PK_OFICINA derivada en F1/F2 vía audit/oficinas.py
 ```
 
 Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F4 MySQL GAPPS, F5 SISUD.
@@ -39,7 +40,7 @@ Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F4 MySQL GAPPS, F5 SISU
 | `DW_M_DIM_*` / `DW_M_DET_ETAPA_MC` | Estrella (DET FK al enriquecido) |
 | `DW_M_FACT_MULTA_COERCITIVA` | Negocio: F1∪F2 + lookup SISUD ∪ GAPPS (`logica/dwh/enrich.py`) |
 | `DW_M_DQ_HALLAZGO` | Bitácora R01–R05 (cuarentena blanda; no elimina filas) |
-| `DW_M_AUD_F1_OD_MULTAS` / `DW_M_AUD_F2_CSEP_MULTAS` / `DW_M_AUD_F2_CSEP_ETAPAS` / `DW_M_AUD_F5_SISUD_VW` / `DW_M_AUD_F4_FORM` | Foto cruda STG 1:1 |
+| `DW_M_AUD_F1_OD_MULTAS` / `DW_M_AUD_F2_CSEP_MULTAS` / `DW_M_AUD_F2_CSEP_ETAPAS` / `DW_M_AUD_F5_SISUD_VW` / `DW_M_AUD_F4_FORM` | Foto cruda STG 1:1. Salvo `PK_OFICINA`: única columna derivada, solo en F1 y F2, contra `T_SEP_OFICINA`. Ver [`docs/lineamientos/ddl/audit/README.md`](../docs/lineamientos/ddl/audit/README.md) |
 
 ### Solo memoria de corrida (no Oracle)
 

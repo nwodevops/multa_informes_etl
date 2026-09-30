@@ -128,14 +128,18 @@
       "nombre": "Consultoras Ambientales",
       "spreadsheet_key": "1_Nzd-cGOkVG-qwTPXp0MDd9p11ImnDquyOfJUQ-2G5A",
       "activo": true,
-      "nota": "Sin filas de multas; cod_unidad desde título sheet (Modificado CCAM)"
+      "nota": "Sin filas de multas; cod_unidad desde título sheet (Modificado CCAM)",
+      "pk_oficina": "COR068",
+      "pk_oficina_nota": "Unica de las 3 consultoras ambientales (COR060 coordinacion / COR068 seguimiento / COR085 fiscalizacion) confirmada por negocio. 'nombre' aqui no deriva: la oficina real se llama 'Coordinacion de Seguimiento y Verificacion a las Consultoras Ambientales'."
     },
     {
       "orden": 9,
       "cod_unidad": "UFED",
       "nombre": "UF educación",
       "spreadsheet_key": "1-mWS2tTgpYPwem53FJOYVo3ZLNEOYzZsIGSVQtKCUWw",
-      "activo": true
+      "activo": true,
+      "pk_oficina": "COR095",
+      "pk_oficina_nota": "'nombre' ('UF educacion') no deriva: la oficina real se llama 'Unidad Funcional Supervision Ambiental en Educacion'."
     },
     {
       "orden": 10,
@@ -143,7 +147,9 @@
       "nombre": "UF vivienda",
       "spreadsheet_key": "1yLW70PeW2kj-O7XasCMZ0rpPPUOtyYBsyJDO0v9QpxI",
       "activo": true,
-      "nota": "Sin filas de multas; cod_unidad desde título sheet (Modificado UFSAVC)"
+      "nota": "Sin filas de multas; cod_unidad desde título sheet (Modificado UFSAVC)",
+      "pk_oficina": "COR071",
+      "pk_oficina_nota": "'nombre' ('UF vivienda') no deriva: la oficina real se llama 'Unidad Funcional Supervision Ambiental en Vivienda y Construccion'."
     }
   ]
 }

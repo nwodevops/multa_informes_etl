@@ -64,6 +64,7 @@ flowchart LR
 | **F2-ET** | Etapas sede central | **Multas** (detalle) | `2) Etapas` | Google Sheets | mismo catálogo F2 | `STG_GS1_ETAPAS` | `pl_stage_csep_etapa.hpl` vía `stage_csep_sheets.sh` | Detalle `DW_M_DET_ETAPA_MC` |
 | **F5** | SISUD vista MC | **Multas** | — | Oracle | `SISUD.VW_MULTA_COERCITIVA` | `STG_ORA_VW_MULTA_COERCITIVA` | `pl_stage_oracle.hpl` | Evidencia `DW_M_FACT_MC_SISUD`; lookup CUM/CAM al enriquecido |
 | **F4** | App GAPPS | **Multas** | — | MySQL | [`vw_multas_app.sql`](../../input_legacy/input_mysql/vw_multas_app.sql) | `STG_MYSQL_MULTAS` | `pl_stage_mysql.hpl` | AUD `DW_M_AUD_F4_FORM` + filas fact (`GAPPS`); grano `NU_IDMC` |
+| **Catálogo oficinas** | `T_SEP_OFICINA` | — | — | MySQL | `gappsdb.T_SEP_OFICINA` | `STG_MYSQL_OFICINAS` | `pl_stage_mysql.hpl` | Solo `PK_OFICINA` en AUD F1/F2; **no** entra a `DW_M_DIM_*` ni `DW_M_FACT_*` |
 
 Códigos internos (`FUENTE_ORIGEN`): F1 = **`OD_SHEETS`** (NOMBRE **OD**), F2 = **`CAGR`** (NOMBRE **Sede central**), F5 = **`SISUD_VW`**. Territorio F2: `COORD` / `DW_M_DIM_ORGANO_UNIDAD`. Territorio F1: **`DW_M_DIM_OD`**. Cómo se arma el enriquecido: [`../lineamientos/extra/manual-como-se-arma-el-fact.md`](../lineamientos/extra/manual-como-se-arma-el-fact.md).
 
@@ -129,6 +130,7 @@ Los archivos [`f1_ods_sheets.json`](f1_ods_sheets.json) y [`f2_csep_sheets.json`
 
 - Cambiar `cod_od` / `cod_unidad` / `nombre` / `spreadsheet_id` / `activo` implica semántica de dim y staging.
 - `nombre` de F2 alimenta `DW_M_DIM_ORGANO_UNIDAD.DESCRIPCION`.
+- `pk_oficina` de F2 es opcional y **solo** para unidades cuyo `nombre` no permite derivar la `PK_OFICINA` desde `gappsdb.T_SEP_OFICINA.TX_DESCRIPCION` (hoy `CCAM`, `UFED`, `UFSAVC`). No altera dim ni staging. Ver [`../lineamientos/ddl/audit/README.md`](../lineamientos/ddl/audit/README.md).
 - No editar a mano en corridas ad hoc sin commit; el harness y el DW dependen de ellos.
 
 ## SLA / reintentos Google Sheets

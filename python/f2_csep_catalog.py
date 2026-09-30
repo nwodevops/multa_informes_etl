@@ -55,3 +55,21 @@ def descripcion_por_sigla(catalog: dict) -> dict[str, str]:
         if cod and nombre:
             out[cod] = nombre
     return out
+
+
+def pk_oficina_por_sigla(catalog: dict) -> dict[str, str]:
+    """Mapa COD_UNIDAD (upper) → PK_OFICINA solo para los overrides declarados.
+
+    Solo trae las unidades cuyo 'nombre' de catálogo NO permite derivar la
+    PK_OFICINA desde T_SEP_OFICINA.TX_DESCRIPCION. El resto se deriva en
+    logica/audit y no necesita entrada aquí.
+    """
+    out: dict[str, str] = {}
+    for o in catalog.get("unidades") or []:
+        if not isinstance(o, dict):
+            continue
+        cod = str(o.get("cod_unidad") or "").strip().upper()
+        pk = str(o.get("pk_oficina") or "").strip().upper()
+        if cod and pk:
+            out[cod] = pk
+    return out
