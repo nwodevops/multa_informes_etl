@@ -47,7 +47,9 @@ Smoke sin Hop: [`./init.sh`](../../init.sh) o manualmente:
 |---|---|---|
 | `h2` | `DB_H2_*` | Staging |
 | `oracle_sisud` | `DB_ORA_SISUD_*` | Fuente SISUD (solo F5 `VW_MULTA_COERCITIVA`; sandbox local: `localhost:1525/CSEP`) |
-| `oracle_dw` | `DB_ORA_DW_*` | Destino DW (carga Fase 6–7; local: `localhost:1524/BD_CURSOR`) |
+| `oracle_dw` | `DB_ORA_DW_*` | Destino DW Oracle (carga Fase 6–7; local: `localhost:1524/BD_CURSOR`) |
+| `mysql` | `DB_MYSQL_*` | Fuente F4 gappsdb (INPUT staging) |
+| `mysql_dw` | `DB_MYSQL_DW_*` | Destino espejo DW MySQL (OUTPUT; local: `localhost:3307/gappsdb`) |
 | `oracle_BD_CURSOR` | `DB_ORA_REPO_*` | Legado |
 
 ## Secretos

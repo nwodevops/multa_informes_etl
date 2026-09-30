@@ -1,14 +1,16 @@
-# Sesión activa — rama `linux_v2` / `windows_v2`
+# Sesión activa — rama `linux_v3`
 
 ## Feature activa
 
-`f4-mysql-aud-fact` (`in_progress`).
+`dual-write-mysql-dw` (`in_progress`).
 
 ## Hecho reciente
 
-- F4 cableado: STG_MYSQL_MULTAS → AUD_F4_FORM + filas GAPPS al fact (sin lookup SISUD).
+- Rama `linux_v3` desde `linux_v2`.
+- Espejo MySQL DW: `DB_MYSQL_DW_*` + `cargar_dw_mysql` / `cargar_aud_mysql` (soft-fail).
 
 ## Siguiente
 
-1. Corrida Hop/MySQL: `./switch-env.sh local` (o remote) + `./init.sh` → HARNESS OK.
-2. Confirmar `enriquecida = AUD_F2+AUD_F1+AUD_F4` y `ID_FUENTE=GAPPS` en las filas nuevas.
+1. `./switch-env.sh local` (regenera `project-config.json` con `DB_MYSQL_DW_*`).
+2. Corrida `wf_main` / `./init.sh` → ver `DW-MYSQL:` y `AUD-MYSQL:` en log.
+3. En MySQL `localhost:3307/gappsdb`: `SELECT COUNT(*) FROM DW_M_FACT_MULTA_COERCITIVA`.

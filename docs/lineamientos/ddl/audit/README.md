@@ -25,6 +25,12 @@ Origen: `gappsdb.T_SEP_OFICINA` stageada en `STG_MYSQL_OFICINAS`
 (`inputs.yaml` → `pl_stage_mysql.hpl`), leída como `OFICINAS` en
 `python/io/leer_h2.py`. Resolución en `python/audit/oficinas.py`.
 
+Publicación: `cargar_aud.enriquecer()` muta el dict de staging **antes** de abrir
+cualquier conexión, así que la foto Oracle (`cargar_aud`) y el espejo MySQL
+(`cargar_aud_mysql`, que arma sus columnas desde `df.columns`) publican la misma
+forma. La columna llega a los dos destinos; si el espejo MySQL no responde,
+`cargar_aud_mysql` avisa y la corrida sigue (Oracle ya cargó).
+
 | AUD | Columna origen | Clave |
 |---|---|---|
 | `DW_M_AUD_F2_CSEP_MULTAS` | `COD_UNIDAD` | sigla → `Coordinación de Supervisión Ambiental en {nombre}` |
