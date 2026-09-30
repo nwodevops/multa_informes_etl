@@ -86,7 +86,7 @@ COMMENT ON TABLE DW_M_FACT_MULTA_COERCITIVA IS 'Hecho: una multa coercitiva de p
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.ID_MC IS 'Clave surrogate del hecho multa.';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.COD_MA IS 'Código de medida administrativa (clave natural Excel).';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.COD_PROY_MC IS 'Código del proyecto interno de elaboración de la multa (sede central).';
-COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.NUMERO_EXPEDIENTE IS 'Expediente administrativo; puente de amarre H9 entre fuentes de multa.';
+COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.NUMERO_EXPEDIENTE IS 'Expediente de supervisión/informe de incumplimiento (planilla EXP_INF_INCUMP); atributo de trazabilidad, NO clave de amarre (el match SISUD usa N_RES_MC+MONTO_UIT); puente interno H9 COD_MA vs expediente en Sheets.';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.EXP_RES_MC IS 'Expediente de la resolución de multa coercitiva.';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.N_RES_MC IS 'Número de resolución de multa coercitiva (planilla; no lo pisa SISUD).';
 COMMENT ON COLUMN DW_M_FACT_MULTA_COERCITIVA.N_RES_SISUD IS 'Resolución en SISUD si hubo match; sombra de N_RES_MC, no lo reemplaza.';
