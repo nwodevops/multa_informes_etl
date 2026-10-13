@@ -3,7 +3,7 @@
   <info>
     <name>pl_stage_mysql</name>
     <name_sync_with_filename>Y</name_sync_with_filename>
-    <description>Staging MySQL: vw_multas_app.sql -&gt; H2 STG_MYSQL_MULTAS</description>
+    <description>Staging MySQL: vw_multas_app.sql -&gt; H2 STG_MYSQL_MULTAS + T_SEP_OFICINA -&gt; H2 STG_MYSQL_OFICINAS</description>
     <extended_description/>
     <pipeline_version/>
     <pipeline_type>Normal</pipeline_type>
@@ -39,6 +39,8 @@
       <yloc>32</yloc>
       <note>F4 gappsdb: VW_MULTAS_APP (create_vw_multas_app.sql) -&gt; H2 STG_MYSQL_MULTAS.
 Definición de columnas: input_legacy/input_mysql/vw_multas_app.sql.
+Catálogo de oficinas: gappsdb.T_SEP_OFICINA -&gt; H2 STG_MYSQL_OFICINAS
+(alimenta PK_OFICINA en DW_M_AUD_F1_OD_MULTAS y DW_M_AUD_F2_CSEP_MULTAS).
 Requiere DB_MYSQL_* en project-config.json y driver mysql-connector-j en el lib de Hop.</note>
       <width>560</width>
     </notepad>
@@ -47,6 +49,11 @@ Requiere DB_MYSQL_* en project-config.json y driver mysql-connector-j en el lib 
     <hop>
       <from>Table Input MySQL</from>
       <to>H2 MySQL Staging</to>
+      <enabled>Y</enabled>
+    </hop>
+    <hop>
+      <from>Table Input MySQL Oficinas</from>
+      <to>H2 Oficinas Staging</to>
       <enabled>Y</enabled>
     </hop>
   </order>
@@ -111,6 +118,69 @@ Requiere DB_MYSQL_* en project-config.json y driver mysql-connector-j en el lib 
     <GUI>
       <xloc>368</xloc>
       <yloc>128</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>Table Input MySQL Oficinas</name>
+    <type>TableInput</type>
+    <description>Catálogo de oficinas gappsdb.T_SEP_OFICINA (PK_OFICINA + TX_DESCRIPCION)</description>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <connection>mysql</connection>
+    <sql>SELECT PK_OFICINA, TX_DESCRIPCION, TX_ABREVIATURA, NU_PADRE, TX_ESTADO FROM T_SEP_OFICINA</sql>
+    <limit>0</limit>
+    <lookup/>
+    <execute_each_row>N</execute_each_row>
+    <variables_active>N</variables_active>
+    <attributes/>
+    <GUI>
+      <xloc>128</xloc>
+      <yloc>288</yloc>
+    </GUI>
+  </transform>
+  <transform>
+    <name>H2 Oficinas Staging</name>
+    <type>TableOutput</type>
+    <description/>
+    <distribute>Y</distribute>
+    <custom_distribution/>
+    <copies>1</copies>
+    <partitioning>
+      <method>none</method>
+      <schema_name/>
+    </partitioning>
+    <connection>h2</connection>
+    <schema>PUBLIC</schema>
+    <table>STG_MYSQL_OFICINAS</table>
+    <commit>1000</commit>
+    <truncate>Y</truncate>
+    <only_when_have_rows>N</only_when_have_rows>
+    <ignore_errors>N</ignore_errors>
+    <use_batch>Y</use_batch>
+    <partitioning_enabled>N</partitioning_enabled>
+    <partitioning_field/>
+    <partitioning_daily>N</partitioning_daily>
+    <partitioning_monthly>N</partitioning_monthly>
+    <tablename_in_field>N</tablename_in_field>
+    <tablename_field/>
+    <tablename_in_table>N</tablename_in_table>
+    <return_keys>N</return_keys>
+    <return_field/>
+    <specify_fields>N</specify_fields>
+    <auto_update_table_structure>N</auto_update_table_structure>
+    <always_drop_and_recreate>N</always_drop_and_recreate>
+    <add_columns>N</add_columns>
+    <drop_columns>N</drop_columns>
+    <change_column_types>N</change_column_types>
+    <attributes/>
+    <GUI>
+      <xloc>368</xloc>
+      <yloc>288</yloc>
     </GUI>
   </transform>
   <transform_error_handling>

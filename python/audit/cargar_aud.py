@@ -11,6 +11,9 @@ Mapeo STG lógico → tabla audit:
   MYSQL  → DW_M_AUD_F4_FORM
 
 Todas las columnas se guardan como VARCHAR2 (foto 1:1 textual) + FECHA_CARGA.
+
+Única excepción a la foto 1:1 — PK_OFICINA en GS1 y GS2 (ver DERIVADOS_AUD).
+Esa columna no participa de la estrella (DIM_/FACT_) ni del enriquecido.
 """
 
 from __future__ import annotations
@@ -22,6 +25,10 @@ import pandas as pd
 
 from config import load_vars, project_root, require_live_conn
 
+# audit/ se importa como paquete (main.py deja python/ en sys.path y este
+# módulo se carga por ruta, así que aquí no vale un import relativo).
+from audit.oficinas import resolver as resolver_oficinas
+
 ESQUEMA_DEFAULT = "APP"
 ESQUEMA = ESQUEMA_DEFAULT
 
@@ -32,6 +39,14 @@ MAPEO_AUD: dict[str, str] = {
     "GS2": "DW_M_AUD_F1_OD_MULTAS",
     "ORA": "DW_M_AUD_F5_SISUD_VW",
     "MYSQL": "DW_M_AUD_F4_FORM",
+}
+
+# Columnas derivadas sobre la foto cruda: clave STG → (columna origen, destino).
+# Únicamente F1 y F2. PK_OFICINA se resuelve contra gappsdb.T_SEP_OFICINA
+# (staging STG_MYSQL_OFICINAS); si un código no resuelve queda NULL y se avisa.
+DERIVADOS_AUD: dict[str, tuple[str, str]] = {
+    "GS2": ("COD_OD", "PK_OFICINA"),
+    "GS1": ("COD_UNIDAD", "PK_OFICINA"),
 }
 
 VARCHAR_LEN = 4000
@@ -172,11 +187,74 @@ def _create_and_load(
     return n
 
 
+def _derivar(
+    stg_key: str,
+    df: pd.DataFrame | None,
+    mapas: dict[str, dict[str, str]],
+) -> pd.DataFrame | None:
+    """Agrega la columna derivada de DERIVADOS_AUD, si el STG la tiene.
+
+    Un código sin PK_OFICINA queda NULL (no se descarta la fila) y se avisa con
+    el conteo por código para que la corrida lo muestre.
+    """
+    if stg_key not in DERIVADOS_AUD:
+        return df
+    if df is None or df.empty:
+        return df
+    origen, destino = DERIVADOS_AUD[stg_key]
+    if origen not in df.columns:
+        print(f"AUD: AVISO {stg_key} sin columna '{origen}'; {destino} no se agrega", flush=True)
+        return df
+
+    out = df.copy()
+    codigos = out[origen].astype("string").str.strip().str.upper()
+    out[destino] = codigos.map(mapas.get(stg_key, {}))
+
+    sin_pk = out[destino].isna()
+    if sin_pk.any():
+        conteo = out.loc[sin_pk, origen].astype("string").value_counts().to_dict()
+        print(
+            f"AUD: AVISO {stg_key}: {int(sin_pk.sum())}/{len(out)} filas sin {destino} "
+            f"-> NULL: {conteo}",
+            flush=True,
+        )
+    else:
+        print(f"AUD: {stg_key}: {destino} resuelta en {len(out)}/{len(out)} filas", flush=True)
+    return out
+
+
+def enriquecer(
+    stg: dict[str, pd.DataFrame],
+    root: Path | None = None,
+) -> dict[str, pd.DataFrame]:
+    """Deriva las columnas de DERIVADOS_AUD sobre el dict de staging.
+
+    Muta `stg` y lo devuelve para que todo consumidor aguas abajo reciba los
+    mismos DataFrames: la foto Oracle (cargar_aud) y el espejo MySQL
+    (cargar_aud_mysql) publican la misma forma de columnas.
+
+    Se ejecuta completo ANTES de abrir cualquier conexión: si T_SEP_OFICINA no
+    responde, el error ocurre sin una transacción a medias.
+    """
+    root = root or project_root()
+    mapas = resolver_oficinas(stg.get("OFICINAS"), root)
+    for stg_key in DERIVADOS_AUD:
+        df = stg.get(stg_key)
+        if df is None:
+            continue
+        stg[stg_key] = _derivar(stg_key, df, mapas)
+    return stg
+
+
 def cargar_aud(
     stg: dict[str, pd.DataFrame],
     root: Path | None = None,
 ) -> dict[str, int]:
-    """Punto de entrada desde main.py: crea/llena DW_M_AUD_* desde STG (GS1/ETAPAS/GS2/ORA/MYSQL)."""
+    """Punto de entrada desde main.py: crea/llena DW_M_AUD_* desde STG (GS1/ETAPAS/GS2/ORA/MYSQL).
+
+    Las columnas derivadas de DERIVADOS_AUD ya vienen en `stg`: main.py (o el
+    llamador) pasa por enriquecer() antes de la foto. Aquí solo se copia 1:1.
+    """
     root = root or project_root()
     # STEP 8.1: abrir Oracle para guardar la fotografía cruda del staging.
     conn, _cv = _connect(root)

@@ -14,6 +14,8 @@ Flujo interno:
   3. LOGICA  : único .py en logica/ → PROF_*, DF_*, DW_M_DIM_*, DW_M_FACT_*, …
   4. SALIDA  : cargar_dw Oracle + cargar_aud Oracle
                + cargar_dw_mysql / cargar_aud_mysql (espejo DB_MYSQL_DW_*; soft-fail)
+               PK_OFICINA derivada en GS1/GS2 contra T_SEP_OFICINA (audit/oficinas.py):
+               la foto y el espejo publican la misma forma de columnas
                evidencia FACT_MC_* / QA/K quedan en memoria (no se publican)
 
 Contrato: python/CONTRATO.md
@@ -154,8 +156,12 @@ def main() -> int:
         cargar = _load("cargar_dw", HERE / "io" / "cargar_dw.py")
         cargar.cargar_dw(tablas_dw, root)
 
-        # Foto cruda 1:1 del staging (usa `datos` de leer_h2, no los facts)
+        # PK_OFICINA derivada ANTES de la foto: muta `datos` para que la
+        # fotografía Oracle y cualquier espejo (MySQL) publiquen la misma forma.
         aud = _load("cargar_aud", HERE / "audit" / "cargar_aud.py")
+        aud.enriquecer(datos, root)
+
+        # Foto cruda 1:1 del staging (salvo PK_OFICINA en F1/F2), no los facts
         aud.cargar_aud(datos, root)
 
         # Espejo MySQL DW (DB_MYSQL_DW_*). Soft-fail si no hay conexión.

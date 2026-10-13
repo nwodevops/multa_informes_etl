@@ -6,21 +6,19 @@ Reglas fijas del arquetipo:
 - Siempre es un ETL **Apache Hop**.
 - Siempre se usa **H2 in-memory** (`mem:csep`, puerto `9092`) como staging, con **reset clean en cada corrida** (stop + start + DDL). La infra de H2 se reutiliza de `etl_diego/h2`.
 
-## Nuevo proyecto desde el arquetipo local
+## Nuevo proyecto (cascarón Hop + H2 + Python)
 
-Plantilla mínima en [`archetype/README.md`](archetype/README.md) (generada con [`scripts/sync_archetype.sh`](scripts/sync_archetype.sh)):
+Plantilla mínima, **sin** lógica de multa. Regenerar y copiar:
 
 ```bash
-cp -r archetype/ ~/workspace/mi_etl/
-cd ~/workspace/mi_etl/
-# ver archetype/README.md → venv, hop-conf, ./init.sh
+./scripts/nuevo_etl.sh ~/workspace/mi_etl
+cd ~/workspace/mi_etl
+# venv + ./init.sh → HARNESS OK  (detalle: README del destino)
 ```
 
-Este repo (`datawarehouse_multa_etl`) **extiende** ese arquetipo con lógica OEFA (Fases 2–7, DW Oracle):
+O solo regenerar `archetype/` (gitignored): `./scripts/sync_archetype.sh`.
 
-- Fuentes: **F1** Sheets OD, **F2** Sheets CSEP, **F5** SISUD (sin F3/F4 en ingestión).
-- Oracle: 3 facts evidencia + enrich `07` → `DW_M_FACT_MULTA_COERCITIVA` / `VW_MC_ENRIQUECIDA`.
-- Guía: [`docs/modelo-kimball.md`](docs/modelo-kimball.md).
+Este repo **extiende** ese cascarón con el DW de multa (F1/F2/F5, `logica/dwh/`, Oracle flaco). No copies `logica/dwh` al proyecto nuevo salvo que quieras el mismo modelo.
 
 ## Uso (desde arquetipo histórico)
 

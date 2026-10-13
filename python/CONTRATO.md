@@ -16,6 +16,7 @@ CAPA POST-STAGING (lineamientos Fases 2–7)
   logica/dwh/               perfil … dimensional (3 facts memoria) … enrich.py … KPIs
   python/io/cargar_dw.py    SALIDA Oracle: wipe + DDL + INSERT canónico
   python/io/cargar_dw_mysql.py  SALIDA MySQL DW (`DB_MYSQL_DW_*`): espejo dims/fact/DET/DQ
+  python/audit/oficinas.py  deriva `PK_OFICINA` (GS1/GS2) contra `T_SEP_OFICINA`
   python/audit/cargar_aud.py      DW_M_AUD_* Oracle 1:1 desde STG
   python/audit/cargar_aud_mysql.py  DW_M_AUD_* MySQL DW (soft-fail)
 ```
@@ -43,7 +44,7 @@ Destinos: Oracle `DB_ORA_DW_*` **y** MySQL `DB_MYSQL_DW_*` (OUTPUT; distinto de 
 | `DW_M_DIM_*` / `DW_M_DET_ETAPA_MC` | Estrella (DET FK al enriquecido) |
 | `DW_M_FACT_MULTA_COERCITIVA` | Negocio: F1∪F2 + lookup SISUD ∪ GAPPS (`logica/dwh/enrich.py`) |
 | `DW_M_DQ_HALLAZGO` | Bitácora R01–R05 (cuarentena blanda; no elimina filas) |
-| `DW_M_AUD_*` | Foto cruda STG 1:1 (`F1`/`F2`/`F4_FORM`/`F5`) |
+| `DW_M_AUD_*` | Foto cruda STG 1:1 (`F1`/`F2`/`F4_FORM`/`F5`). Salvo `PK_OFICINA` en `DW_M_AUD_F1_OD_MULTAS` y `DW_M_AUD_F2_CSEP_MULTAS`: única columna derivada, contra `T_SEP_OFICINA`, presente en Oracle **y** en el espejo MySQL. Ver [`docs/lineamientos/ddl/audit/README.md`](../docs/lineamientos/ddl/audit/README.md) |
 
 MySQL DW: wipe solo `DW_M_%` (no toca `T_MVC_*`). Si `DB_MYSQL_DW_*` no responde → aviso y la corrida sigue (Oracle ya cargó).
 

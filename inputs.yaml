@@ -36,3 +36,10 @@ sources:
     connection: mysql
     sql_file: input_legacy/input_mysql/vw_multas_app.sql
     types: varchar
+
+  # Catálogo de oficinas gappsdb: única fuente de PK_OFICINA para las fotos
+  # AUD de F1 y F2. No alimenta la estrella (DIM_/FACT_).
+  - stg_table: STG_MYSQL_OFICINAS
+    type: mysql
+    connection: mysql
+    object: gappsdb.T_SEP_OFICINA

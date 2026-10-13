@@ -45,7 +45,7 @@ Contrato: [`python/CONTRATO.md`](python/CONTRATO.md).
 
 ---
 
-## Fuera de alcance del arquetipo base
+## Fuera de alcance del cascarón
 
-- Modelo dimensional Oracle (`cargar_dw.py`) → copiar desde repo OEFA.
-- Indicadores K1–K5 → skill `phased-dwh-lineamiento`.
+- Modelo dimensional Oracle (`cargar_dw.py`) → copiar cuando el proyecto lo pida.
+- Fases Kimball / indicadores → no vienen en esta plantilla.

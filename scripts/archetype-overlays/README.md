@@ -1,70 +1,60 @@
 # Arquetipo Apache Hop + H2 in-memory + Python
 
-Plantilla **mínima** para nuevos ETLs. Clonar con:
+Cascarón **mínimo** para un ETL nuevo. Sin fuentes ni lógica de negocio: demo `DEMO_TABLA_EJEMPLO` → Excel.
+
+Desde el repo padre:
 
 ```bash
-cp -r /ruta/a/etl_phyton_cursor/archetype/ ~/workspace/mi_etl/
-cd ~/workspace/mi_etl/
+./scripts/nuevo_etl.sh ~/workspace/mi_etl
+cd ~/workspace/mi_etl
+```
+
+O regenerar y copiar a mano:
+
+```bash
+./scripts/sync_archetype.sh
+cp -r archetype/ ~/workspace/mi_etl/
 ```
 
 ## Bootstrap
 
+`nuevo_etl.sh` crea el `.venv` con pip. Si copiás `archetype/` a mano en Ubuntu sin `python3-venv`:
+
 ```bash
-# 1. Python venv
-python3 -m venv .venv
+# usar python3-venv (ensurepip) O el helper del repo padre:
+#   ./scripts/nuevo_etl.sh ~/workspace/mi_etl
+# A mano en Ubuntu sin ensurepip:
+python3 -m venv --without-pip .venv
+# después: copiar pip del .venv del repo multa, o get-pip.py, y:
 .venv/bin/python -m pip install -r python/requirements.txt
-
-# 2. Registrar proyecto en Hop (ajusta nombre y ruta)
-~/apps/hop/hop-conf.sh --project-create \
-  --project=mi_etl \
-  --project-home="$(pwd)" \
-  --project-keep-config-file
-
-# 3. Completar credenciales en project-config.json o environments/*.json
-#    (placeholders <HOST>, <PASSWORD>, etc.)
-
-# 4. Smoke harness
-chmod +x init.sh
-./init.sh   # debe terminar en HARNESS OK
-```
-
-## Qué incluye
-
-- **H2** in-memory `mem:csep` (reset en cada corrida)
-- **Hop**: `wf_create_stg.hwf` (diseño STG), `wf_main.hwf` (demo)
-- **Python**: `create_stg.py` (DDL), `main.py` + `logica/demo.py`
-- **Harness**: `feature_list.json`, `CHECKPOINTS.md`, `init.sh`, `progress/`
-- **Skill**: `.agents/skills/hop-python-etl/`
-
-## Extender el proyecto
-
-| Fase | Qué hacer |
-|---|---|
-| Fuentes STG | Entradas en `inputs.yaml` → `pl_stage_*.hpl` → cablear en `wf_main.hwf` |
-| Lecturas | Claves en `python/io/leer_h2.py` |
-| Lógica | Un solo `.py` en `logica/` (ver `python/plantilla_logica.py`) |
-| Destino DW | `python/io/cargar_dw.py` (Oracle) |
-
-## Extender a consultoría OEFA (opcional)
-
-El repo [`etl_phyton_cursor`](../) es la implementación de referencia. Copiar desde ahí:
-
-- `logica/dwh/` + `logica/ejecutar.py`
-- `python/io/cargar_dw.py`, `python/verify_dw.py`
-- `docs/lineamientos/`
-- Skills: `phased-dwh-lineamiento`, `auditable-soft-quarantine`, `oracle-cargar-dw`
-
-Regenerar este arquetipo desde el repo padre:
-
-```bash
-./scripts/sync_archetype.sh
-```
-
-## Verificación
-
-```bash
+chmod +x init.sh switch-env.sh h2/scripts/*.sh
+./switch-env.sh local
 ./init.sh
-.venv/bin/python python/main.py   # → output/resultado.xlsx
 ```
 
-Ver [`docs/verification.md`](docs/verification.md) y [`AGENTS.md`](AGENTS.md).
+## Qué trae
+
+- **H2** in-memory `mem:csep` (reset cada corrida)
+- **Hop:** `wf_create_stg.hwf` (diseño STG), `wf_main.hwf` (demo)
+- **Python:** `create_stg.py` (DDL), `main.py` + `logica/demo.py` → `output/resultado.xlsx`
+- **Harness:** `feature_list.json`, `CHECKPOINTS.md`, `init.sh`, `progress/`
+- **Skill:** `.agents/skills/hop-python-etl/`
+
+No incluye `logica/dwh/`, `cargar_dw.py` ni planillas OEFA. Eso se copia después si el proyecto es un DW.
+
+## Cómo extender (otros inputs, otra lógica)
+
+| Paso | Dónde |
+|---|---|
+| 1. Fuentes | `inputs.yaml` (ver `.agents/skills/hop-python-etl/inputs.example.yaml`) |
+| 2. Staging Hop | `wf_create_stg.hwf` → `pipelines/pl_stage_*.hpl` → cablear en `wf_main.hwf` **después** de create STG |
+| 3. Lecturas | claves en `python/io/leer_h2.py` (`LECTURAS`) |
+| 4. Lógica | un solo `.py` en `logica/` (borrar `demo.py`; partir de `python/plantilla_logica.py`) |
+| 5. Destino | por defecto Excel (`escribir_excel.py`). Oracle DW: copiar `cargar_dw.py` desde el repo multa |
+
+Contrato: [`python/CONTRATO.md`](python/CONTRATO.md). Verificación: [`docs/verification.md`](docs/verification.md).
+
+## Credenciales
+
+`environments/local.json` / `remote.json` tienen placeholders `<HOST>`, `<PASSWORD>`.  
+`./switch-env.sh local|remote` escribe `project-config.json` (gitignored).

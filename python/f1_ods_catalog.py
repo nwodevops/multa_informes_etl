@@ -37,3 +37,14 @@ def stg_columns(catalog: dict) -> list[str]:
     if "COD_OD" not in cols:
         cols = ["COD_OD"] + cols
     return cols
+
+
+def nombre_por_cod(catalog: dict) -> dict[str, str]:
+    """Mapa COD_OD (upper) → nombre largo del OD, para las ODs activas."""
+    out: dict[str, str] = {}
+    for o in active_ods(catalog):
+        cod = str(o.get("cod_od") or "").strip().upper()
+        nombre = str(o.get("nombre") or "").strip()
+        if cod and nombre:
+            out[cod] = nombre
+    return out

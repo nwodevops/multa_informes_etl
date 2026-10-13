@@ -281,6 +281,16 @@
       "criterio": "Tras Oracle, wipe solo DW_M_% en MySQL OUTPUT y cargar dims/fact/DET/DQ + AUD; INPUT F4 sigue DB_MYSQL_*; soft-fail si MySQL DW cae; ./switch-env.sh local + corrida Success",
       "doc": "python/io/cargar_dw_mysql.py",
       "evidencia": "progress/impl_dual-write-mysql-dw.md"
+    },
+    {
+      "id": "aud-pk-oficina",
+      "title": "PK_OFICINA derivada de T_SEP_OFICINA en DW_M_AUD_F1_OD_MULTAS y F2_CSEP_MULTAS",
+      "status": "done",
+      "passes": true,
+      "criterio": "Única excepción 1:1 del modelo: COD_OD/COD_UNIDAD → catálogo f1/f2 → T_SEP_OFICINA.TX_DESCRIPCION; override de catálogo primero; sin coincidencia NULL+aviso (no descarta fila); ambigüedad rompe la corrida; init.bat HARNESS OK; Oracle 282/282 y 994/994 con PK_OFICINA; la columna no aparece en otra tabla DW_M_*",
+      "doc": "docs/lineamientos/ddl/audit/README.md",
+      "evidencia": "progress/impl_aud-pk-oficina.md",
+      "nota": "Mergeado sobre windows_v3 (dual-write); enrich muta el dict de staging antes de abrir conexión, así Oracle y el espejo MySQL publican la misma forma."
     }
   ]
 }

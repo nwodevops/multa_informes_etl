@@ -213,3 +213,17 @@ Registro de sesiones y features cerradas. No editar entradas pasadas.
 - `DB_MYSQL_DW_*` OUTPUT separado de `DB_MYSQL_*` INPUT F4.
 - `cargar_dw_mysql` + `cargar_aud_mysql` (soft-fail); wipe solo `DW_M_%`.
 - Evidencia: `progress/impl_dual-write-mysql-dw.md`
+
+---
+
+## 2026-09-30 — PK_OFICINA en auditorías F1/F2 (`windows_v3`)
+
+**Feature:** `aud-pk-oficina` → `done`
+
+- Única excepción 1:1 del modelo: `PK_OFICINA` en `DW_M_AUD_F1_OD_MULTAS` y `DW_M_AUD_F2_CSEP_MULTAS`.
+- Cadena `COD_OD`/`COD_UNIDAD` → catálogo f1/f2 → `T_SEP_OFICINA.TX_DESCRIPCION`. Override de catálogo primero (CCAM/UFED/UFSAVC).
+- Sin coincidencia: `NULL` + aviso, se conserva la fila. Ambigüedad: falla la corrida.
+- Merge sobre `windows_v3` (2 conflictos a mano). Enriquecido antes de abrir conexión, así Oracle y espejo MySQL publican la misma forma.
+- `init.bat` → **HARNESS OK**. Oracle: F1 282/282, F2 994/994 con PK_OFICINA; dentro de `DW_M_*` la columna solo existe en esas 2.
+- Pruebas 7/7 unit + 7/7 e2e MySQL real.
+- Evidencia: `progress/impl_aud-pk-oficina.md`
