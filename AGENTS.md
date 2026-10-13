@@ -1,93 +1,59 @@
-# AGENTS.md — mapa para agentes (rama `windows`)
+# AGENTS.md — mapa para agentes (cascarón Hop + H2 + Python)
 
-ETL **Apache Hop + H2 in-memory + Python** (OEFA) — **esta rama es exclusiva Windows**.
+ETL **Apache Hop + H2 in-memory + Python**. Arquitectura: [`docs/arquitectura.md`](docs/arquitectura.md).
 
-Requerimiento: [`docs/TDR REQ 3629-2026.pdf`](docs/TDR%20REQ%203629-2026.pdf).
-
-| Doc | Para qué |
-|---|---|
-| [`docs/README.md`](docs/README.md) | Índice docs |
-| [`docs/modelo-kimball.md`](docs/modelo-kimball.md) | Estrella `DW_M_DIM_*` / `DW_M_FACT_*` |
-| [`docs/arquitectura.md`](docs/arquitectura.md) | Detalle Hop + H2 + Python |
-| [`docs/inputs/README.md`](docs/inputs/README.md) | Fuentes vigentes F1/F2/F5 |
-| [`docs/fases/status.md`](docs/fases/status.md) | Semáforo fases 1–7 |
-| [`docs/verification.md`](docs/verification.md) | Cómo demostrar que funciona |
-
-> **Arquetipo base:** plantilla mínima `archetype/` (no versionado; regenerar con `./scripts/sync_archetype.sh`). Este repo es la implementación de referencia consultoría.
-
-> Linux / harness genérico: rama `main`. Aquí no mezclar flujos `init.sh` / `wf_main.hwf` como camino primario.
-
-**Verificación Win:** `.\switch-env.ps1 remote` + `init.bat` **o** Hop `wf_main_win.hwf` → Success / **HARNESS OK**. Criterios: [`CHECKPOINTS.md`](CHECKPOINTS.md).
+**Verificación:** `./init.sh` (Linux) o `init.bat remote` (Windows) debe terminar en **`HARNESS OK`**. Criterios: [`CHECKPOINTS.md`](CHECKPOINTS.md).
 
 ## Harness
 
 | Archivo | Propósito |
 |---|---|
-| [`feature_list.json`](feature_list.json) | Alcance; **una** `in_progress` |
-| [`progress/current.md`](progress/current.md) | Plan sesión |
-| [`progress/history.md`](progress/history.md) | Bitácora |
-| [`docs/harness/workflow.md`](docs/harness/workflow.md) | Roles |
+| [`feature_list.json`](feature_list.json) | Alcance; **una** `in_progress` a la vez |
+| [`progress/current.md`](progress/current.md) | Plan de sesión activa |
+| [`progress/history.md`](progress/history.md) | Bitácora append-only |
+| [`docs/harness/workflow.md`](docs/harness/workflow.md) | Roles líder / implementador / revisor |
 | [`docs/harness/platform.md`](docs/harness/platform.md) | Hop, H2, variables |
 
 ## Skills
 
-- [`.agents/skills/hop-python-etl/SKILL.md`](.agents/skills/hop-python-etl/SKILL.md)
-- [`.agents/skills/phased-dwh-lineamiento/SKILL.md`](.agents/skills/phased-dwh-lineamiento/SKILL.md)
-- [`.agents/skills/auditable-soft-quarantine/SKILL.md`](.agents/skills/auditable-soft-quarantine/SKILL.md)
-- [`.agents/skills/oracle-cargar-dw/SKILL.md`](.agents/skills/oracle-cargar-dw/SKILL.md)
+- [`.agents/skills/hop-python-etl/SKILL.md`](.agents/skills/hop-python-etl/SKILL.md) — capas Hop / H2 / Python
+- [`.agents/skills/linux-windows-parity/SKILL.md`](.agents/skills/linux-windows-parity/SKILL.md) — el cambio de Linux se espeja en `init.bat`, `wf_main_windows.hwf` y `run_wf_main.bat`
+- [`.agents/skills/etl-run-logs/SKILL.md`](.agents/skills/etl-run-logs/SKILL.md) — cada corrida deja bitácora en `logs/`
+- [`.agents/skills/release-etl/SKILL.md`](.agents/skills/release-etl/SKILL.md) — corta la rama `release` solo con el ETL
 
-Lineamiento canónico: [`docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md).  
-Modelo vigente: [`docs/modelo-kimball.md`](docs/modelo-kimball.md). Manual fact: [`docs/lineamientos/extra/manual-como-se-arma-el-fact.md`](docs/lineamientos/extra/manual-como-se-arma-el-fact.md). Status: [`docs/fases/status.md`](docs/fases/status.md). DDL DW: [`docs/lineamientos/ddl/`](docs/lineamientos/ddl/).
+## Inicio rápido
 
-## Inicio rápido (Windows)
+### Linux (desarrollo, entorno `local`)
 
-```powershell
-cd D:\Eder\workspace_etl_oefa\multa_informes_etl
-git checkout windows
-git pull
-.\switch-env.ps1 remote
-
-# Opción A — harness
-init.bat
-# log: output\init_win_YYYYMMDD_HHMMSS.log
-
-# Opción B — Hop GUI
-# Hop en D:\Eder\hop → proyecto multa_informes_etl → wf_main_win.hwf → Play
+```bash
+./switch-env.sh local
+./init.sh
+~/apps/hop/hop-gui.sh   # → wf_main.hwf
 ```
 
-Prerrequisitos Win:
+### Windows (este equipo, entorno `remote`)
 
-- Java en PATH (H2)
-- `.venv` + `pip install -r python\requirements.txt`
-- `input_excel\*.xlsx` / `client_secret.json` (Sheets)
-- Hop: `D:\Eder\hop\hop-run.bat` (o `set HOP_RUN=...`)
-- Red/VPN a Oracle SISUD, Oracle DW (`REPOCSEP` @ `10.6.0.15`) y MySQL DW OUTPUT (`DB_MYSQL_DW_*`)
-
-Flujo: `inputs.yaml` → Hop `STG_*` (F1/F2/F4/F5) → `python/main.py` → facts evidencia en memoria + dims → `cargar_dw.py` (Oracle) + `cargar_dw_mysql.py` (espejo `DB_MYSQL_DW_*`) + AUD en ambos destinos → `DW_M_FACT_MULTA_COERCITIVA`.
-
-**Diseño vigente:** planillas **sede central (10) + OD (31) + GAPPS (F4)**; SISUD solo lookup CUM/CAM sobre F1∪F2. No hay base CSEP. F3 fuera de ingestión. Lectura: [`docs/adjunto/README.md`](docs/adjunto/README.md).
-
-## Python (esta rama)
-
-```text
-python/
-  create_stg.py / main.py / verify_dw.py / stage_sheets.py
-  config.py / h2_conn.py / plantilla_logica.py
-  introspect/     # DDL STG
-  io/leer_h2.py   # entrada
-  io/cargar_dw.py # salida Oracle DW
-  io/cargar_dw_mysql.py # espejo MySQL DW (DB_MYSQL_DW_*)
-  audit/cargar_aud.py + cargar_aud_mysql.py
+```bat
+powershell -ExecutionPolicy Bypass -File switch-env.ps1 remote
+init.bat remote
+REM Programador de tareas → run_wf_main.bat
+REM Hop GUI → workflows\wf_main_windows.hwf
 ```
 
-Sin escritores legacy (`escribir_*`). Contrato: [`python/CONTRATO.md`](python/CONTRATO.md).
+## Entornos
+
+Host, servicio y esquema no van en este archivo. Viven en `environments/local.json` y `environments/remote.json` (placeholders `<...>`). El esquema destino es `DB_ORA_DW_SCHEMA`. Credenciales reales solo en `docs/credenciales/*.txt` (gitignored), sobrepuestas por `switch-env.sh` / `switch-env.ps1`.
 
 ## Reglas críticas
 
-1. **Un solo `.py`** en `logica/` (auto-descubierto por `main.py`); subpaquete `logica/dwh/` es el pipeline real.
-2. **Credenciales:** `project-config.json` es generado y gitignored — nunca se commitea. `environments/*.json` son versionados pero SOLO con credenciales dev locales; jamás credenciales de producción/remoto reales (usar placeholder `<...>`).
-3. **Sin `${VAR}` literal** en logs = variable Hop mal definida.
-4. **Rama por fase de servicio** (`fase-1`, `fase-2`, …); esta rama = **solo Windows**; no portar aquí como default el flujo Linux.
-5. **CodeGraph** para entender/locar código: `.codegraph/` es índice local por máquina (gitignored); indexar con `codegraph init` y consultar vía MCP `codegraph_explore` (config global opencode) o CLI `codegraph explore "…"`.
+1. **Prioridad:** Apache Hop mueve las filas. Un mapeo 1:1 no pasa por `logica/`. Un tema complejo (joins, calidad, varias fuentes, dimensional, indicadores) sí usa Python en `logica/`.
+2. **Un solo `.py`** en `logica/` (el cascarón trae `demo.py`).
+3. **Sin secretos** en git (`project-config.json` es generado).
+4. **Sin `${VAR}` literal** en logs Hop = variable mal definida.
+5. `logica/` no abre conexiones. I/O en `python/io/`.
+6. **No solapar corridas**: `mem:csep`:9092 es compartido con los repos hermanos y todos hacen `DROP ALL OBJECTS`.
+7. **Corrida en `logs/`**: `logs/init_YYYYMMDD.log` y `logs/wf_main_YYYYMMDD.log`. stdout o un temporal que se borra no cuentan. Skill `etl-run-logs`.
 
-Plataforma / H2: [`docs/harness/platform.md`](docs/harness/platform.md).
+## Nuevo proyecto
+
+Este repo es un cascarón. Fuentes → `inputs.yaml`. Filas → pipelines Hop. `logica/<tu>.py` es obligatorio cuando el tema es complejo. Destino demo del cascarón → Excel.
