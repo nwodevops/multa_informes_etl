@@ -192,7 +192,10 @@ def _drop_model(cur) -> None:
                 raise
             print(f"AVISO: DROP VIEW {nombre}: {exc}", flush=True)
 
-    cur.execute("SELECT table_name FROM user_tables WHERE table_name LIKE 'DW_M_%'")
+    cur.execute(
+        "SELECT table_name FROM user_tables "
+        "WHERE table_name LIKE 'DW\\_M\\_%' ESCAPE '\\'"
+    )
     existentes = {r[0] for r in cur.fetchall()}
     for tabla in DROP_ORDEN:
         if tabla in existentes:

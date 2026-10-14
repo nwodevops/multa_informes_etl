@@ -107,7 +107,9 @@ def _create_sql(tabla: str, df: pd.DataFrame) -> str:
 
 
 def _drop_dw_tables(cur) -> None:
-    cur.execute("SHOW TABLES LIKE 'DW_M_%'")
+    # 'DW\_M\_%': los '_' van escapados para no barrer DW_MED_* de otros ETL
+    # (sin escapar, '_' es comodin de un caracter y matchea DW_MED_*).
+    cur.execute("SHOW TABLES LIKE 'DW\\_M\\_%'")
     tablas = [r[0] for r in cur.fetchall()]
     if not tablas:
         return
