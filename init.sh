@@ -238,7 +238,8 @@ with oracledb.connect(user=cv["username"], password=cv["password"], dsn=dsn) as 
         cur.execute(
             """
             SELECT view_name FROM user_views
-            WHERE view_name LIKE 'VW_MC_%' OR view_name LIKE 'VW_FCT_%'
+            WHERE view_name LIKE 'VW\\_MC\\_%' ESCAPE '\\'
+               OR view_name LIKE 'VW\\_FCT\\_%' ESCAPE '\\'
             ORDER BY 1
             """
         )

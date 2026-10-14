@@ -179,7 +179,8 @@ def _drop_model(cur) -> None:
     cur.execute(
         """
         SELECT view_name FROM user_views
-        WHERE view_name LIKE 'VW_MC_%' OR view_name LIKE 'VW_FCT_%'
+        WHERE view_name LIKE 'VW\\_MC\\_%' ESCAPE '\\'
+           OR view_name LIKE 'VW\\_FCT\\_%' ESCAPE '\\'
         ORDER BY view_name
         """
     )
