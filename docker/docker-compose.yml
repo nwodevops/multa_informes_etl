@@ -1,0 +1,29 @@
+# Opción C — visualizar indicadores K1–K5 en Ubuntu (sin Power BI / ODAC).
+# Uso: docker compose -f docker/docker-compose.yml up --build
+#
+# UI: http://localhost:8088
+# Login: admin / admin  (cambiar SUPERSET_ADMIN_PASSWORD)
+
+services:
+  superset:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: multa_informes_superset:local
+    container_name: multa_superset
+    ports:
+      - "8088:8088"
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-dev-only-change-me-multa-informes}
+      SUPERSET_ADMIN_USER: ${SUPERSET_ADMIN_USER:-admin}
+      SUPERSET_ADMIN_PASSWORD: ${SUPERSET_ADMIN_PASSWORD:-admin}
+      SUPERSET_ADMIN_EMAIL: ${SUPERSET_ADMIN_EMAIL:-admin@localhost}
+    volumes:
+      - superset_home:/app/superset_home
+    extra_hosts:
+      # Oracle en el host Ubuntu (BD_CURSOR local)
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  superset_home:

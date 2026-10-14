@@ -1,0 +1,35 @@
+# Credenciales LOCAL — referencia humana (no commitear secretos en git)
+# Aplicar: ./switch-env.sh local  |  .\switch-env.ps1 local  →  regenera project-config.json
+
+# INPUT — MySQL F4 (Hop: mysql → DB_MYSQL_*)
+# Schema completo + VW_MULTAS_APP
+Host: 209.45.104.78
+Port: 3306
+Database: gappsdb
+User: gapps
+Password: Knjux4a9tJCbrly!
+Tabla: VW_MULTAS_APP
+
+# INPUT — Oracle SISUD (Hop: oracle_sisud → DB_ORA_SISUD_*)
+Host: localhost
+Port: 1525
+Service: CSEP
+User: SISUD
+Password: sisud2026
+Tablas: VW_MULTA_COERCITIVA
+
+############################ OUTPUT ############################
+# Oracle DW (DB_ORA_DW_*)
+Host: localhost
+Port: 1524
+Service: BD_CURSOR
+User: app
+Password: app2026
+
+# MySQL DW espejo (DB_MYSQL_DW_*) — wipe solo DW_M_%
+Host: localhost
+Port: 3307
+Database: gappsdb
+User: gapps
+Password: gapps2026
+RootPassword: MysqlRoot2026

@@ -1,0 +1,70 @@
+# CONTRATO — dos capas Python (no mezclar)
+
+Ver [`LEEME.md`](LEEME.md) y [`../docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md`](../docs/lineamientos/PROPUESTA_ADAPTADA_ETL.md).  
+Manual enrich: [`../docs/lineamientos/extra/manual-como-se-arma-el-fact.md`](../docs/lineamientos/extra/manual-como-se-arma-el-fact.md).
+
+```
+CAPA STG / DDL
+  python/create_stg.py      inputs.yaml → introspect/ → CREATE TABLE STG_*
+  python/introspect/        schema vivo. No extrae filas.
+
+CAPA POST-STAGING (lineamientos Fases 2–7)
+  python/main.py            orquesta: leer_h2 → logica/ → cargar_dw → audit
+                            → cargar_dw_mysql → audit MySQL (espejo soft-fail)
+  python/io/leer_h2.py      ENTRADA: H2 STG_* → DataFrames
+  logica/ejecutar.py        delega a logica/dwh/
+  logica/dwh/               perfil … dimensional (3 facts memoria) … enrich.py … KPIs
+  python/io/cargar_dw.py    SALIDA Oracle: wipe + DDL + INSERT canónico
+  python/io/cargar_dw_mysql.py  SALIDA MySQL DW (`DB_MYSQL_DW_*`): espejo dims/fact/DET/DQ
+  python/audit/oficinas.py  deriva `PK_OFICINA` (GS1/GS2) contra `T_SEP_OFICINA`
+  python/audit/cargar_aud.py      DW_M_AUD_* Oracle 1:1 desde STG
+  python/audit/cargar_aud_mysql.py  DW_M_AUD_* MySQL DW (soft-fail)
+```
+
+Fuentes activas: F1 Sheets OD, F2 Sheets CSEP (+etapas), F4 MySQL GAPPS **INPUT**, F5 SISUD.
+
+Destinos: Oracle `DB_ORA_DW_*` **y** MySQL `DB_MYSQL_DW_*` (OUTPUT; distinto de INPUT F4).
+
+## Entrada (`python/io/leer_h2.py`)
+
+| Nombre | STG H2 | Fuente lineamiento |
+|---|---|---|
+| `GS1` | `STG_GS1_CSEP_MULTAS` | F2 CSEP Google Sheets multas (`COD_UNIDAD`) |
+| `GS2` | `STG_GS2_OD_MULTAS` | F1 ODs Google Sheets (`COD_OD` por fila) |
+| `ETAPAS` | `STG_GS1_ETAPAS` | F2-ET (Sheets CSEP) |
+| `ORA` | `STG_ORA_VW_MULTA_COERCITIVA` | F5 |
+| `MYSQL` | `STG_MYSQL_MULTAS` | F4 gapps (`vw_multas_app.sql`) |
+
+## Salida
+
+### Publicada en Oracle **y** MySQL DW (mismo canónico)
+
+| Nombre | Qué es |
+|---|---|
+| `DW_M_DIM_*` / `DW_M_DET_ETAPA_MC` | Estrella (DET FK al enriquecido) |
+| `DW_M_FACT_MULTA_COERCITIVA` | Negocio: F1∪F2 + lookup SISUD ∪ GAPPS (`logica/dwh/enrich.py`) |
+| `DW_M_DQ_HALLAZGO` | Bitácora R01–R05 (cuarentena blanda; no elimina filas) |
+| `DW_M_AUD_*` | Foto cruda STG 1:1 (`F1`/`F2`/`F4_FORM`/`F5`). Salvo `PK_OFICINA` en `DW_M_AUD_F1_OD_MULTAS` y `DW_M_AUD_F2_CSEP_MULTAS`: única columna derivada, contra `T_SEP_OFICINA`, presente en Oracle **y** en el espejo MySQL. Ver [`docs/lineamientos/ddl/audit/README.md`](../docs/lineamientos/ddl/audit/README.md) |
+
+MySQL DW: wipe solo `DW_M_%` (no toca `T_MVC_*`). Si `DB_MYSQL_DW_*` no responde → aviso y la corrida sigue (Oracle ya cargó).
+
+### Solo memoria de corrida (no se publica)
+
+| Nombre | Fase | Qué es |
+|---|---|---|
+| `PROF_*` / `DICCIONARIO` / `DF_*` | 2–4 | Intermedios |
+| `DW_M_FACT_MC_CSEP` / `_OD` / `_SISUD` / `_GAPPS` | 5 | Evidencia por fuente (no se publica) |
+| `DW_M_QA_AMARRE*` | 4 | Amarre H9 (resumen/detalle) |
+| `DW_M_INDICADOR_RESULTADO` | 7 | KPIs K1–K5 |
+| `RESULTADO` | 2–7 | Resumen de corrida |
+
+Carga Oracle: wipe **todas** `DW_M_*` y `VW_MC_*`/`VW_FCT_*` → DDL `01`+`02` + `DW_M_DQ_HALLAZGO` (03 filtrado) (+ comentarios `05`) → INSERT dims/enriquecida/DET/DQ → `python/audit` recrea `DW_M_AUD_*`.  
+**No** se aplican `04`/`06`/`07` ni tablas `DW_M_QA_*` / `DW_M_FACT_MC_*` en runtime.
+
+Windows/REPOCSEP: cleanup manual de vistas/`DW_M_*` viejos una vez; luego el wipe canónico mantiene el esquema flaco. Linux/Docker: wipe total cada corrida.
+
+## Reglas
+
+- En `logica/` no hay conexiones ni drivers.
+- Hop resetea H2 y carga `STG_*`; Python no filtra el landing.
+- Consultar hechos en `DW_M_FACT_*` (no hay vistas `VW_MC_*` en destino).

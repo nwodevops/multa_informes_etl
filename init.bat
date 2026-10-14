@@ -1,0 +1,247 @@
+@echo off
+setlocal enabledelayedexpansion
+REM Harness — verificacion e inicializacion del ETL (capa Python + staging Excel).
+REM Equivalente Windows de init.sh (post-pull).
+REM Log persistente: output\init_win_YYYYMMDD_HHMMSS.log
+cd /d "%~dp0"
+
+set RED=[91m
+set GREEN=[92m
+set YELLOW=[93m
+set NC=[0m
+
+REM --- Log de corrida Windows (no se borra al final) ---
+if not exist "output" mkdir output
+for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd_HHmmss"') do set STAMP=%%i
+set "RUN_LOG=%CD%\output\init_win_%STAMP%.log"
+set "LOG=%RUN_LOG%"
+(
+  echo === init.bat Windows harness ===
+  echo start: %DATE% %TIME%
+  echo cwd: %CD%
+  echo computer: %COMPUTERNAME%
+  echo user: %USERNAME%
+  echo.
+) > "%RUN_LOG%"
+echo %GREEN%==>%NC% Log de corrida: %RUN_LOG%
+
+REM --- Python ---
+set PY=python
+if exist ".venv\Scripts\python.exe" set PY=.venv\Scripts\python.exe
+
+REM --- Hop (Windows: hop-run.bat; override con set HOP_RUN=...) ---
+REM Orden: HOP_RUN env > D:\Eder\hop > %USERPROFILE%\apps\hop > PATH
+if not defined HOP_RUN (
+    if exist "D:\Eder\hop\hop-run.bat" (
+        set "HOP_RUN=D:\Eder\hop\hop-run.bat"
+    ) else if exist "%USERPROFILE%\apps\hop\hop-run.bat" (
+        set "HOP_RUN=%USERPROFILE%\apps\hop\hop-run.bat"
+    ) else if exist "%USERPROFILE%\apps\hop\hop-run.cmd" (
+        set "HOP_RUN=%USERPROFILE%\apps\hop\hop-run.cmd"
+    ) else (
+        set "HOP_RUN=hop-run"
+    )
+)
+for %%I in ("%CD%") do set HOP_PROJECT=%%~nxI
+echo PY=%PY%>> "%RUN_LOG%"
+echo HOP_RUN=%HOP_RUN%>> "%RUN_LOG%"
+echo HOP_PROJECT=%HOP_PROJECT%>> "%RUN_LOG%"
+echo.>> "%RUN_LOG%"
+echo %GREEN%==>%NC% HOP_RUN=%HOP_RUN%
+set PYTHONIOENCODING=utf-8
+
+call :step "Prerrequisitos (java, venv, inputs)"
+where java >nul 2>&1
+if errorlevel 1 (
+    call :fail "java no esta en PATH (requerido para H2)"
+    exit /b 1
+)
+if not exist "inputs.yaml" (
+    call :fail "inputs.yaml no encontrado"
+    exit /b 1
+)
+if exist "pipelines\pl_stage_informes.hpl" (
+    call :fail "pl_stage_informes.hpl no debe existir (F3 fuera de alcance)"
+    exit /b 1
+)
+if not exist "h2\lib\h2-2.4.240.jar" (
+    call :fail "jar H2 no encontrado en h2\lib\"
+    exit /b 1
+)
+if not exist ".venv\Scripts\python.exe" (
+    call :warn "venv ausente; crear con: python -m venv .venv && .venv\Scripts\pip install -r python\requirements.txt"
+)
+
+call :step "Reset H2 + DDL STG"
+call h2\scripts\reset_and_create.bat >> "%RUN_LOG%" 2>&1
+if errorlevel 1 (
+    call :fail "reset_and_create.bat failed"
+    exit /b 1
+)
+
+call :step "Python create STG (inputs.yaml -> tablas STG_*)"
+"%PY%" python\create_stg.py >> "%RUN_LOG%" 2>&1
+if errorlevel 1 (
+    call :fail "create_stg.py failed"
+    exit /b 1
+)
+
+call :step "Staging F2 CSEP Google Sheets (unidades activas)"
+call scripts\stage_csep_sheets.cmd >> "%RUN_LOG%" 2>&1
+if errorlevel 1 (
+    call :fail "stage_csep_sheets.cmd failed"
+    exit /b 1
+)
+
+call :step "Staging F1 ODs Google Sheets (31 oficinas)"
+call scripts\stage_ods_sheets.cmd >> "%RUN_LOG%" 2>&1
+if errorlevel 1 (
+    call :fail "stage_ods_sheets.cmd failed"
+    exit /b 1
+)
+
+call :step "Staging Oracle SISUD (Hop directo)"
+if /I "%HOP_RUN%"=="hop-run" (
+    where hop-run >nul 2>&1
+    if errorlevel 1 (
+        call :fail "hop-run no encontrado; requerido para staging Oracle"
+        exit /b 1
+    )
+) else if not exist "%HOP_RUN%" (
+    call :fail "hop-run no encontrado (%HOP_RUN%); requerido para staging Oracle"
+    exit /b 1
+)
+call "%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_oracle.hpl" -r local >> "%RUN_LOG%" 2>&1
+if errorlevel 1 (
+    call :fail "pl_stage_oracle.hpl failed"
+    exit /b 1
+)
+
+call :step "Staging MySQL GAPPS (Hop directo, opcional)"
+call "%HOP_RUN%" -j "%HOP_PROJECT%" -f "%CD%\pipelines\pl_stage_mysql.hpl" -r local >> "%RUN_LOG%" 2>&1
+if errorlevel 1 (
+    call :warn "MySQL GAPPS no disponible; STG vacio; DW_M_AUD_F4_FORM se crea vacia"
+)
+
+call :step "Python main (logica Fases 2-7 + carga DW)"
+echo --- python\main.py --->> "%RUN_LOG%"
+"%PY%" python\main.py >> "%RUN_LOG%" 2>&1
+set MAIN_RC=%errorlevel%
+if not %MAIN_RC%==0 (
+    call :fail "python/main.py termino con codigo %MAIN_RC%"
+    exit /b 1
+)
+
+call :step "Comprobando salidas minimas en log"
+findstr /C:"Salida PROF_" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida PROF_* en el log"
+    exit /b 1
+)
+findstr /C:"Salida DW_M_DIM_" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida DW_M_DIM_* en el log"
+    exit /b 1
+)
+findstr /C:"Salida DW_M_FACT_MC_CSEP" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida DW_M_FACT_MC_CSEP en el log"
+    exit /b 1
+)
+findstr /C:"Salida DW_M_FACT_MC_OD" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida DW_M_FACT_MC_OD en el log"
+    exit /b 1
+)
+findstr /C:"Salida DW_M_FACT_MC_SISUD" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida DW_M_FACT_MC_SISUD en el log"
+    exit /b 1
+)
+findstr /C:"Salida DW_M_FACT_MC_GAPPS" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida DW_M_FACT_MC_GAPPS en el log"
+    exit /b 1
+)
+findstr /C:"Salida DW_M_FACT_MULTA_COERCITIVA" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida DW_M_FACT_MULTA_COERCITIVA en el log"
+    exit /b 1
+)
+findstr /C:"Salida DW_M_DQ_HALLAZGO" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay salida DW_M_DQ_HALLAZGO en el log"
+    exit /b 1
+)
+findstr /C:"Salida DW_M_INDICADOR_RESULTADO" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "no hay DW_M_INDICADOR_RESULTADO en el log (memoria de corrida)"
+    exit /b 1
+)
+findstr /C:"Salida DF_INFORMES" "%LOG%" >nul 2>&1
+if not errorlevel 1 (
+    call :fail "log contiene DF_INFORMES (F3 fuera de alcance)"
+    exit /b 1
+)
+findstr /C:"Salida DW_M_FACT_INFORME" "%LOG%" >nul 2>&1
+if not errorlevel 1 (
+    call :fail "log contiene DW_M_FACT_INFORME (F3 fuera de alcance)"
+    exit /b 1
+)
+
+call :step "Verificando carga DW"
+findstr /C:"DW:" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :fail "sin lineas DW: en log (carga Oracle obligatoria)"
+    exit /b 1
+)
+findstr /C:"REVISAR" "%LOG%" >nul 2>&1
+if not errorlevel 1 (
+    call :fail "carga DW con tablas en REVISAR"
+    exit /b 1
+)
+findstr /C:"(OK)" "%LOG%" >nul 2>&1
+if errorlevel 1 (
+    call :warn "carga DW sin lineas (OK); revisar credenciales oracle_dw"
+)
+
+call :step "Verificacion Oracle canónica (verify_dw.py)"
+"%PY%" python\verify_dw.py >> "%RUN_LOG%" 2>&1
+if errorlevel 1 (
+    call :fail "Verificacion Oracle (verify_dw.py) fallo"
+    exit /b 1
+)
+findstr /C:"DW_M_DQ_HALLAZGO" "%RUN_LOG%"
+findstr /C:"QA/K en Oracle" "%RUN_LOG%"
+
+(
+  echo.
+  echo === HARNESS OK ===
+  echo end: %DATE% %TIME%
+  echo log: %RUN_LOG%
+) >> "%RUN_LOG%"
+echo.
+echo %GREEN%HARNESS OK%NC% — ver CHECKPOINTS.md y docs\verification.md
+echo %GREEN%==>%NC% Log guardado: %RUN_LOG%
+exit /b 0
+
+REM ---------- helpers ----------
+:step
+echo %GREEN%==>%NC% %~1
+echo.>> "%RUN_LOG%"
+echo ==^> %~1>> "%RUN_LOG%"
+goto :eof
+
+:warn
+echo %YELLOW%AVISO:%NC% %~1
+echo AVISO: %~1>> "%RUN_LOG%"
+goto :eof
+
+:fail
+echo %RED%FAIL:%NC% %~1
+echo FAIL: %~1>> "%RUN_LOG%"
+echo end: %DATE% %TIME%>> "%RUN_LOG%"
+echo Log guardado: %RUN_LOG%
+echo --- tail log ---
+powershell -NoProfile -Command "Get-Content -LiteralPath '%RUN_LOG%' -Tail 40"
+goto :eof
